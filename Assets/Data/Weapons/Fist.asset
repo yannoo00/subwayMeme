@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8389f5e14ec9445d949c4766dd7ca51, type: 3}
+  m_Name: Fist
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponData
+  weaponName: Fist
+  weaponType: 0
+  damage: 10
+  attackCooldown: 0.5
+  range: 2
+  attackAngle: 90
+  projectilePrefab: {fileID: 0}
+  projectileSpeed: 20
