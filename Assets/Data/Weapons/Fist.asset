@@ -15,7 +15,7 @@ MonoBehaviour:
   weaponName: Fist
   weaponType: 0
   damage: 10
-  attackCooldown: 0.5
+  attackCooldown: 1
   range: 2
   attackAngle: 90
   projectilePrefab: {fileID: 0}

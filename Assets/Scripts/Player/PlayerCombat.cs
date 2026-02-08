@@ -4,35 +4,43 @@ using UnityEngine.InputSystem;
 public class PlayerCombat : MonoBehaviour
 {
     
-
-    [SerializeField] private WeaponBase _weapon;
+    [Header ("Weapon Settings")]
+    [SerializeField] private GameObject _defaultWeaponPrefab;
+    [SerializeField] private Transform _weaponHolder;
     
+    private WeaponBase _currentWeapon;
 
+    
+    private void Start()
+    {
+        EquipWeapon(_defaultWeaponPrefab);
+    }
 
     private void Update()
     {
         if(Mouse.current!=null && Mouse.current.leftButton.isPressed)
         {
+            //Debug.Log("try attack");
             Attack();
         }
     }
-
-
-
     private void Attack()
     {
-        _weapon.TryAttack();
+        _currentWeapon.TryAttack();
     }
 
 
-    public void EquipWeapon(WeaponBase newWeapon)
+
+
+    public void EquipWeapon(GameObject weaponPrefab)
     {
-        if(_weapon != null)
+        if(_currentWeapon != null)
         {
-            _weapon.Unequip();
+            _currentWeapon.Unequip();
         }
 
-        _weapon = newWeapon;
-        _weapon.Equip();
+        GameObject weaponObject = Instantiate(weaponPrefab, _weaponHolder);
+        _currentWeapon = weaponObject.GetComponent<WeaponBase>();
+        _currentWeapon.Equip();
     }
 }

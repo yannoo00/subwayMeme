@@ -1,7 +1,8 @@
 using UnityEngine;
-using UnityEngine.AI;
-using UnityEngine.Rendering;
-using UnityEngine.XR;
+using UnityEngine.InputSystem;
+
+
+
 
 public enum GameState
 {
@@ -42,6 +43,18 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         ChangeState(GameState.Menu);
+    }
+
+    private void Update()
+    {
+
+
+
+
+        if (_currentState == GameState.Menu && Keyboard.current.enterKey.isPressed)
+        {
+            StartGame();
+        }
     } 
 
 
@@ -84,6 +97,8 @@ public class GameManager : MonoBehaviour
     {
         Time.timeScale = 1f;
         ChangeState(GameState.Playing);
+        
+        StageManager.Instance.TryGame();
     }
 
     public void PauseGame()

@@ -21,6 +21,7 @@ public class MeleeWeapon : WeaponBase
 
         Collider[] hits = Physics.OverlapSphere(attackPosition, _weaponData.range, _targetLayer);
         
+
         foreach (Collider hit in hits)
         {
             if (!IsInAttackAngle(hit.transform)) continue; 

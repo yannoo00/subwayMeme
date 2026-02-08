@@ -15,9 +15,11 @@ public abstract class WeaponBase : MonoBehaviour
 
     public void TryAttack()
     {
+        //Debug.Log("try attack!");
         if (!CanAttack) return;
 
         _lastAttackTime = Time.time;
+        Debug.Log("perform attack!");
         PerformAttack();
     }
 
