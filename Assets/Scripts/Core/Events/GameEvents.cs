@@ -1,7 +1,6 @@
 using System;
 
 // 게임 흐름 관련 이벤트
-
 public static class GameEvents
 {
     public static event Action OnGameStart;

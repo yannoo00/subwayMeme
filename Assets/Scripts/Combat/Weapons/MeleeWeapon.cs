@@ -25,9 +25,12 @@ public class MeleeWeapon : WeaponBase
         {
             if (!IsInAttackAngle(hit.transform)) continue; 
 
+            Debug.Log("hit ! ");
+
             if (hit.TryGetComponent<IDamageable>(out var damageable))
             {
                 damageable.TakeDamage(_weaponData.damage);
+                
             }
         }
     }

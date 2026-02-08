@@ -27,6 +27,7 @@ public class EnemyStats : MonoBehaviour, IDamageable
 
     public void Die()
     {
+        CombatEvents.EnemyDied(gameObject);
         Destroy(gameObject);
     }
 }
