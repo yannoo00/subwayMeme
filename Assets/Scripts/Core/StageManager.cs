@@ -1,5 +1,23 @@
 using UnityEngine;
 
+
+
+public enum MapType
+{
+    Station,
+    Subway
+}
+
+
+// 스테이지 정보 메타 데이터
+public struct StageInfo
+{
+    public MapType mapType;
+    public int stageNumber;
+}
+
+
+
 public class StageManager : MonoBehaviour
 {
     public static StageManager Instance { get; private set; }
@@ -45,6 +63,8 @@ public class StageManager : MonoBehaviour
         _currentStage = 0;
         StartStage(_currentStage);
     }
+
+
 
     // 특정 스테이지 시작
     public void StartStage(int stageNumber)
