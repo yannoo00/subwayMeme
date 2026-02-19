@@ -511,84 +511,9 @@ public enum NodeLocation
 4. **보스 직전 층(9층)에 휴게역 불가**
    - 10층이 이미 휴게역 고정이므로 연속 방지
 
+
 ### 맵 데이터 구조
 
-#### StageNode (각 역)
-```csharp
-public class StageNode
-{
-    // === 격자 위치 ===
-    public int floor;                       // 층 (깊이, 1부터 시작)
-    public int column;                      // 열 (0부터 시작)
-
-    // === 역 타입 ===
-    public NodeLocation location;           // 역 타입 (Normal, Elite, RestSite...)
-
-    // === 그래프 연결 ===
-    public List<StageNode> nextNodes;       // 다음 역 선택지 (위층)
-    public List<StageNode> previousNodes;   // 이전 역 (아래층, 역추적용)
-
-    // === 런타임 상태 ===
-    public bool isVisited;                  // 방문 여부
-    public bool isAvailable;               // 현재 선택 가능한지
-
-    // === 게임플레이 ===
-    public int difficulty;                  // 난이도 (floor 기반 자동 계산)
-}
-```
-
-#### StageMap (전체 노선도)
-```csharp
-public class StageMap
-{
-    public List<List<StageNode>> floors;    // 층별 노드 목록
-    public StageNode bossNode;              // 보스(종착역) 노드
-    public StageNode currentNode;           // 현재 플레이어 위치
-    public int seed;                        // 맵 생성 시드 (재현 가능)
-
-    // 다음 선택 가능한 역들
-    public List<StageNode> GetAvailableNextNodes();
-
-    // 현재 노드로 이동
-    public void MoveToNode(StageNode node);
-
-    // 종착역까지 남은 최소 거리
-    public int GetDistanceToBoss();
-}
-```
-
-#### StageMapGenerator (맵 생성기)
-```csharp
-// Scripts/Dungeon/StageMapGenerator.cs
-public class StageMapGenerator
-{
-    private MapGenerationConfig _config;
-
-    public StageMap Generate(int seed)
-    {
-        Random.InitState(seed);
-
-        // 1. 격자 생성
-        CreateGrid();
-
-        // 2. 경로 생성 (N회 반복)
-        for (int i = 0; i < _config.pathCount; i++)
-            GeneratePath(i);
-
-        // 3. 미연결 노드 제거
-        RemoveUnconnectedNodes();
-
-        // 4. 역 타입 할당
-        AssignFixedLocations();    // 고정 배치
-        AssignRandomLocations();   // 확률 배치 + 규칙 오버라이드
-
-        // 5. 보스 노드 추가
-        AddBossNode();
-
-        return stageMap;
-    }
-}
-```
 
 #### MapGenerationConfig (생성 설정 ScriptableObject)
 ```csharp
@@ -862,7 +787,7 @@ OnWeaponChanged: Action<Weapon>
 전투 시스템(AI, 공격 메커니즘)을 마지막에 구현하더라도, 게임의 전체 흐름과 시스템은 먼저 완성할 수 있습니다.
 **핵심 아이디어**: 적 스폰 → (임시 처리로 처치) → 이벤트 발생 → 스테이지 진행 로직을 먼저 완성
 
-### 1단계: 스테이지 시스템 핵심 구현 ⭐ 최우선
+### 1단계: 스테이지 시스템 핵심 구현 (최우선)
 **목표**: 지하철 ↔ 역을 오가는 게임의 핵심 루프 완성
 
 #### 1-1. StageManager 확장
