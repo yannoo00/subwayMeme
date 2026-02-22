@@ -10,4 +10,13 @@ public class StageNode
     public List<StageNode> previousNodes; 
 
     public bool visited = false;
+
+
+    public StageNode(int floor, int column)
+    {
+        this.floor      = floor;
+        this.column     = column; 
+        nextNodes       = new List<StageNode>();
+        previousNodes   = new List<StageNode>();
+    }
 }

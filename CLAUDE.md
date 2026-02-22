@@ -383,6 +383,7 @@ Station (최종역) → MainMenu
 ### 개요
 매 플레이(Try)마다 다른 맵을 경험할 수 있도록 동적으로 노선도를 생성합니다.
 Slay the Spire의 맵 생성 알고리즘을 지하철 테마에 맞게 변형합니다.
+아래 내용에서 제안하는 상세 코드와 구현 방식은 예시일 뿐입니다. 
 
 **핵심 차이점**: Slay the Spire에서는 노드 간 이동이 단순 클릭이지만,
 이 게임에서는 **역(노드) 사이를 지하철(엣지)로 이동하며 전투**합니다.
@@ -467,20 +468,6 @@ Slay the Spire의 맵 생성 알고리즘을 지하철 테마에 맞게 변형�
 
 #### 4단계: 역 타입(Location) 할당
 
-##### 역 타입 정의:
-```csharp
-public enum NodeLocation
-{
-    Normal,      // 일반역: 기본 전투 구간
-    Elite,       // 급행역: 강력한 적 + 큰 보상
-    RestSite,    // 휴게역: HP 회복, 무기 강화
-    Merchant,    // 상점역: 아이템 구매/판매
-    Event,       // 이벤트역: 랜덤 이벤트 발생
-    Treasure,    // 보물역: 무료 아이템 획득
-    Boss         // 종착역: 보스 전투
-}
-```
-
 ##### 고정 배치:
 | 층 | 역 타입 | 이유 |
 |----|---------|------|
@@ -515,33 +502,6 @@ public enum NodeLocation
 ### 맵 데이터 구조
 
 
-#### MapGenerationConfig (생성 설정 ScriptableObject)
-```csharp
-[CreateAssetMenu(menuName = "Stage/Map Generation Config")]
-public class MapGenerationConfig : ScriptableObject
-{
-    [Header("Grid Size")]
-    public int columns = 5;              // 열 수
-    public int floors = 10;              // 층 수
-    public int pathCount = 6;            // 경로 생성 횟수
-
-    [Header("Fixed Floors")]
-    public int treasureFloor = 6;        // 보물역 고정 층
-
-    [Header("Location Weights (%)")]
-    public float normalWeight = 45f;     // 일반역
-    public float eventWeight = 22f;      // 이벤트역
-    public float treasureWeight = 8f;    // 보물역
-    public float restSiteWeight = 12f;   // 휴게역
-    public float merchantWeight = 5f;    // 상점역
-    public float eliteWeight = 8f;       // 급행역
-
-    [Header("Rules")]
-    public int eliteMinFloor = 5;        // 급행역 최소 층
-    public int restSiteMinFloor = 5;     // 휴게역 최소 층
-    public float lateGameEliteWeight = 16f;  // 후반부 급행역 확률 증가
-}
-```
 
 ### 게임 흐름과 맵의 통합
 
@@ -575,49 +535,6 @@ StageMapGenerator.Generate(seed)     ← 맵 생성
 [종착역 (보스)] 도착 → 보스 전투 → 클리어!
 ```
 
-#### StageManager 연동 핵심:
-```csharp
-// StageManager.cs에서의 사용
-public class StageManager : MonoBehaviour
-{
-    private StageMap _currentMap;
-    private StageMapGenerator _mapGenerator;
-
-    public void TryGame()
-    {
-        int seed = System.Environment.TickCount;
-        _currentMap = _mapGenerator.Generate(seed);
-        StartStation();  // 출발역에서 시작
-    }
-
-    // 플레이어가 노선도에서 다음 역 선택 시
-    public void SelectNextNode(StageNode selected)
-    {
-        StartSubway(selected);  // 지하철 구간 시작 (전투)
-    }
-
-    // 지하철 타이머 종료 시
-    private void ArriveAtStation(StageNode destination)
-    {
-        _currentMap.MoveToNode(destination);
-        HandleNodeLocation(destination.location);  // 역 타입별 처리
-    }
-
-    // 역 타입별 처리
-    private void HandleNodeLocation(NodeLocation location)
-    {
-        switch (location)
-        {
-            case NodeLocation.Normal:     // 기본 로직
-            case NodeLocation.Merchant:   // 상점 오픈
-            case NodeLocation.RestSite:   // 회복 UI
-            case NodeLocation.Event:      // 랜덤 이벤트
-            case NodeLocation.Elite:      // 강력한 적 경고
-            case NodeLocation.Boss:       // 보스 전투
-        }
-    }
-}
-```
 
 ### Act 시스템 (노선 환승)
 

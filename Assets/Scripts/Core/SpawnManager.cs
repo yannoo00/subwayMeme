@@ -41,17 +41,17 @@ public class SpawnManager : MonoBehaviour
 
 
 
-    // 스테이지 번호에 맞는 웨이브 스폰
-    public void SpawnWaveForStage(int stageNumber)
+    // 역 floor 에 맞는 웨이브 스폰
+    public void SpawnWaveForStage(int floor)
     {
-        // 스테이지 번호에 맞는 StageData 찾기
-        if (_stageDataList == null || stageNumber >= _stageDataList.Length)
+        // floor에 맞는 StageData 찾기
+        if (_stageDataList == null || floor >= _stageDataList.Length)
         {
-            Debug.LogWarning($"[SpawnManager] 스테이지 {stageNumber}에 해당하는 데이터가 없습니다!");
+            Debug.LogWarning($"[SpawnManager] 스테이지 {floor}에 해당하는 데이터가 없습니다!");
             return;
         }
 
-        StageData stageData = _stageDataList[stageNumber];
+        StageData stageData = _stageDataList[floor];
         WaveData wave = stageData.GetRandomWave();
 
         if (wave == null) return;
