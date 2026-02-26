@@ -81,6 +81,7 @@ public class StageManager : MonoBehaviour
         // 맵 생성
         int seed = Random.Range(0, int.MaxValue);
         _stageMap = _mapGenerator.GenerateMap(seed);
+        StageEvents.MapGenerated(_stageMap);  // MapUI가 받아서 노선도 UI 구성
 
         // 출발역 설정 (임시로 0층 0번 노드 고정)
         _stageMap.currentNode = _stageMap.floors[0][0];
@@ -151,6 +152,7 @@ public class StageManager : MonoBehaviour
         // 적 전멸 역 상호작용 잠금 해제 (진행은 타이머가 담당)
         StageEvents.InteractionUnlocked();
     }
+
 
     // 플레이어가 탑승 시도 시 호출 (SubwayEntrance에서 호출)
     public void HandlePlayerBoarding()

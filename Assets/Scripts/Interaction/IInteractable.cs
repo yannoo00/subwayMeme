@@ -8,3 +8,5 @@ public interface IInteractable
     // 상호작용 가능 범위 안에 있을 때 표시할 안내 문구 (예: "E: 탑승")
     string GetHintText();
 }
+
+
