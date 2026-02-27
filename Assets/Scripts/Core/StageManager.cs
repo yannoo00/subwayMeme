@@ -143,6 +143,10 @@ public class StageManager : MonoBehaviour
     }
 
 
+
+
+
+
     private void HandleAllEnemiesDefeated()
     {
         if (!_isSubwayActive) return;
@@ -162,10 +166,12 @@ public class StageManager : MonoBehaviour
 
         var nextNodes = _stageMap.currentNode.nextNodes;
 
-        //ui에서 이동할 역 선택
-        StageEvents.RouteSelectionRequired(nextNodes);
+        // 맵 UI 열기 (역 선택 모드)
+        StageEvents.MapOpenRequested(MapOpenReason.RouteSelection, nextNodes);
         
     }
+
+
 
 
     private void GameClear()

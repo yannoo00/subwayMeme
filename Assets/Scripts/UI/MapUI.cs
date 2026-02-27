@@ -2,10 +2,10 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-// 노선도 전체를 관리하는 컴포넌트
-// StageEvents.OnMapGenerate:               BuildMap으로 노선도 비주얼 구성
-// StageEvents.OnRouteSelectionRequired:    패널 표시 및 선택 가능 노드 강조
-// StageEvents.OnStationArrived:            현재 노드 및 지나온 경로 상태 갱신
+// 노선 UI 전체를 관리하는 컴포넌트
+// StageEvents.OnMapGenerated:      BuildMap으로 노선도 비주얼 구성
+// StageEvents.OnMapOpenRequested:  맵 패널 열기 (RouteSelection: 역 선택 강제 / ViewOnly: 자유롭게 닫기 가능)
+// StageEvents.OnStationArrived:    현재 노드 및 지나온 경로 상태 갱신
 
 public class MapUI : MonoBehaviour
 {
@@ -25,23 +25,23 @@ public class MapUI : MonoBehaviour
     private Dictionary<StageNode, NodeVisual> _nodeVisuals = new();
     private Dictionary<(StageNode, StageNode), PathVisual> _pathVisuals = new();
 
-    // 현재 선택 가능한 노드 목록 (선택 후 상태 복원에 사용)
     private List<StageNode> _currentAvailableNodes = new();
+    private MapOpenReason _currentReason;
 
 
 
     private void OnEnable()
     {
-        StageEvents.OnMapGenerated += BuildMap;
-        StageEvents.OnRouteSelectionRequired += OnRouteSelectionRequired;
-        StageEvents.OnStationArrived += OnStationArrived;
+        StageEvents.OnMapGenerated          += BuildMap;
+        StageEvents.OnMapOpenRequested      += OnMapOpenRequested;
+        StageEvents.OnStationArrived        += OnStationArrived;
     }
 
     private void OnDisable()
     {
-        StageEvents.OnMapGenerated -= BuildMap;
-        StageEvents.OnRouteSelectionRequired -= OnRouteSelectionRequired;
-        StageEvents.OnStationArrived -= OnStationArrived;
+        StageEvents.OnMapGenerated          -= BuildMap;
+        StageEvents.OnMapOpenRequested      -= OnMapOpenRequested;
+        StageEvents.OnStationArrived        -= OnStationArrived;
     }
 
 
@@ -104,15 +104,34 @@ public class MapUI : MonoBehaviour
 
 
 
-    // 탑승 시 맵 패널 표시 + 다음 역 강조
-    private void OnRouteSelectionRequired(List<StageNode> nextNodes)
+    private void OnMapOpenRequested(MapOpenReason reason, List<StageNode> nextNodes)
     {
-        _panel.SetActive(true);
-        _currentAvailableNodes = nextNodes;
+        // 패널이 열려있는 경우
+        if (_panel.activeSelf)
+        {
+            // ViewOnly로 열려있을 때 M키 재입력 → 닫기 (토글)
+            if (reason == MapOpenReason.ViewOnly && _currentReason == MapOpenReason.ViewOnly)
+                CloseMap();
 
-        foreach (var node in nextNodes)
-            if (_nodeVisuals.TryGetValue(node, out NodeVisual visual))
-                visual.SetState(NodeState.Available);
+            // 그 외(RouteSelection 중 M키 등)는 무시
+            return;
+        }
+
+        _currentReason = reason;
+        _panel.SetActive(true);
+
+        if (reason == MapOpenReason.RouteSelection)
+        {
+            _currentAvailableNodes = nextNodes;
+            foreach (var node in nextNodes)
+                if (_nodeVisuals.TryGetValue(node, out NodeVisual visual))
+                    visual.SetState(NodeState.Available);
+        }
+    }
+
+    private void CloseMap()
+    {
+        _panel.SetActive(false);
     }
 
     // 역 도착 시 현재 노드와 지나온 경로 갱신
