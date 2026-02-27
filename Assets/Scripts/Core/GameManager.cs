@@ -50,7 +50,7 @@ public class GameManager : MonoBehaviour
 
 
 
-
+        //디버그용으로 Enter를 누르면 넘어가게 해놧음
         if (_currentState == GameState.Menu && Keyboard.current.enterKey.isPressed)
         {
             StartGame();
@@ -69,36 +69,42 @@ public class GameManager : MonoBehaviour
         switch (newState)
         {
             case GameState.Menu:
-                
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
                 break;
-                
+
             case GameState.Playing:
-                
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
                 break;
 
             case GameState.Station:
-                
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
                 break;
 
             case GameState.Paused:
                 Time.timeScale = 0f;
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
                 break;
 
             case GameState.GameOver:
-                
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
                 break;
         }
     }
 
 
 
-
+    //게임 진행 관련
     public void StartGame()
     {
         Time.timeScale = 1f;
         ChangeState(GameState.Playing);
         
-        StageManager.Instance.TryGame();
+        StageManager.Instance._TryGame();
     }
 
     public void PauseGame()

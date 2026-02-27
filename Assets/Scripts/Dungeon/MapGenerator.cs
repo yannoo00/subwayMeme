@@ -39,6 +39,12 @@ public class MapGenerator : MonoBehaviour
         {
             for(int j=0; j<_columns; ++j)
             {
+                //연결 안된 애는 패스
+                if ((grid[i, j].previousNodes.Count == 0) && (grid[i, j].nextNodes.Count == 0))
+                {
+                    continue;
+                }
+
                 stageMap.floors[i].Add(grid[i, j]);
             }
         }
@@ -64,6 +70,8 @@ public class MapGenerator : MonoBehaviour
         {
             for (int col = 0; col < _columns; col++)
             {
+
+                
                 //배열 각 칸을 StageNode로 채워준다.
                 grid[floor, col] = new StageNode(floor, col);
             }
@@ -139,24 +147,6 @@ public class MapGenerator : MonoBehaviour
         return candidates[Random.Range(0, candidates.Count)];
     }
 
-
-
-    //연결 안된 노드 삭제 
-    //얘를 사용하지 않고 StageMap의 floor에 node들을 넣을 때 생각해도 됨 
-    private void RemoveUnconnectedNodes(StageNode[,] grid)
-    {
-        for (int floor = 0; floor < _floors; floor++)
-        {
-            for (int col = 0; col < _columns; col++)
-            {
-                //어떤 path도 연결되지 않은 노드들은 여기서 삭제
-                if ((grid[floor, col].previousNodes.Count == 0) && (grid[floor, col].nextNodes.Count == 0))
-                {
-                    //delete
-                }
-            }
-        }
-    }
 
 
 

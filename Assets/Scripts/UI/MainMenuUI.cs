@@ -15,7 +15,8 @@ public class MainMenuUI : MonoBehaviour
 
     private void OnStartClicked()
     {
+        Debug.Log("onStartClicked! ");
         _panel.SetActive(false);
-        StageManager.Instance.TryGame();
+        GameManager.Instance.StartGame();
     }
 }

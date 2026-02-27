@@ -1,6 +1,4 @@
 using System.Collections;
-using NUnit.Framework.Constraints;
-using UnityEditor.ShaderGraph.Internal;
 using UnityEngine;
 
 
@@ -76,16 +74,16 @@ public class StageManager : MonoBehaviour
 
 
     // 게임 1트 시작
-    public void TryGame()
+    // GameManager에서만 사용하고, 직접 호출되는 일은 없어야 함
+    public void _TryGame()
     {
         // 맵 생성
         int seed = Random.Range(0, int.MaxValue);
         _stageMap = _mapGenerator.GenerateMap(seed);
-        StageEvents.MapGenerated(_stageMap);  // MapUI가 받아서 노선도 UI 구성
 
-        // 출발역 설정 (임시로 0층 0번 노드 고정)
-        _stageMap.currentNode = _stageMap.floors[0][0];
-        StartStation();
+        StageEvents.MapGenerated(_stageMap);  // MapUI가 받아서 노선도 UI 구성 
+
+        StageEvents.MapOpenRequested(MapOpenReason.RouteSelection, _stageMap.floors[0]);
     }
 
 
@@ -139,6 +137,7 @@ public class StageManager : MonoBehaviour
         _stageMap.currentNode = nextNode;
         nextNode.visited = true;
 
+        //출발 역에서 다음 역을 선택했으면 지하철로 진행
         StartSubway();
     }
 

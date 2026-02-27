@@ -62,11 +62,9 @@ public class MapUI : MonoBehaviour
                 foreach (var nextNode in node.nextNodes)
                     CreatePathVisual(node, nextNode);
 
-        // 연결된 노드만 생성
         foreach (var floorList in map.floors)
             foreach (var node in floorList)
-                if (node.nextNodes.Count > 0 || node.previousNodes.Count > 0)
-                    CreateNodeVisual(node);
+                CreateNodeVisual(node);
 
         _panel.SetActive(false);
     }
@@ -134,6 +132,8 @@ public class MapUI : MonoBehaviour
         _panel.SetActive(false);
     }
 
+
+
     // 역 도착 시 현재 노드와 지나온 경로 갱신
     private void OnStationArrived(StageNode currentNode)
     {
@@ -146,7 +146,9 @@ public class MapUI : MonoBehaviour
                 pathVisual.SetVisited(true);
     }
 
-    // 노드 버튼 클릭 시 처리
+
+
+    // 노드(station) 버튼 클릭 시 처리
     private void OnNodeSelected(StageNode node)
     {
         _panel.SetActive(false);

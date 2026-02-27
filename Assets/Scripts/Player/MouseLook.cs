@@ -12,16 +12,18 @@ public class MouseLook : MonoBehaviour
 
     void Start()
     {
-        Cursor.lockState    = CursorLockMode.Locked;
-        Cursor.visible      = false;
+        // 커서 제어는 GameManager.ChangeState()가 담당
     }
 
     void Update()
     {
-        if (Mouse.current == null) return; 
-        
+        // Menu 상태에서는 마우스 룩 비활성화
+        if (GameManager.Instance.CurrentState == GameState.Menu) return;
+
+        if (Mouse.current == null) return;
+
         float mouseX = Mouse.current.delta.x.ReadValue() * _mouseSensitivity * Time.deltaTime;
-        float mouseY = Mouse.current.delta.y.ReadValue() * _mouseSensitivity * Time.deltaTime;        
+        float mouseY = Mouse.current.delta.y.ReadValue() * _mouseSensitivity * Time.deltaTime;
 
         // 플레이어 몸체 회전
         _playerBody.Rotate(Vector3.up * mouseX); 
