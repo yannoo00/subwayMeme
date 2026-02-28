@@ -1,0 +1,110 @@
+/* === MapUI Panel === */
+
+.map-panel {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+}
+
+/* ScrollView가 패널을 꽉 채우도록 */
+.map-scroll {
+    width: 100%;
+    height: 100%;
+}
+
+.map-area {
+    position: relative;
+    width: 100%;
+}
+
+
+/* === Containers === */
+
+/* path-container: 노드 위에 겹쳐서 뒤(아래)에 렌더링 */
+.path-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+/* node-container: Flexbox로 노드를 격자 배치, 높이는 내용물이 결정 */
+.node-container {
+    flex-direction: column;
+    padding: 40px 20px;
+}
+
+.floor-row {
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    margin-bottom: 100px;
+}
+
+.floor-row:last-child {
+    margin-bottom: 0;
+}
+
+
+/* === Node === */
+
+.node {
+    width: 50px;
+    height: 50px;
+    border-radius: 25px;
+    border-width: 2px;
+    margin: 0;
+    padding: 0;
+    -unity-text-align: middle-center;
+    font-size: 10px;
+    color: white;
+    background-color: rgb(60, 60, 60);
+    border-color: rgb(80, 80, 80);
+    /* 기본: 숨김 (자리는 유지) */
+    visibility: hidden;
+}
+
+.node.active {
+    visibility: visible;
+    background-color: rgb(100, 100, 100);
+    border-color: rgb(150, 150, 150);
+}
+
+.node.active.node--available {
+    background-color: rgb(50, 180, 50);
+    border-color: rgb(100, 255, 100);
+}
+
+.node.active.node--available:hover {
+    background-color: rgb(70, 210, 70);
+    scale: 1.1 1.1;
+}
+
+.node.active.node--current {
+    background-color: rgb(50, 120, 220);
+    border-color: rgb(100, 180, 255);
+}
+
+.node.active.node--visited {
+    background-color: rgb(80, 80, 80);
+    border-color: rgb(60, 60, 60);
+    opacity: 0.6;
+}
+
+
+/* === Path === */
+
+.path {
+    position: absolute;
+    height: 2px;
+    background-color: transparent;
+}
+
+.path.active {
+    background-color: rgb(150, 150, 150);
+}
+
+.path.active.path--visited {
+    background-color: rgb(80, 80, 80);
+    opacity: 0.5;
+}

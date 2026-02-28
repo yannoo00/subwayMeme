@@ -1,0 +1,10 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:VisualElement name="map-panel" class="map-panel">
+        <ui:ScrollView name="map-scroll" class="map-scroll" horizontal-scroller-visibility="Hidden">
+            <ui:VisualElement name="map-area" class="map-area">
+                <ui:VisualElement name="path-container" class="path-container" />
+                <ui:VisualElement name="node-container" class="node-container" />
+            </ui:VisualElement>
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>
