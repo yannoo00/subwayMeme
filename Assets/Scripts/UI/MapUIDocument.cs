@@ -6,6 +6,7 @@ using UnityEngine.UIElements;
 // UI Toolkit 기반 노선도 UI
 // 초기화 시 전체 격자(50노드 + 117경로)를 1회 생성
 // 맵 생성 시에는 active 클래스 토글로 사용/미사용 전환
+// 경로 위치는 GeometryChangedEvent마다 재계산 (스크롤바 등 레이아웃 변경 대응)
 public class MapUIDocument : MonoBehaviour
 {
     // === Inspector 변수 ===
@@ -32,7 +33,6 @@ public class MapUIDocument : MonoBehaviour
     private List<StageNode> _currentAvailableNodes = new();
     private MapOpenReason _currentReason;
     private bool _isOpen;
-    private bool _pathsPositioned;
 
 
     // === Unity 생명주기 ===
@@ -47,6 +47,8 @@ public class MapUIDocument : MonoBehaviour
         BindUI();
         BuildGrid();
 
+        _nodeContainer.RegisterCallback<GeometryChangedEvent>(OnNodeContainerGeometryChanged);
+
         StageEvents.OnMapGenerated     += OnMapGenerated;
         StageEvents.OnMapOpenRequested += OnMapOpenRequested;
         StageEvents.OnStationArrived   += OnStationArrived;
@@ -54,6 +56,8 @@ public class MapUIDocument : MonoBehaviour
 
     private void OnDisable()
     {
+        _nodeContainer.UnregisterCallback<GeometryChangedEvent>(OnNodeContainerGeometryChanged);
+
         StageEvents.OnMapGenerated     -= OnMapGenerated;
         StageEvents.OnMapOpenRequested -= OnMapOpenRequested;
         StageEvents.OnStationArrived   -= OnStationArrived;
@@ -86,7 +90,6 @@ public class MapUIDocument : MonoBehaviour
     {
         _allNodes = new Button[_floors, _columns];
         _allPaths.Clear();
-        _pathsPositioned = false;
 
         // 노드: floor 높은 순(위에서 아래)으로 floor-row 생성
         // Flexbox(justify-content: space-around)가 자동 배치
@@ -128,10 +131,10 @@ public class MapUIDocument : MonoBehaviour
     }
 
 
-    // === 경로 위치 계산 (layout 확정 후 1회) ===
+    // === 경로 위치 계산 ===
 
     // 노드의 실제 렌더링 위치를 기반으로 경로의 위치/회전/길이를 설정
-    // Flexbox가 노드를 배치한 뒤에 호출되어야 정확한 좌표를 얻을 수 있음
+    // GeometryChangedEvent마다 호출되어 레이아웃 변경에 대응
     private void PositionPaths()
     {
         foreach (var kvp in _allPaths)
@@ -153,11 +156,17 @@ public class MapUIDocument : MonoBehaviour
 
             path.style.width  = dist;
             path.style.left   = mid.x - dist / 2f;
-            path.style.top    = mid.y;
+            // top은 요소의 상단 가장자리 위치이므로 중심을 맞추려면 height/2(=1px) 빼기
+            path.style.top    = mid.y - 1f;
             path.style.rotate = new StyleRotate(new Rotate(Angle.Degrees(angle)));
         }
+    }
 
-        _pathsPositioned = true;
+    // 레이아웃 width가 바뀔 때만 경로 위치 재계산
+    private void OnNodeContainerGeometryChanged(GeometryChangedEvent evt)
+    {
+        if (evt.oldRect.width == evt.newRect.width) return;
+        PositionPaths();
     }
 
 
@@ -194,16 +203,6 @@ public class MapUIDocument : MonoBehaviour
                         path.AddToClassList("active");
                 }
             }
-        }
-
-        // 경로 위치가 아직 계산되지 않았으면 layout 확정 후 1회 계산
-        if (!_pathsPositioned)
-        {
-            _nodeContainer.RegisterCallback<GeometryChangedEvent>(_ =>
-            {
-                if (!_pathsPositioned)
-                    PositionPaths();
-            });
         }
 
         _panel.style.display = DisplayStyle.None;

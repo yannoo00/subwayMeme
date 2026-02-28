@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.EventSystems;
+
 
 public class PlayerCombat : MonoBehaviour
 {
@@ -18,7 +20,8 @@ public class PlayerCombat : MonoBehaviour
 
     private void Update()
     {
-        if(Mouse.current!=null && Mouse.current.leftButton.isPressed)
+        //마우스 클릭 input handler를 따로 만드는것을 고려      
+        if(Mouse.current!=null && Mouse.current.leftButton.isPressed && !EventSystem.current.IsPointerOverGameObject())
         {
             //Debug.Log("try attack");
             Attack();
