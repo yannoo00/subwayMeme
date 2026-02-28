@@ -12,13 +12,15 @@ public class MouseLook : MonoBehaviour
 
     void Start()
     {
-        // 커서 제어는 GameManager.ChangeState()가 담당
+    
     }
 
+
+    //마우스 이동에 따라 플레이어를 회전시킨다. 
     void Update()
     {
-        // Menu 상태에서는 마우스 룩 비활성화
-        if (GameManager.Instance.CurrentState == GameState.Menu) return;
+        // UI 상태에서는 마우스 룩 비활성화
+        if (GameManager.Instance.CurrentState == GameState.UI) return;
 
         if (Mouse.current == null) return;
 

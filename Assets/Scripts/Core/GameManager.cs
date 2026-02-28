@@ -6,11 +6,8 @@ using UnityEngine.InputSystem;
 
 public enum GameState
 {
-    Menu,
+    UI,
     Playing,
-    Station,
-    Paused,
-    GameOver,
 }
 
 
@@ -42,19 +39,13 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        ChangeState(GameState.Menu);
+        ChangeState(GameState.UI);
     }
 
     private void Update()
     {
 
 
-
-        //디버그용으로 Enter를 누르면 넘어가게 해놧음
-        if (_currentState == GameState.Menu && Keyboard.current.enterKey.isPressed)
-        {
-            StartGame();
-        }
     } 
 
 
@@ -68,7 +59,7 @@ public class GameManager : MonoBehaviour
     
         switch (newState)
         {
-            case GameState.Menu:
+            case GameState.UI:
                 Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
                 break;
@@ -76,22 +67,6 @@ public class GameManager : MonoBehaviour
             case GameState.Playing:
                 Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;
-                break;
-
-            case GameState.Station:
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-                break;
-
-            case GameState.Paused:
-                Time.timeScale = 0f;
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-                break;
-
-            case GameState.GameOver:
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
                 break;
         }
     }
@@ -111,14 +86,14 @@ public class GameManager : MonoBehaviour
     {
         if (_currentState == GameState.Playing)
         {
-            ChangeState(GameState.Paused);
+            ChangeState(GameState.UI);
         }
     }
 
 
     public void ResumeGame()
     {
-        if(_currentState == GameState.Paused)
+        if(_currentState == GameState.UI)
         {
             Time.timeScale = 1f;
             ChangeState(GameState.Playing);
@@ -128,7 +103,7 @@ public class GameManager : MonoBehaviour
     
     public void EndGame()
     {
-        ChangeState(GameState.GameOver);
+        ChangeState(GameState.UI);
     }
 
 }

@@ -28,7 +28,9 @@ public class NodeVisual : MonoBehaviour
     {
         _image  = GetComponent<Image>();
         _button = GetComponent<Button>();
-        
+
+        Debug.Log(" Awaken ! ");
+
         if (_button == null)
             Debug.LogError("[NodeVisual] Button 컴포넌트가 없습니다!", gameObject);
         if (_image == null)
@@ -37,12 +39,10 @@ public class NodeVisual : MonoBehaviour
 
     public void Setup(StageNode node, Action<StageNode> onSelected)
     {
-
         Debug.Log($"_button={_button}, _image={_image}");
 
         _button.onClick.AddListener(() => onSelected(node));
         SetState(NodeState.Normal);
-
     }
 
     public void SetState(NodeState state)
