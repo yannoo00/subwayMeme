@@ -40,6 +40,7 @@ public class MapUIDocument : MonoBehaviour
     private void Awake()
     {
         _document = GetComponent<UIDocument>();
+        DontDestroyOnLoad(gameObject);
     }
 
     private void OnEnable()

@@ -7,6 +7,11 @@ public class UIInputHandler : MonoBehaviour
 {
     [Header("Keys")]
     [SerializeField] private Key _mapKey       = Key.M;
+
+    private void Awake()
+    {
+        DontDestroyOnLoad(gameObject);
+    }
     // [SerializeField] private Key _inventoryKey = Key.I;  // 인벤토리 구현 시 활성화
 
     private void Update()

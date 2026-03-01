@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 public class PlayerInteractor : MonoBehaviour
 {
     [Header("Interaction Settings")]
-    [SerializeField] private float _interactRange = 2f;
+    [SerializeField] private float _interactRange = 5f;
 
     private IInteractable _currentInteractable;
 
