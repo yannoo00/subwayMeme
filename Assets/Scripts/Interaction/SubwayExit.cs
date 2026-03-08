@@ -6,14 +6,26 @@ public class SubwayExit : MonoBehaviour, IInteractable
 {
     public void Interact()
     {
-        // 지하철 주행 중일 때 && 모든 적을 죽였을 때만 하차 가능(플래그 추가 필요)
         if (StageManager.Instance.CurrentMapType != MapType.Subway) return;
+
+
+
+        // 지하철에 적이 남아있으면 하차 불가
+        if (SpawnManager.Instance.AliveEnemyCount > 0) 
+        {
+            Debug.Log("하차 불가 - 적이 남아있음");
+            return;
+        }
+
 
         StageManager.Instance.StartStation();
     }
 
     public string GetHintText()
     {
+        if (SpawnManager.Instance.AliveEnemyCount > 0)
+            return "적을 모두 처치하세요";
+
         return "E: 하차";
     }
 }

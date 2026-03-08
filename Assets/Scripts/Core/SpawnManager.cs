@@ -1,16 +1,13 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class SpawnManager : MonoBehaviour
 {
     public static SpawnManager Instance { get; private set; }
 
-    [Header("Spawn Settings")]
-    [SerializeField] private Transform[] _spawnPoints;
-
     [Header("Stage Data")]
     [SerializeField] private StageData[] _stageDataList;  // 스테이지별 데이터
-
 
     private List<GameObject> _aliveEnemies = new List<GameObject>();
     public int AliveEnemyCount => _aliveEnemies.Count;
@@ -24,27 +21,38 @@ public class SpawnManager : MonoBehaviour
             return;
         }
         Instance = this;
+        DontDestroyOnLoad(gameObject);
     }
+
 
     private void OnEnable()
     {
         CombatEvents.OnEnemyDied += HandleEnemyDied;
+        // Station 씬 로드 시 적 리스트 정리 (Single 모드 전환으로 적 오브젝트는 자동 소멸하지만 리스트에 null 참조 남음)
+        SceneManager.sceneLoaded += HandleSceneLoaded;
     }
+
 
     private void OnDisable()
     {
         CombatEvents.OnEnemyDied -= HandleEnemyDied;
+        SceneManager.sceneLoaded -= HandleSceneLoaded;
     }
 
 
+    private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name == "Station")
+        {
+            _aliveEnemies.Clear();
+            Debug.Log("[SpawnManager] Station 씬 로드 - 적 리스트 초기화");
+        }
+    }
 
 
-
-
-    // 역 floor 에 맞는 웨이브 스폰
+    // floor 에 맞는 웨이브 스폰
     public void SpawnWaveForStage(int floor)
     {
-        // floor에 맞는 StageData 찾기
         if (_stageDataList == null || floor >= _stageDataList.Length)
         {
             Debug.LogWarning($"[SpawnManager] 스테이지 {floor}에 해당하는 데이터가 없습니다!");
@@ -59,7 +67,7 @@ public class SpawnManager : MonoBehaviour
         SpawnWave(wave);
     }
 
-    
+
     // WaveData에 정의된 적들을 스폰
     public void SpawnWave(WaveData wave)
     {
@@ -76,7 +84,7 @@ public class SpawnManager : MonoBehaviour
         Debug.Log($"[SpawnManager] 웨이브 '{wave.waveName}' 스폰 완료. 총 {_aliveEnemies.Count}마리");
     }
 
-    
+
     // 특정 프리팹으로 적 1마리 스폰
     public void SpawnEnemy(GameObject prefab)
     {
@@ -107,17 +115,14 @@ public class SpawnManager : MonoBehaviour
         Debug.Log("[SpawnManager] 모든 적 제거됨");
     }
 
-    
 
     private void HandleEnemyDied(GameObject enemy)
     {
-        // 리스트에서 제거
         if (_aliveEnemies.Contains(enemy))
         {
             _aliveEnemies.Remove(enemy);
             Debug.Log($"[SpawnManager] 적 사망. 남은 적: {_aliveEnemies.Count}");
 
-            // 모든 적이 처치되면 이벤트 발생
             if (_aliveEnemies.Count == 0)
             {
                 StageEvents.AllEnemiesDefeated();
@@ -127,23 +132,14 @@ public class SpawnManager : MonoBehaviour
     }
 
 
-
-    //temporary logic
+    // SpawnManager는 DontDestroyOnLoad 씬에 있고 SpawnPoint는 Subway 씬에 있으므로
+    // 인스펙터 직접 참조 불가 -> 태그로 동적 탐색
     private Vector3 GetSpawnPosition()
     {
-        // 스폰 포인트가 설정되어 있으면 랜덤하게 선택
-        if (_spawnPoints != null && _spawnPoints.Length > 0)
-        {
-            int randomIndex = Random.Range(0, _spawnPoints.Length);
-            return _spawnPoints[randomIndex].position;
-        }
+        GameObject[] spawnPoints = GameObject.FindGameObjectsWithTag("EnemySpawnPoint");
 
-        // 스폰 포인트가 없으면 SpawnManager 위치 기준으로 랜덤 오프셋
-        Vector3 randomOffset = new Vector3(
-            Random.Range(-5f, 5f),
-            0f,
-            Random.Range(-5f, 5f)
-        );
-        return transform.position + randomOffset;
+        int randomIndex = Random.Range(0, spawnPoints.Length);
+        
+        return spawnPoints[randomIndex].transform.position;
     }
 }
