@@ -76,9 +76,6 @@ public class StageManager : MonoBehaviour
     {
         yield return new WaitForSeconds(_subwayStayingDuration);
 
-        //플레이어가 탑승했는지를 체크
-        //탑승하지 않았으면 일단 게임 오버 (나중에 이 부분의 로직을 구현)
-        //탑승했으면 StartSubway
         StartSubway();
     }
 
@@ -202,9 +199,10 @@ public class StageManager : MonoBehaviour
     // 플레이어가 탑승 시도 시 호출 (SubwayEntrance에서 호출)
     public void HandlePlayerBoarding()
     {
+        Debug.Log("Boarding Trial!");
+
         // 역 대기 타이머 중단 (탑승 완료)
         if (_stayingCoroutine != null) StopCoroutine(_stayingCoroutine);
-
         var nextNodes = _stageMap.currentNode.nextNodes;
 
         // 맵 UI 열기 (역 선택 모드)

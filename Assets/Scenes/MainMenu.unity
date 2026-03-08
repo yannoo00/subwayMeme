@@ -208,8 +208,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0e8a5e64acd65b9479cca3d7dbd96b68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainMenuUI
-  _panel: {fileID: 207084245}
-  _startButton: {fileID: 727487290}
 --- !u!1 &268974535
 GameObject:
   m_ObjectHideFlags: 0
@@ -1344,6 +1342,7 @@ GameObject:
   - component: {fileID: 1108330065}
   - component: {fileID: 1108330069}
   - component: {fileID: 1108330070}
+  - component: {fileID: 1108330071}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -1476,6 +1475,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCombat
   _defaultWeaponPrefab: {fileID: 8461495708005427365, guid: af3a8795737abd2439800c06835afda7, type: 3}
   _weaponHolder: {fileID: 2123263569}
+--- !u!114 &1108330071
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1108330064}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ee75b3e470474a42aeab9dad5a2846d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractor
+  _interactRange: 4
 --- !u!1 &1525599757
 GameObject:
   m_ObjectHideFlags: 0

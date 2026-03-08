@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   weaponName: Fist
   weaponType: 0
-  damage: 10
+  damage: 99
   attackCooldown: 1
   range: 2
   attackAngle: 90

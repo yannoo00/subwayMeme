@@ -6,10 +6,14 @@ public class SubwayExit : MonoBehaviour, IInteractable
 {
     public void Interact()
     {
-        if (StageManager.Instance.CurrentMapType != MapType.Subway) return;
+        // MapType 체크
+        if (StageManager.Instance.CurrentMapType != MapType.Subway)
+        {
+            Debug.Log("you are using subwayExit but you are not in subway");
+            return;
+        }
 
-
-
+    
         // 지하철에 적이 남아있으면 하차 불가
         if (SpawnManager.Instance.AliveEnemyCount > 0) 
         {
@@ -17,7 +21,7 @@ public class SubwayExit : MonoBehaviour, IInteractable
             return;
         }
 
-
+        // station 시작
         StageManager.Instance.StartStation();
     }
 
