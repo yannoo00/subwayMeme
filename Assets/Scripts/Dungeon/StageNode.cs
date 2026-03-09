@@ -5,6 +5,7 @@ public class StageNode
     public int floor;
     public int column;
     public NodeType type;
+    public StageData stageData;
 
     public List<StageNode> nextNodes; 
     public List<StageNode> previousNodes; 

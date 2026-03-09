@@ -6,9 +6,6 @@ public class SpawnManager : MonoBehaviour
 {
     public static SpawnManager Instance { get; private set; }
 
-    [Header("Stage Data")]
-    [SerializeField] private StageData[] _stageDataList;  // 스테이지별 데이터
-
     private List<GameObject> _aliveEnemies = new List<GameObject>();
     public int AliveEnemyCount => _aliveEnemies.Count;
 
@@ -28,6 +25,8 @@ public class SpawnManager : MonoBehaviour
     private void OnEnable()
     {
         CombatEvents.OnEnemyDied += HandleEnemyDied;
+        StageEvents.OnSubwayStarted += HandleSubwayStarted;
+        StageEvents.OnStationSkipped += HandleStationSkipped;
         // Station 씬 로드 시 적 리스트 정리 (Single 모드 전환으로 적 오브젝트는 자동 소멸하지만 리스트에 null 참조 남음)
         SceneManager.sceneLoaded += HandleSceneLoaded;
     }
@@ -36,7 +35,32 @@ public class SpawnManager : MonoBehaviour
     private void OnDisable()
     {
         CombatEvents.OnEnemyDied -= HandleEnemyDied;
+        StageEvents.OnSubwayStarted -= HandleSubwayStarted;
+        StageEvents.OnStationSkipped -= HandleStationSkipped;
         SceneManager.sceneLoaded -= HandleSceneLoaded;
+    }
+
+
+    private void HandleSubwayStarted(StageNode node)
+    {
+        if (node.stageData == null)
+        {
+            Debug.LogWarning($"[SpawnManager] floor {node.floor} 노드에 StageData가 없습니다.");
+            return;
+        }
+        SpawnWave(node.stageData.GetRandomWave());
+    }
+
+
+    // 역 스킵 시 기존 적은 건드리지 않고 새 웨이브 추가 스폰
+    private void HandleStationSkipped(StageNode node)
+    {
+        if (node.stageData == null)
+        {
+            Debug.LogWarning($"[SpawnManager] floor {node.floor} 노드에 StageData가 없습니다.");
+            return;
+        }
+        SpawnWave(node.stageData.GetRandomWave());
     }
 
 
@@ -47,24 +71,6 @@ public class SpawnManager : MonoBehaviour
             _aliveEnemies.Clear();
             Debug.Log("[SpawnManager] Station 씬 로드 - 적 리스트 초기화");
         }
-    }
-
-
-    // floor 에 맞는 웨이브 스폰
-    public void SpawnWaveForStage(int floor)
-    {
-        if (_stageDataList == null || floor >= _stageDataList.Length)
-        {
-            Debug.LogWarning($"[SpawnManager] 스테이지 {floor}에 해당하는 데이터가 없습니다!");
-            return;
-        }
-
-        StageData stageData = _stageDataList[floor];
-        WaveData wave = stageData.GetRandomWave();
-
-        if (wave == null) return;
-
-        SpawnWave(wave);
     }
 
 

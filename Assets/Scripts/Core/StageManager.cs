@@ -136,13 +136,11 @@ public class StageManager : MonoBehaviour
 
         Debug.Log($"[StageManager] 지하철 출발 - floor: {_stageMap.currentNode.floor}");
 
-        StageEvents.SubwayStarted(_stageMap.currentNode);
-
-        // Subway 씬 로드 완료 후 스폰 및 주행 타이머 시작
-        // 씬 로드 전 스폰 시도 시 SpawnPoint 탐색 실패 가능성이 있어 콜백으로 처리
+        // Subway 씬 로드 완료 후 이벤트 발행
+        // 씬 로드 전 발행 시 SpawnManager의 SpawnPoint 탐색 실패 가능성이 있어 콜백으로 처리
         SceneLoader.Instance.LoadSubway(() =>
         {
-            SpawnManager.Instance.SpawnWaveForStage(_stageMap.currentNode.floor);
+            StageEvents.SubwayStarted(_stageMap.currentNode);
             _movingCoroutine = StartCoroutine(SubwayMovingTimer());
         });
     }
@@ -177,14 +175,11 @@ public class StageManager : MonoBehaviour
 
         Debug.Log($"[StageManager] 역 스킵 - 다음 노드: floor {nextNode.floor}");
 
-        // 기존 적은 유지하면서 새 웨이브 추가 스폰
-        SpawnManager.Instance.SpawnWaveForStage(_stageMap.currentNode.floor);
-
         // 타이머 재시작
         _movingCoroutine = StartCoroutine(SubwayMovingTimer());
 
-        // UI 경고 이벤트 발생 (HUD 등에서 구독해 경고 표시 가능)
-        StageEvents.StationSkipped();
+        // 역 스킵 이벤트 발행 (SpawnManager가 구독해 추가 웨이브 스폰, HUD 등 경고 표시)
+        StageEvents.StationSkipped(_stageMap.currentNode);
     }
 
 

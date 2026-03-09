@@ -24,6 +24,9 @@ public class MapGenerator : MonoBehaviour
     [SerializeField] private int _floors = 10;
     [SerializeField] private int _pathCount = 8;
 
+    [Header("Stage Data")]
+    [SerializeField] private StageData[] _stageDataPerFloor;
+
     public StageMap GenerateMap(int seed)
     {
         Random.InitState(seed);
@@ -150,7 +153,7 @@ public class MapGenerator : MonoBehaviour
 
 
 
-    // 노드에 타입 할당: 층 규칙에 따라 고정 타입 배치, 나머지는 랜덤
+    // 노드에 타입과 StageData 할당: 층 규칙에 따라 고정 타입 배치, 나머지는 랜덤
     private void AssignNodeTypes(StageMap stageMap)
     {
         int totalTypes = System.Enum.GetValues(typeof(NodeType)).Length;
@@ -160,13 +163,19 @@ public class MapGenerator : MonoBehaviour
             foreach (StageNode node in stageMap.floors[floor])
             {
                 //당장은 간단한 규칙만 적용.
-                //첫번째 station이 shop이 되어서 반드시 템을 구매하든 얻든 하게 된다. 
+                //첫번째 station이 shop이 되어서 반드시 템을 구매하든 얻든 하게 된다.
                 if (floor == 0)
                     node.type = NodeType.shop;
                 else if (floor == 1)
                     node.type = NodeType.heal;
                 else
                     node.type = (NodeType)Random.Range(0, totalTypes);
+
+                // floor에 해당하는 StageData 바인딩
+                if (_stageDataPerFloor != null && floor < _stageDataPerFloor.Length)
+                    node.stageData = _stageDataPerFloor[floor];
+                else
+                    Debug.LogWarning($"[MapGenerator] floor {floor}에 해당하는 StageData가 없습니다.");
             }
         }
     }
