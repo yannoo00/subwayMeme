@@ -1158,6 +1158,20 @@ MonoBehaviour:
   _columns: 5
   _floors: 10
   _pathCount: 4
+  _stageDataPerFloor:
+  - {fileID: 11400000, guid: 74303550621524de595a511ed58bdd28, type: 2}
+  - {fileID: 11400000, guid: 74303550621524de595a511ed58bdd28, type: 2}
+  - {fileID: 11400000, guid: 74303550621524de595a511ed58bdd28, type: 2}
+  - {fileID: 11400000, guid: 74303550621524de595a511ed58bdd28, type: 2}
+  - {fileID: 11400000, guid: 74303550621524de595a511ed58bdd28, type: 2}
+  - {fileID: 11400000, guid: 74303550621524de595a511ed58bdd28, type: 2}
+  - {fileID: 11400000, guid: 74303550621524de595a511ed58bdd28, type: 2}
+  - {fileID: 11400000, guid: 74303550621524de595a511ed58bdd28, type: 2}
+  - {fileID: 11400000, guid: 74303550621524de595a511ed58bdd28, type: 2}
+  - {fileID: 11400000, guid: 74303550621524de595a511ed58bdd28, type: 2}
+  - {fileID: 11400000, guid: 74303550621524de595a511ed58bdd28, type: 2}
+  - {fileID: 11400000, guid: 74303550621524de595a511ed58bdd28, type: 2}
+  - {fileID: 11400000, guid: 74303550621524de595a511ed58bdd28, type: 2}
 --- !u!4 &684758302
 Transform:
   m_ObjectHideFlags: 0
