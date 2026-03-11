@@ -2,6 +2,25 @@ using UnityEngine;
 
 public class StationController : MonoBehaviour
 {
+    // === Inspector 변수 ===
+
+    [Header("Interactable Prefabs")]
+    [SerializeField] private GameObject _shopPrefab;
+    [SerializeField] private GameObject _healPrefab;
+    [SerializeField] private GameObject _trapPrefab;
+    [SerializeField] private GameObject _boxPrefab;
+
+    [Header("Spawn Point")]
+    [SerializeField] private Transform _spawnPoint;
+
+
+    // === Private 변수 ===
+
+    private GameObject _currentInteractable;
+
+
+    // === Unity 생명주기 ===
+
     private void OnEnable()
     {
         StageEvents.OnStationArrived += HandleStationArrived;
@@ -12,55 +31,44 @@ public class StationController : MonoBehaviour
         StageEvents.OnStationArrived -= HandleStationArrived;
     }
 
+
+    // === 이벤트 처리 ===
+
     private void HandleStationArrived(StageNode node)
     {
         Debug.Log($"[StationController] 역 도착 - floor: {node.floor}, type: {node.type}");
 
-        switch (node.type)
+        //여기 코드 구현 방식 설명
+        GameObject prefab = node.type switch
         {
-            case NodeType.shop:
-                ActivateShop();
-                break;
+            NodeType.shop => _shopPrefab,
+            NodeType.heal => _healPrefab,
+            NodeType.trap => _trapPrefab,
+            NodeType.box  => _boxPrefab,
+            _             => null
+        };
 
-            case NodeType.heal:
-                ActivateHeal();
-                break;
-
-            case NodeType.trap:
-                ActivateTrap();
-                break;
-
-            case NodeType.box:
-                ActivateBox();
-                break;
-
-            default:
-                Debug.LogWarning($"[StationController] 처리되지 않은 NodeType: {node.type}");
-                break;
+        if (prefab == null)
+        {
+            Debug.LogWarning($"[StationController] 처리되지 않은 NodeType: {node.type}");
+            return;
         }
+
+        SpawnInteractable(prefab);
     }
 
-    private void ActivateShop()
-    {
-        // TODO: 상점 UI 활성화
-        Debug.Log("[StationController] 상점 활성화");
-    }
 
-    private void ActivateHeal()
-    {
-        // TODO: 회복 오브젝트 활성화
-        Debug.Log("[StationController] 회복 스테이션 활성화");
-    }
+    // === Private 메서드 ===
 
-    private void ActivateTrap()
+    private void SpawnInteractable(GameObject prefab)
     {
-        // TODO: 함정 이벤트 처리
-        Debug.Log("[StationController] 함정 이벤트 활성화");
-    }
+        // 이전 오브젝트 제거 (역 재방문 등 대비)
+        if (_currentInteractable != null)
+            Destroy(_currentInteractable);
 
-    private void ActivateBox()
-    {
-        // TODO: 보물 상자 오브젝트 활성화
-        Debug.Log("[StationController] 보물 상자 활성화");
+        Vector3 position   = _spawnPoint != null ? _spawnPoint.position : transform.position;
+        Quaternion rotation = _spawnPoint != null ? _spawnPoint.rotation : Quaternion.identity;
+
+        _currentInteractable = Instantiate(prefab, position, rotation);
     }
 }
