@@ -20,6 +20,10 @@ public class PlayerStats: MonoBehaviour, IDamageable
         _currentHealth -= damage;
         _currentHealth = Mathf.Max(_currentHealth, 0);
 
+        PlayerEvents.PlayerDamaged(damage);
+        PlayerEvents.HealthChanged(_currentHealth, _maxHealth);
+
+
         if (!IsAlive)
         {
             Die();

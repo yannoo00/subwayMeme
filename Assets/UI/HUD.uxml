@@ -1,0 +1,16 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/HUD.uss?fileID=7433441132597879392&amp;guid=c5b4224978db24c5db387bb2ef3b91ac&amp;type=3#HUD"/>
+    <ui:VisualElement name="hud-root" picking-mode="Ignore" class="hud-root">
+        <ui:VisualElement name="hp-panel" class="hud-panel">
+            <ui:Label name="hp-title" text="HP" class="hud-label--title"/>
+            <ui:VisualElement name="hp-bar-bg" class="hp-bar-bg">
+                <ui:VisualElement name="hp-bar-fill" class="hp-bar-fill"/>
+            </ui:VisualElement>
+            <ui:Label name="hp-label" text="100 / 100" class="hud-label"/>
+        </ui:VisualElement>
+        <ui:VisualElement name="timer-panel" class="hud-panel hud-panel--hidden">
+            <ui:Label name="timer-title" text="다음 역까지" class="hud-label--title"/>
+            <ui:Label name="timer-label" text="00:30" class="hud-label--timer"/>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

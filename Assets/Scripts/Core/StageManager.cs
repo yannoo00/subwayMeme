@@ -57,7 +57,15 @@ public class StageManager : MonoBehaviour
     // 타이머 종료 시 적 생존 여부에 따라 분기
     private IEnumerator SubwayMovingTimer()
     {
-        yield return new WaitForSeconds(_subwayMovingDuration);
+        float remaining = _subwayMovingDuration;
+        StageEvents.TimerTick(remaining, _subwayMovingDuration);
+
+        while (remaining > 0f)
+        {
+            yield return new WaitForSeconds(1f);
+            remaining -= 1f;
+            StageEvents.TimerTick(remaining, _subwayMovingDuration);
+        }
 
         if (SpawnManager.Instance.AliveEnemyCount > 0)
         {
@@ -74,7 +82,15 @@ public class StageManager : MonoBehaviour
 
     private IEnumerator SubwayStayingTimer()
     {
-        yield return new WaitForSeconds(_subwayStayingDuration);
+        float remaining = _subwayStayingDuration;
+        StageEvents.TimerTick(remaining, _subwayStayingDuration);
+
+        while (remaining > 0f)
+        {
+            yield return new WaitForSeconds(1f);
+            remaining -= 1f;
+            StageEvents.TimerTick(remaining, _subwayStayingDuration);
+        }
 
         StartSubway();
     }

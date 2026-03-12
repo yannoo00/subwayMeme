@@ -12,6 +12,7 @@ public static class StageEvents
     public static event Action<StageNode> OnStationSkipped;                            // 적 생존으로 역 스킵 발생
     public static event Action<StageMap> OnMapGenerated;                                // 맵 생성 완료
     public static event Action<MapOpenReason, List<StageNode>> OnMapOpenRequested;      // 맵 UI 열기 요청
+    public static event Action<float, float> OnTimerTick;                               // 타이머 틱 (remaining, total)
 
     public static void SubwayStarted(StageNode node)                                    => OnSubwayStarted?.Invoke(node);
     public static void StationArrived(StageNode node)                                   => OnStationArrived?.Invoke(node);
@@ -19,4 +20,5 @@ public static class StageEvents
     public static void StationSkipped(StageNode node)                                   => OnStationSkipped?.Invoke(node);
     public static void MapGenerated(StageMap map)                                       => OnMapGenerated?.Invoke(map);
     public static void MapOpenRequested(MapOpenReason reason, List<StageNode> nodes)    => OnMapOpenRequested?.Invoke(reason, nodes);
+    public static void TimerTick(float remaining, float total)                          => OnTimerTick?.Invoke(remaining, total);
 }

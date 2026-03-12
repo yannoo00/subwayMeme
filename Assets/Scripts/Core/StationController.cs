@@ -3,6 +3,8 @@ using UnityEngine;
 public class StationController : MonoBehaviour
 {
     // === Inspector 변수 ===
+    // station 자체는 똑같고, 소환되는 상호작용(이벤트) 오브젝트만 다르다. 
+    // station은 가만히 있으면서 몇 개의 오브젝트만 교체하는 방식으로 구현
 
     [Header("Interactable Prefabs")]
     [SerializeField] private GameObject _shopPrefab;
