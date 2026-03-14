@@ -5,7 +5,8 @@ using UnityEngine.InputSystem;
 
 public class MouseLook : MonoBehaviour
 {
-    [SerializeField] private float _mouseSensitivity = 100f;
+    [SerializeField] private float _sensitivityX = 0.15f;
+    [SerializeField] private float _sensitivityY = 0.12f;
     [SerializeField] private Transform _playerBody;
 
     private float _xRotation = 0f; 
@@ -24,8 +25,8 @@ public class MouseLook : MonoBehaviour
 
         if (Mouse.current == null) return;
 
-        float mouseX = Mouse.current.delta.x.ReadValue() * _mouseSensitivity * Time.deltaTime;
-        float mouseY = Mouse.current.delta.y.ReadValue() * _mouseSensitivity * Time.deltaTime;
+        float mouseX = Mouse.current.delta.x.ReadValue() * _sensitivityX;
+        float mouseY = Mouse.current.delta.y.ReadValue() * _sensitivityY;
 
         // 플레이어 몸체 회전
         _playerBody.Rotate(Vector3.up * mouseX); 
