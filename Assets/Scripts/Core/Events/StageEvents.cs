@@ -6,16 +6,18 @@ public enum MapOpenReason { ViewOnly, RouteSelection }
 // 스테이지 관련 이벤트
 public static class StageEvents
 {
-    public static event Action<StageNode> OnSubwayStarted;                              // 지하철 출발
-    public static event Action<StageNode> OnStationArrived;                             // 역 도착
-    public static event Action OnAllEnemiesDefeated;                                    // 지하철 내 모든 적 처치
-    public static event Action<StageNode> OnStationSkipped;                            // 적 생존으로 역 스킵 발생
+    public static event Action<StageNode> OnSubwayStarted;                              // 지하철 출발 (Subway 씬 로드 완료 후)
+    public static event Action<StageNode> OnStationArrived;                             // 주행 타이머 종료 = 역 도착 (Exit Door 활성화 트리거)
+    public static event Action<StageNode> OnSubwayArrived;                              // 역 웨이브 타이머 종료 = 지하철 도착 (Subway Entrance 활성화 트리거)
+    public static event Action OnAllEnemiesDefeated;                                    // 모든 적 처치 (진행 트리거 아님, 보너스 등 연결용)
+    public static event Action<StageNode> OnStationSkipped;                             // 하차 미시도로 역 스킵 발생
     public static event Action<StageMap> OnMapGenerated;                                // 맵 생성 완료
     public static event Action<MapOpenReason, List<StageNode>> OnMapOpenRequested;      // 맵 UI 열기 요청
     public static event Action<float, float> OnTimerTick;                               // 타이머 틱 (remaining, total)
 
     public static void SubwayStarted(StageNode node)                                    => OnSubwayStarted?.Invoke(node);
     public static void StationArrived(StageNode node)                                   => OnStationArrived?.Invoke(node);
+    public static void SubwayArrived(StageNode node)                                    => OnSubwayArrived?.Invoke(node);
     public static void AllEnemiesDefeated()                                             => OnAllEnemiesDefeated?.Invoke();
     public static void StationSkipped(StageNode node)                                   => OnStationSkipped?.Invoke(node);
     public static void MapGenerated(StageMap map)                                       => OnMapGenerated?.Invoke(map);

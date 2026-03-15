@@ -1,34 +1,30 @@
 using UnityEngine;
 
 // 지하철 하차구 오브젝트에 붙이는 컴포넌트
-// 플레이어가 E키를 눌러 하차 시 역으로 전환
+// StageManager.CanExit가 true일 때만 하차 가능 (주행 타이머 종료 후 활성화)
 public class SubwayExit : MonoBehaviour, IInteractable
 {
     public void Interact()
     {
-        // MapType 체크
         if (StageManager.Instance.CurrentMapType != MapType.Subway)
         {
-            Debug.Log("you are using subwayExit but you are not in subway");
+            Debug.Log("[SubwayExit] Subway 씬이 아닌 곳에서 호출됨");
             return;
         }
 
-    
-        // 지하철에 적이 남아있으면 하차 불가
-        if (SpawnManager.Instance.AliveEnemyCount > 0) 
+        if (!StageManager.Instance.CanExit)
         {
-            Debug.Log("하차 불가 - 적이 남아있음");
+            Debug.Log("[SubwayExit] 하차 불가 - 아직 역에 도착하지 않음");
             return;
         }
 
-        // station 시작
         StageManager.Instance.StartStation();
     }
 
     public string GetHintText()
     {
-        if (SpawnManager.Instance.AliveEnemyCount > 0)
-            return "적을 모두 처치하세요";
+        if (!StageManager.Instance.CanExit)
+            return "아직 역에 도착하지 않았습니다";
 
         return "E: 하차";
     }

@@ -15,3 +15,4 @@ MonoBehaviour:
   stageName: TestStage
   availableWaves:
   - {fileID: 11400000, guid: 2dc379b23ba8544deb01a5cf7ed427a8, type: 2}
+  - {fileID: 11400000, guid: 90e0cb07ab88fac4fac221b57b4b9466, type: 2}

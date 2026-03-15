@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -7,6 +8,10 @@ public class SpawnManager : MonoBehaviour
     public static SpawnManager Instance { get; private set; }
 
     private List<GameObject> _aliveEnemies = new List<GameObject>();
+    // 현재 진행 중인 SpawnGroup 코루틴 목록
+    // 웨이브 하나당 SpawnGroup 수만큼 코루틴이 동시에 실행됨
+    private List<Coroutine> _activeGroupCoroutines = new List<Coroutine>();
+
     public int AliveEnemyCount => _aliveEnemies.Count;
 
 
@@ -25,9 +30,6 @@ public class SpawnManager : MonoBehaviour
     private void OnEnable()
     {
         CombatEvents.OnEnemyDied += HandleEnemyDied;
-        StageEvents.OnSubwayStarted += HandleSubwayStarted;
-        StageEvents.OnStationSkipped += HandleStationSkipped;
-        // Station 씬 로드 시 적 리스트 정리 (Single 모드 전환으로 적 오브젝트는 자동 소멸하지만 리스트에 null 참조 남음)
         SceneManager.sceneLoaded += HandleSceneLoaded;
     }
 
@@ -35,68 +37,73 @@ public class SpawnManager : MonoBehaviour
     private void OnDisable()
     {
         CombatEvents.OnEnemyDied -= HandleEnemyDied;
-        StageEvents.OnSubwayStarted -= HandleSubwayStarted;
-        StageEvents.OnStationSkipped -= HandleStationSkipped;
         SceneManager.sceneLoaded -= HandleSceneLoaded;
     }
 
 
-    private void HandleSubwayStarted(StageNode node)
-    {
-        if (node.stageData == null)
-        {
-            Debug.LogWarning($"[SpawnManager] floor {node.floor} 노드에 StageData가 없습니다.");
-            return;
-        }
-        SpawnWave(node.stageData.GetRandomWave());
-    }
-
-
-    // 역 스킵 시 기존 적은 건드리지 않고 새 웨이브 추가 스폰
-    private void HandleStationSkipped(StageNode node)
-    {
-        if (node.stageData == null)
-        {
-            Debug.LogWarning($"[SpawnManager] floor {node.floor} 노드에 StageData가 없습니다.");
-            return;
-        }
-        SpawnWave(node.stageData.GetRandomWave());
-    }
-
-
+    // 씬 전환 시 적 리스트와 진행 중인 모든 스폰 코루틴 정리
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (scene.name == "Station")
-        {
-            _aliveEnemies.Clear();
-            Debug.Log("[SpawnManager] Station 씬 로드 - 적 리스트 초기화");
-        }
+        StopAllGroupCoroutines();
+        _aliveEnemies.Clear();
+        Debug.Log($"[SpawnManager] {scene.name} 씬 로드 - 초기화");
     }
 
 
-    // WaveData에 정의된 적들을 스폰
-    public void SpawnWave(WaveData wave)
+    // 웨이브 시작: 기존 코루틴 중단 후 WaveData의 SpawnGroup들을 동시에 예약
+    // 각 그룹은 자신의 delay만큼 기다렸다가 독립적으로 스폰
+    public void StartWave(WaveData wave)
     {
-        if (wave == null || wave.enemies == null) return;
+        if (wave == null) return;
 
-        foreach (var spawnInfo in wave.enemies)
+        StopAllGroupCoroutines();
+
+        foreach (var group in wave.spawnGroups)
         {
-            for (int i = 0; i < spawnInfo.count; i++)
+            Coroutine c = StartCoroutine(SpawnGroupAfterDelay(group));
+            _activeGroupCoroutines.Add(c);
+        }
+
+        Debug.Log($"[SpawnManager] 웨이브 '{wave.waveName}' 시작 - {wave.spawnGroups.Length}개 그룹 예약");
+    }
+
+
+    // delay 후 해당 그룹의 적을 스폰
+    private IEnumerator SpawnGroupAfterDelay(SpawnGroup group)
+    {
+        yield return new WaitForSeconds(group.delay);
+
+        foreach (var info in group.enemies)
+        {
+            for (int i = 0; i < info.count; i++)
             {
-                SpawnEnemy(spawnInfo.prefab);
+                SpawnEnemy(info.prefab);
             }
         }
-
-        Debug.Log($"[SpawnManager] 웨이브 '{wave.waveName}' 스폰 완료. 총 {_aliveEnemies.Count}마리");
     }
 
 
-    // 특정 프리팹으로 적 1마리 스폰
+    private void StopAllGroupCoroutines()
+    {
+        foreach (var c in _activeGroupCoroutines)
+        {
+            if (c != null) StopCoroutine(c);
+        }
+        _activeGroupCoroutines.Clear();
+    }
+
+
     public void SpawnEnemy(GameObject prefab)
     {
         if (prefab == null)
         {
             Debug.LogWarning("[SpawnManager] Enemy Prefab이 null입니다!");
+            return;
+        }
+
+        if (prefab.GetComponent<EnemyStats>() == null)
+        {
+            Debug.LogWarning($"[SpawnManager] {prefab.name}에 EnemyStats가 없습니다!");
             return;
         }
 
@@ -112,10 +119,7 @@ public class SpawnManager : MonoBehaviour
     {
         foreach (var enemy in _aliveEnemies)
         {
-            if (enemy != null)
-            {
-                Destroy(enemy);
-            }
+            if (enemy != null) Destroy(enemy);
         }
         _aliveEnemies.Clear();
         Debug.Log("[SpawnManager] 모든 적 제거됨");
@@ -138,14 +142,16 @@ public class SpawnManager : MonoBehaviour
     }
 
 
-    // SpawnManager는 DontDestroyOnLoad 씬에 있고 SpawnPoint는 Subway 씬에 있으므로
-    // 인스펙터 직접 참조 불가 -> 태그로 동적 탐색
     private Vector3 GetSpawnPosition()
     {
         GameObject[] spawnPoints = GameObject.FindGameObjectsWithTag("EnemySpawnPoint");
 
-        int randomIndex = Random.Range(0, spawnPoints.Length);
-        
-        return spawnPoints[randomIndex].transform.position;
+        if (spawnPoints.Length == 0)
+        {
+            Debug.LogWarning("[SpawnManager] EnemySpawnPoint 태그 오브젝트가 없습니다. Vector3.zero 반환");
+            return Vector3.zero;
+        }
+
+        return spawnPoints[Random.Range(0, spawnPoints.Length)].transform.position;
     }
 }

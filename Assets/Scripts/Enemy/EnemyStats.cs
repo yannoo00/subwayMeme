@@ -28,6 +28,13 @@ public class EnemyStats : MonoBehaviour, IDamageable
     public void Die()
     {
         CombatEvents.EnemyDied(gameObject);
-        Destroy(gameObject);
+
+        // EnemyAI가 있으면 사망 애니메이션 재생 후 Destroy를 위임
+        // EnemyAI가 없는 경우(테스트용 등)에는 즉시 Destroy
+        EnemyAI ai = GetComponent<EnemyAI>();
+        if (ai != null)
+            ai.OnDeath();
+        else
+            Destroy(gameObject);
     }
 }

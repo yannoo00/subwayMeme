@@ -15,18 +15,22 @@ public class StageManager : MonoBehaviour
 
     [Header("Stage Settings")]
     [SerializeField] private MapGenerator _mapGenerator;
-    [SerializeField] private int _subwayMovingDuration = 30;
-    [SerializeField] private int _subwayStayingDuration = 30;
+    // 주행 타이머 종료 후 플레이어가 하차하지 않을 때 역 스킵까지 대기하는 시간
+    // 웨이브 진행 시간/간격은 WaveData에서 관리
+    [SerializeField] private int _exitWaitDuration = 15;
 
     private StageMap _stageMap;
     private MapType _currentMapType;
     private bool _isSubwayActive = false;
+    private bool _canExit = false;
 
     private Coroutine _movingCoroutine;
     private Coroutine _stayingCoroutine;
+    private Coroutine _exitWaitCoroutine;
 
     public MapType CurrentMapType => _currentMapType;
     public bool IsSubwayActive => _isSubwayActive;
+    public bool CanExit => _canExit;
     public StageNode CurrentNode => _stageMap?.currentNode;
 
 
@@ -54,45 +58,53 @@ public class StageManager : MonoBehaviour
     }
 
 
-    // 타이머 종료 시 적 생존 여부에 따라 분기
-    private IEnumerator SubwayMovingTimer()
+    // 주행 타이머: wave.duration만큼 진행 후 역 도착 이벤트 발행
+    private IEnumerator SubwayMovingTimer(float duration)
     {
-        float remaining = _subwayMovingDuration;
-        StageEvents.TimerTick(remaining, _subwayMovingDuration);
+        float remaining = duration;
+        StageEvents.TimerTick(remaining, duration);
 
         while (remaining > 0f)
         {
             yield return new WaitForSeconds(1f);
             remaining -= 1f;
-            StageEvents.TimerTick(remaining, _subwayMovingDuration);
+            StageEvents.TimerTick(remaining, duration);
         }
 
-        if (SpawnManager.Instance.AliveEnemyCount > 0)
+        _canExit = true;
+        StageEvents.StationArrived(_stageMap.currentNode);
+
+        _exitWaitCoroutine = StartCoroutine(ExitWaitTimer());
+    }
+
+
+    // 하차 대기 타이머: 시간 초과 시 역 스킵 발동
+    private IEnumerator ExitWaitTimer()
+    {
+        yield return new WaitForSeconds(_exitWaitDuration);
+
+        if (_canExit)
         {
-            // 적이 남아있으면 Station 스킵, 현재 씬 유지
+            _canExit = false;
             SkipStation();
-        }
-        else
-        {
-            // 모든 적 처치 시 정상적으로 역 도착
-            StartStation();
         }
     }
 
 
-    private IEnumerator SubwayStayingTimer()
+    // 역 웨이브 타이머: wave.duration만큼 진행 후 지하철 도착 이벤트 발행
+    private IEnumerator SubwayStayingTimer(float duration)
     {
-        float remaining = _subwayStayingDuration;
-        StageEvents.TimerTick(remaining, _subwayStayingDuration);
+        float remaining = duration;
+        StageEvents.TimerTick(remaining, duration);
 
         while (remaining > 0f)
         {
             yield return new WaitForSeconds(1f);
             remaining -= 1f;
-            StageEvents.TimerTick(remaining, _subwayStayingDuration);
+            StageEvents.TimerTick(remaining, duration);
         }
 
-        StartSubway();
+        StageEvents.SubwayArrived(_stageMap.currentNode);
     }
 
 
@@ -103,9 +115,8 @@ public class StageManager : MonoBehaviour
         int seed = Random.Range(0, int.MaxValue);
         _stageMap = _mapGenerator.GenerateMap(seed);
 
-        StageEvents.MapGenerated(_stageMap);  // MapUI가 받아서 노선도 UI 구성
+        StageEvents.MapGenerated(_stageMap);
 
-        // Station 씬 로드 후 시작 루트 선택 UI 표시
         _currentMapType = MapType.Station;
         SceneLoader.Instance.LoadStation(() =>
         {
@@ -114,66 +125,89 @@ public class StageManager : MonoBehaviour
     }
 
 
-    // 역 도착: Station 씬 로드 후 역 로직 처리
+    // 역 하차: SubwayExit 컴포넌트에서 플레이어 상호작용 시 호출
     public void StartStation()
     {
+        if (!_canExit)
+        {
+            Debug.Log("[StageManager] 아직 하차할 수 없습니다. (주행 타이머 미종료)");
+            return;
+        }
+
+        _canExit = false;
         _isSubwayActive = false;
         _currentMapType = MapType.Station;
 
-        // 지하철 주행 타이머 종료
+        if (_exitWaitCoroutine != null) StopCoroutine(_exitWaitCoroutine);
         if (_movingCoroutine != null) StopCoroutine(_movingCoroutine);
 
-        Debug.Log($"[StageManager] 역 도착 - floor: {_stageMap.currentNode.floor}, type: {_stageMap.currentNode.type}");
+        Debug.Log($"[StageManager] 역 하차 - floor: {_stageMap.currentNode.floor}, type: {_stageMap.currentNode.type}");
 
-        // Station 씬 로드 완료 후 역 이벤트 발생 및 대기 타이머 시작
+        if (_stageMap.currentNode.floor >= _stageMap.floors.Count - 1)
+        {
+            SceneLoader.Instance.LoadStation(() => GameClear());
+            return;
+        }
+
         SceneLoader.Instance.LoadStation(() =>
         {
-            StageEvents.StationArrived(_stageMap.currentNode);
-
-            if (_stageMap.currentNode.floor >= _stageMap.floors.Count - 1)
+            // wave를 선택해 SpawnManager에 전달, duration으로 역 웨이브 타이머 시작
+            WaveData wave = _stageMap.currentNode.stageData?.GetRandomWave();
+            if (wave != null)
             {
-                GameClear();
-                return;
+                SpawnManager.Instance.StartWave(wave);
+                _stayingCoroutine = StartCoroutine(SubwayStayingTimer(wave.duration));
             }
-
-            _stayingCoroutine = StartCoroutine(SubwayStayingTimer());
+            else
+            {
+                Debug.LogWarning($"[StageManager] floor {_stageMap.currentNode.floor} 노드에 WaveData가 없습니다. 기본 타이머로 진행");
+                _stayingCoroutine = StartCoroutine(SubwayStayingTimer(30f));
+            }
         });
     }
 
 
-    // 지하철 출발: Subway 씬 로드 후 웨이브 스폰
+    // 지하철 출발: MoveToNode에서만 호출
     public void StartSubway()
     {
         _isSubwayActive = true;
         _currentMapType = MapType.Subway;
 
-        // 역 대기 타이머 종료
         if (_stayingCoroutine != null) StopCoroutine(_stayingCoroutine);
 
         Debug.Log($"[StageManager] 지하철 출발 - floor: {_stageMap.currentNode.floor}");
 
-        // Subway 씬 로드 완료 후 이벤트 발행
-        // 씬 로드 전 발행 시 SpawnManager의 SpawnPoint 탐색 실패 가능성이 있어 콜백으로 처리
         SceneLoader.Instance.LoadSubway(() =>
         {
             StageEvents.SubwayStarted(_stageMap.currentNode);
-            _movingCoroutine = StartCoroutine(SubwayMovingTimer());
+
+            // wave를 선택해 SpawnManager에 전달, duration으로 주행 타이머 시작
+            WaveData wave = _stageMap.currentNode.stageData?.GetRandomWave();
+            if (wave != null)
+            {
+                SpawnManager.Instance.StartWave(wave);
+                _movingCoroutine = StartCoroutine(SubwayMovingTimer(wave.duration));
+            }
+            else
+            {
+                Debug.LogWarning($"[StageManager] floor {_stageMap.currentNode.floor} 노드에 WaveData가 없습니다. 기본 타이머로 진행");
+                _movingCoroutine = StartCoroutine(SubwayMovingTimer(30f));
+            }
         });
     }
 
 
-    // 플레이어가 다음 역을 선택했을 때 호출 (UI에서 호출)
+    // 다음 역 선택 시 호출 (노선도 UI에서 호출)
     public void MoveToNode(StageNode nextNode)
     {
         _stageMap.currentNode = nextNode;
         nextNode.visited = true;
 
-        // 선택한 역으로 이동 = 지하철 출발
         StartSubway();
     }
 
 
-    // 타이머 종료 시 적이 남아있으면 역을 스킵하고 현재 Subway 씬 유지
+    // 하차 미시도로 역 스킵: 기존 Subway 씬 유지, 새 wave 추가
     private void SkipStation()
     {
         var nextNodes = _stageMap.currentNode.nextNodes;
@@ -184,39 +218,43 @@ public class StageManager : MonoBehaviour
             return;
         }
 
-        // 플레이어 선택권 없이 랜덤으로 다음 노드 결정
         StageNode nextNode = nextNodes[Random.Range(0, nextNodes.Count)];
         _stageMap.currentNode = nextNode;
         nextNode.visited = true;
 
         Debug.Log($"[StageManager] 역 스킵 - 다음 노드: floor {nextNode.floor}");
 
-        // 타이머 재시작
-        _movingCoroutine = StartCoroutine(SubwayMovingTimer());
+        // 새 wave 선택해 SpawnManager에 추가 (기존 적 유지 + 새 wave 스폰)
+        WaveData wave = nextNode.stageData?.GetRandomWave();
+        if (wave != null)
+        {
+            SpawnManager.Instance.StartWave(wave);
+            _movingCoroutine = StartCoroutine(SubwayMovingTimer(wave.duration));
+        }
+        else
+        {
+            _movingCoroutine = StartCoroutine(SubwayMovingTimer(30f));
+        }
 
-        // 역 스킵 이벤트 발행 (SpawnManager가 구독해 추가 웨이브 스폰, HUD 등 경고 표시)
         StageEvents.StationSkipped(_stageMap.currentNode);
     }
 
 
+    // 모든 적 처치: 진행 트리거 아님. 추후 보너스 로직 연결 가능
     private void HandleAllEnemiesDefeated()
     {
-        if (!_isSubwayActive) return;
-
-        Debug.Log("[StageManager] 지하철 내 모든 적 처치!");
+        Debug.Log("[StageManager] 모든 적 처치!");
     }
 
 
-    // 플레이어가 탑승 시도 시 호출 (SubwayEntrance에서 호출)
+    // 탑승 시도 시 호출 (SubwayEntrance에서 호출)
     public void HandlePlayerBoarding()
     {
         Debug.Log("Boarding Trial!");
 
-        // 역 대기 타이머 중단 (탑승 완료)
         if (_stayingCoroutine != null) StopCoroutine(_stayingCoroutine);
         var nextNodes = _stageMap.currentNode.nextNodes;
 
-        // 맵 UI 열기 (역 선택 모드)
         StageEvents.MapOpenRequested(MapOpenReason.RouteSelection, nextNodes);
     }
 
@@ -224,6 +262,5 @@ public class StageManager : MonoBehaviour
     private void GameClear()
     {
         Debug.Log("[StageManager] 최종 역 도달! 게임 클리어!");
-        // TODO: 게임 클리어 처리 (결과 화면 등)
     }
 }

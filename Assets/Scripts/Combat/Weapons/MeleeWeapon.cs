@@ -30,9 +30,10 @@ public class MeleeWeapon : WeaponBase
 
             if (hit.TryGetComponent<IDamageable>(out var damageable))
             {
-                damageable.TakeDamage(_weaponData.damage);
-                
+                damageable.TakeDamage(_weaponData.damage);   
             }
+            
+            if(!_weaponData.isSplash) break;
         }
     }
 
