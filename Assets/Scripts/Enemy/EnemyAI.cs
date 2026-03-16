@@ -16,6 +16,14 @@ public class EnemyAI : MonoBehaviour
     // 사망 애니메이션이 끝난 후 오브젝트를 제거하기까지의 대기 시간
     [SerializeField] private float _destroyDelay = 2f;
 
+    public void Initialize(float moveSpeed, float detectionRange, float attackRange)
+    {
+        _detectionRange     = detectionRange;
+        _attackRange        = attackRange;
+        // NavMeshAgent speed는 Awake 이후에만 설정 가능
+        if (_agent != null) _agent.speed = moveSpeed;
+    }
+
     private NavMeshAgent _agent;
     private EnemyStats _stats;
     private Animator _animator;

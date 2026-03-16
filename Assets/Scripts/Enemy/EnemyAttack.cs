@@ -11,6 +11,13 @@ public class EnemyAttack : MonoBehaviour
     private Animator _animator;
     private float _lastAttackTime = -Mathf.Infinity;
 
+    public void Initialize(int damage, float attackRange, float attackCooldown)
+    {
+        _damage         = damage;
+        _attackRange    = attackRange;
+        _attackCooldown = attackCooldown;
+    }
+
 
     private void Awake()
     {

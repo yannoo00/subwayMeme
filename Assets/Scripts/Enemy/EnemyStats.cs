@@ -11,6 +11,12 @@ public class EnemyStats : MonoBehaviour, IDamageable
     public int MaxHealth => _maxHealth;
     public bool IsAlive => _currentHealth > 0;
 
+    public void Initialize(int maxHealth)
+    {
+        _maxHealth = maxHealth;
+        _currentHealth = maxHealth;
+    }
+
     public void TakeDamage(int damage)
     {
         if (!IsAlive) return;
