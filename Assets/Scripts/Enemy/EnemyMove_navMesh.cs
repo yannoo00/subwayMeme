@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 
 [RequireComponent(typeof(NavMeshAgent))]
-public class NavMeshMove : EnemyMove
+public class EnemyMove_navMesh : EnemyMove
 {
     private NavMeshAgent _agent;
 

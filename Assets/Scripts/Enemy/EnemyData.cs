@@ -1,6 +1,9 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "EnemyData", menuName = "SubwayMeme/EnemyData")]
+
+
+
+[CreateAssetMenu(fileName = "EnemyData", menuName = "Scriptable Objects/EnemyData")]
 public class EnemyData : ScriptableObject
 {
     public string   enemyName;

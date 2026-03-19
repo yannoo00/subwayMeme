@@ -5,12 +5,11 @@ using UnityEngine;
 // 구체 클래스: MeleeAttack, ProjectileAttack 등
 public abstract class EnemyAttack : MonoBehaviour
 {
-    protected Enemy    enemy;
-    protected EnemyAnimator animator;
+    protected Enemy _enemy;
 
     protected virtual void Awake()
     {
-        enemy    = GetComponent<Enemy>();
+        _enemy = GetComponent<Enemy>();
     }
 
 

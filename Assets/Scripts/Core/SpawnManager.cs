@@ -101,9 +101,9 @@ public class SpawnManager : MonoBehaviour
             return;
         }
 
-        if (prefab.GetComponent<EnemyStats>() == null)
+        if (prefab.GetComponent<Enemy>() == null)
         {
-            Debug.LogWarning($"[SpawnManager] {prefab.name}에 EnemyStats가 없습니다!");
+            Debug.LogWarning($"[SpawnManager] {prefab.name}에 Enemy 컴포넌트가 없습니다!");
             return;
         }
 

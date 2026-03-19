@@ -12,11 +12,7 @@ public abstract class EnemyAI : MonoBehaviour
     [Header("Death")]
     [SerializeField] private float _destroyDelay = 2f;
 
-    protected Enemy         _enemy;
-    protected EnemyMove     _move;
-    protected EnemyAttack   _attack;
-    protected EnemyAnimator _anim;
-
+    protected Enemy     _enemy;
     protected Transform _player;
 
     private State _currentState = State.Idle;
@@ -25,10 +21,7 @@ public abstract class EnemyAI : MonoBehaviour
 
     protected virtual void Awake()
     {
-        _enemy  = GetComponent<Enemy>();
-        _move   = GetComponent<EnemyMove>();
-        _attack = GetComponent<EnemyAttack>();
-        _anim   = GetComponent<EnemyAnimator>();
+        _enemy = GetComponent<Enemy>();
     }
 
 
@@ -61,17 +54,17 @@ public abstract class EnemyAI : MonoBehaviour
         switch (_currentState)
         {
             case State.Idle:
-                _move?.Stop();
-                _anim?.PlayIdle();
+                _enemy.Move?.Stop();
+                _enemy.Anim?.PlayIdle();
                 break;
 
             case State.Chase:
-                _anim?.PlayMove();
+                _enemy.Anim?.PlayMove();
                 break;
 
             case State.Attack:
-                _move?.Stop();
-                _anim?.PlayAttack();
+                _enemy.Move?.Stop();
+                _enemy.Anim?.PlayAttack();
                 break;
         }
     }
@@ -83,8 +76,8 @@ public abstract class EnemyAI : MonoBehaviour
         if (_currentState == State.Dead) return;
 
         _currentState = State.Dead;
-        _move?.Stop();
-        _anim?.PlayDeath();
+        _enemy.Move?.Stop();
+        _enemy.Anim?.PlayDeath();
 
         StartCoroutine(DestroyAfterDelay());
     }

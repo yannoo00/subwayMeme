@@ -26,6 +26,7 @@ public class PlayerStats: MonoBehaviour, IDamageable
         PlayerEvents.PlayerDamaged(damage);
         PlayerEvents.HealthChanged(_currentHealth, _maxHealth);
 
+        Debug.Log("[PlayerStats] 피격! HP: " + _currentHealth + "/" + _maxHealth);
 
         if (!IsAlive)
         {

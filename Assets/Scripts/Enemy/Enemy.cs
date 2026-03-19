@@ -11,21 +11,27 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     private int _currentHealth;
     private int _maxHealth;
 
-    public EnemyData Data           => _data;
-    public int       CurrentHealth  => _currentHealth;
-    public int       MaxHealth      => _maxHealth;
-    public bool      IsAlive        => _currentHealth > 0;
+    public EnemyData    Data          => _data;
+    public int          CurrentHealth => _currentHealth;
+    public int          MaxHealth     => _maxHealth;
+    public bool         IsAlive       => _currentHealth > 0;
 
-    protected EnemyMove   _move;
-    protected EnemyAI     _ai;
-    protected EnemyAttack _attack;
+    public EnemyMove     Move   => _move;
+    public EnemyAI       AI     => _ai;
+    public EnemyAttack   Attack => _attack;
+    public EnemyAnimator Anim   => _anim;
 
+    private EnemyMove    _move;
+    private EnemyAI      _ai;
+    private EnemyAttack  _attack;
+    private EnemyAnimator _anim;
 
     protected virtual void Awake()
     {
         _move   = GetComponent<EnemyMove>();
         _ai     = GetComponent<EnemyAI>();
         _attack = GetComponent<EnemyAttack>();
+        _anim   = GetComponent<EnemyAnimator>();
 
         if (_data != null)
         {
