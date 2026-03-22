@@ -36,6 +36,7 @@ public class PlayerController : MonoBehaviour
     {
         if (Keyboard.current == null) return;
         if (_isDodging) return;
+        if (!_stats.IsAlive) return;
 
         Vector2 input = new Vector2(
             (Keyboard.current.dKey.isPressed ? 1 : 0) - (Keyboard.current.aKey.isPressed ? 1 : 0),

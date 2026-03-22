@@ -6,26 +6,64 @@
 - 서버는 게임 세션 관리 및 동기화 담당
 
 ## 기술 스택
-- **서버**: C# 콘솔 앱 + `SocketAsyncEventArgs` (크로스플랫폼)
-  - Windows 내부: IOCP, macOS 내부: kqueue 자동 사용
-  - 코드는 동일하게 작성 가능
-- **클라**: Unity NetworkManager (TCP Socket)
-- **DB**: MySQL + Dapper (계정, 매치 기록 등 최소한만)
+
+| 항목 | 기술 | 비고 |
+|------|------|------|
+| 서버 네트워크 | C# + SocketAsyncEventArgs | Windows: IOCP, macOS: kqueue 자동 사용 |
+| 직렬화 | Protobuf (Google.Protobuf) | .proto 파일로 서버/클라 동시 생성 |
+| 클라 네트워크 | TcpClient + async/await | 클라는 연결 1개라 SAEA 불필요 |
+| DB | MySQL + Dapper | 계정, 매치 기록 최소한만 |
+| 서버 간 통신 | localhost HTTP (REST) | Lobby ↔ Game Server 내부 통신 |
+
+## 레포 구조
+
+```
+subwayMeme/                   ← git root
+├── Client/                   ← Unity 프로젝트
+├── Common/
+│   └── Protos/               ← .proto 파일 (패킷 정의 단일 관리)
+│       ├── lobby.proto
+│       └── game.proto
+└── Server/
+    ├── ServerCore/           ← SAEA 네트워크 코어 (두 서버 공용 라이브러리)
+    │   └── ServerCore.csproj
+    ├── LobbyServer/          ← 항상 실행, 방 관리 담당
+    │   └── LobbyServer.csproj
+    └── GameServer/           ← 게임방 1개당 1 프로세스, 게임 종료 시 자동 종료
+        └── GameServer.csproj
+```
 
 ## 아키텍처
 
 ```
-Unity Client
-    ↕ TCP (커스텀 패킷)
-C# Server (SocketAsyncEventArgs)
-    ↕
-MySQL DB
+[Mac Mini]
+│
+├── Lobby Server (항상 실행, 포트 7770)
+│   ├── 플레이어 접속 및 인증
+│   ├── 방 목록 관리
+│   └── 게임 시작 시 Game Server 프로세스 spawn
+│
+├── Game Server #1 (포트 7771) ← 방 1개
+├── Game Server #2 (포트 7772) ← 방 1개
+└── Game Server #N ...          ← 게임 종료 시 자동 종료
+
+[클라이언트 접속 흐름]
+1. Lobby Server 접속 (TCP)
+2. 방 생성 / 참가
+3. 게임 시작 → Lobby가 Game Server spawn
+4. Lobby 응답: "7771 포트로 접속해"
+5. Game Server에 직접 접속 → 게임 진행
 ```
+
+**Game Server는 요청 시 spawn**: 방이 만들어질 때 `Process.Start()`로 실행,
+게임 종료 시 스스로 종료. 항상 대기 중인 프로세스 없음.
+
+Lobby ↔ Game Server 내부 통신은 localhost HTTP (REST)로 충분.
 
 ## 로컬 저장 vs 서버 저장
 
 | 데이터 | 저장 위치 |
-|---|---|
+|--------|-----------|
 | 보유 캐릭터 | 로컬 JSON |
 | 해금 내역 | 로컬 JSON |
 | 누적 골드 (메타) | 로컬 JSON |
@@ -36,11 +74,11 @@ MySQL DB
 ## 권한 분리
 
 | 항목 | 권한 |
-|---|---|
+|------|------|
 | 플레이어 이동 | 클라 입력 → 서버 브로드캐스트 |
 | 공격 이벤트 | 클라 입력 → 서버 브로드캐스트 |
 | 데미지 판정 | 서버 권위 |
-| 적 스폰 | 서버 권위 (Host 클라가 아닌 서버가 결정) |
+| 적 스폰 | 서버 권위 |
 | 스테이지 타이머 | 서버 권위 |
 | 무기 애니메이션 | 순수 클라 표현 (서버 무관) |
 
@@ -48,22 +86,29 @@ MySQL DB
 
 ### 헤더 구조
 ```
-[size: 2byte][packetId: 2byte][data: ...]
+[size: 2byte][packetId: 2byte][body: Protobuf bytes]
 ```
 
-### 패킷 ID 목록 (예정)
-```
+패킷 정의는 `Common/Protos/`의 .proto 파일로 작성.
+`protoc`으로 서버(C#)와 클라(Unity C#) 코드를 동시에 자동 생성.
+
+### 패킷 목록 (예정)
+
+```protobuf
 // 공통
 C_Connected
 S_Connected
 
-// 매치메이킹
-C_EnterQueue      // 대기열 입장
-C_LeaveQueue      // 대기열 취소
-S_MatchFound      // 매치 성립, Room 정보 전달
+// 로비 (Lobby Server)
+C_CreateRoom      // 방 만들기
+C_JoinRoom        // 방 참가
+C_LeaveRoom       // 방 나가기
+S_RoomList        // 방 목록 응답
+S_RoomCreated     // 방 생성 완료
 S_PlayerJoined    // 다른 플레이어 입장 알림
+S_GameReady       // 게임 시작 준비 (접속할 Game Server 포트 전달)
 
-// 게임 세션
+// 게임 세션 (Game Server)
 C_PlayerMove      // 위치/회전 전송
 S_PlayerMove      // 다른 플레이어 위치 브로드캐스트
 C_PlayerAttack    // 공격 입력
@@ -79,68 +124,84 @@ S_StageEnd        // 스테이지 종료
 S_GameOver        // 게임오버
 ```
 
-## 클라 준비 사항 (NetworkManager)
+## 서버 프로젝트 구조
 
 ```
-Assets/Scripts/Network/
-├── NetworkManager.cs       // 연결, 송수신 관리
-├── PacketHandler.cs        // 패킷 ID -> 처리 함수 매핑
-├── SendBuffer.cs           // 송신 버퍼
-├── RecvBuffer.cs           // 수신 버퍼 (패킷 경계 파싱)
+Server/
+├── ServerCore/                   ← Lobby/Game Server 공용 SAEA 라이브러리
+│   ├── ServerCore.csproj
+│   ├── Listener.cs               ← AcceptAsync 처리
+│   ├── Session.cs                ← 클라이언트 연결 단위 (Send/Recv)
+│   ├── RecvBuffer.cs             ← 수신 링버퍼 (패킷 단편화 처리)
+│   └── SendBuffer.cs             ← 송신 버퍼
+│
+├── LobbyServer/
+│   ├── LobbyServer.csproj
+│   ├── Program.cs
+│   ├── Lobby/
+│   │   ├── Room.cs               ← 대기방
+│   │   ├── RoomManager.cs        ← 방 목록 관리
+│   │   └── LobbyPlayer.cs        ← 로비 내 플레이어
+│   ├── ProcessManager.cs         ← Game Server 프로세스 spawn/kill
+│   ├── Packet/
+│   │   ├── Generated/            ← protoc 자동 생성
+│   │   └── LobbyPacketHandler.cs
+│   └── DB/
+│       └── DBManager.cs
+│
+└── GameServer/
+    ├── GameServer.csproj
+    ├── Program.cs                ← 인자로 포트/방ID 수신
+    ├── Game/
+    │   ├── GameRoom.cs           ← 게임 룸 (플레이어, 적, 타이머)
+    │   ├── GamePlayer.cs         ← 서버 측 플레이어 상태
+    │   ├── EnemyController.cs    ← 서버 권위 적 관리
+    │   └── StageTimer.cs         ← 스테이지 타이머
+    ├── Packet/
+    │   ├── Generated/            ← protoc 자동 생성
+    │   └── GamePacketHandler.cs
+    └── LobbyReporter.cs          ← 게임 종료 시 Lobby에 HTTP 보고
+```
+
+## 클라이언트 네트워크 구조
+
+```
+Client/Assets/Scripts/Network/
+├── ServerSession.cs        ← TcpClient + async/await, 수신 루프
+├── PacketDispatcher.cs     ← 패킷 ID → 핸들러 매핑
+├── MainThreadDispatcher.cs ← 워커 스레드 → Unity 메인 스레드 전달
 └── Packets/
-    └── PacketDefinitions.cs // 패킷 구조체 공용 정의
+    └── Generated/          ← protoc 자동 생성 (Common/Protos와 동일 소스)
 ```
 
-### 주의사항
-- SocketAsyncEventArgs 콜백은 워커 스레드에서 호출됨
+**주의사항**
+- 수신 콜백은 별도 async 컨텍스트에서 호출됨
 - Unity API는 메인 스레드에서만 호출 가능
-- UnityMainThreadDispatcher 또는 ConcurrentQueue로 메인 스레드 전달 필요
+- `ConcurrentQueue` + `Update()`로 메인 스레드에 작업 전달
 
 ## 구현 순서
 
-### 클라 (서버 작업 전 완성)
+### 0단계: 사전 준비 (클라 단독)
 - [ ] 게임오버 / 재시작 처리
 - [ ] 로컬 JSON 저장 시스템 (PlayerPersistentData)
 
-### 서버 + 클라 동시 진행
-1. **소켓 통신 파이프라인**
-   - 서버: SocketAsyncEventArgs Accept / Send / Recv 뼈대
-   - 클라: NetworkManager 연결 / 패킷 송수신
-   - 목표: 패킷 한 번 주고받기
+### 1단계: 소켓 파이프라인
+- [ ] ServerCore: Session / Listener / RecvBuffer / SendBuffer
+- [ ] LobbyServer: ServerCore 참조, 접속 수락 확인
+- [ ] Client: ServerSession으로 Lobby 접속 + 패킷 1개 주고받기
 
-2. **패킷 프로토콜**
-   - 헤더 구조 구현
-   - 직렬화 / 역직렬화
-   - PacketHandler 등록 구조
+### 2단계: Protobuf 세팅
+- [ ] Common/Protos/lobby.proto 작성
+- [ ] protoc 빌드 스크립트 작성 (서버/클라 동시 생성)
+- [ ] PacketHandler 등록 구조 구현
 
-3. **매치메이킹**
-   - 대기열 입장 / 취소
-   - 인원 충족 시 Room 생성 + 클라 통보
+### 3단계: 로비 시스템
+- [ ] 방 만들기 / 참가 / 목록
+- [ ] 인원 충족 시 GameServer 프로세스 spawn
+- [ ] 클라에 Game Server 포트 전달
 
-4. **게임 세션 동기화**
-   - 플레이어 위치 동기화
-   - 공격 이벤트 브로드캐스트
-   - 스테이지 타이머 서버 관리
-   - 적 스폰 서버 권위로 이전
-
-## 서버 프로젝트 구조 (예정)
-
-```
-SubwayServer/
-├── Program.cs
-├── Network/
-│   ├── Listener.cs           // Accept 처리
-│   ├── Session.cs            // 클라이언트 연결 단위
-│   ├── RecvBuffer.cs
-│   └── SendBuffer.cs
-├── Game/
-│   ├── Room.cs               // 게임 방 (세션 묶음)
-│   ├── RoomManager.cs        // 방 생성/관리
-│   ├── Player.cs             // 서버 측 플레이어 상태
-│   └── MatchMaker.cs         // 대기열 / 매칭 로직
-├── Packet/
-│   ├── PacketDefinitions.cs  // 클라와 공유
-│   └── PacketHandler.cs
-└── DB/
-    └── DBManager.cs
-```
+### 4단계: 게임 세션 동기화
+- [ ] 플레이어 위치 동기화
+- [ ] 공격 이벤트 브로드캐스트
+- [ ] 적 스폰 서버 권위로 이전
+- [ ] 스테이지 타이머 서버 관리

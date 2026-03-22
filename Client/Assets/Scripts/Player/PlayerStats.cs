@@ -3,13 +3,13 @@ using UnityEngine;
 public class PlayerStats: MonoBehaviour, IDamageable
 {
     [Header("Player Stats")]
-    [SerializeField] private int _currentHealth;
+    [SerializeField] private int _currentHealth = 100;
     [SerializeField] private int _maxHealth = 100;
 
 
-    public int CurrentHealth => _currentHealth;
-    public int MaxHealth => _maxHealth;
-    public bool IsAlive => _currentHealth > 0;
+    public int CurrentHealth    => _currentHealth;
+    public int MaxHealth        => _maxHealth;
+    public bool IsAlive         => _currentHealth > 0;
     // 닷지 중 무적 여부 (PlayerController에서 설정)
     public bool IsInvincible { get; set; }
 
