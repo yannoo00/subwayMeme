@@ -139,7 +139,7 @@ namespace ServerCore
             {
                 if (args.BytesTransferred > 0 && args.SocketError == SocketError.Success)
                 {
-                    // 전송 완료 → pendingList 비움
+                    // 전송 완료 -> pendingList 비움
                     _sendArgs.BufferList = null;
                     _pendingList.Clear();
 

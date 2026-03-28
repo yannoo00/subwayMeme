@@ -42,7 +42,7 @@ namespace ServerCore
             if (CurrentBuffer.Value == null)
                 CurrentBuffer.Value = new SendBuffer(ChunkSize);
 
-            // 현재 버퍼에 공간이 부족하면 새 청크 할당
+            // 현재 버퍼에 공간이 부족하면 새 청크 할당 (단일 패킷이 buffer 사이즈보다 클 수는 없게)
             if (CurrentBuffer.Value.FreeSize < reserveSize)
                 CurrentBuffer.Value = new SendBuffer(ChunkSize);
 
