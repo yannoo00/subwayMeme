@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -19,6 +20,10 @@ namespace ServerCore
 
         private SocketAsyncEventArgs _recvArgs = new SocketAsyncEventArgs();
         private SocketAsyncEventArgs _sendArgs = new SocketAsyncEventArgs();
+
+        private object _lock = new object();
+        private Queue<ArraySegment<byte>> _sendQueue = new Queue<ArraySegment<byte>>();
+        private List<ArraySegment<byte>> _pendingList = new List<ArraySegment<byte>>();
 
         // 자식 클래스가 구현: 연결/해제/수신/송신 이벤트 처리
         public abstract void OnConnected(EndPoint endPoint);
@@ -51,7 +56,23 @@ namespace ServerCore
 
         public void Send(ArraySegment<byte> sendBuff)
         {
-            _sendArgs.SetBuffer(sendBuff.Array, sendBuff.Offset, sendBuff.Count);
+            lock (_lock)
+            {
+                _sendQueue.Enqueue(sendBuff);
+                // pendingList가 비어있다 = 현재 전송 중인 것 없음, 바로 전송 시작
+                if (_pendingList.Count == 0)
+                    RegisterSend();
+            }
+        }
+
+        private void RegisterSend()
+        {
+            // 큐에 쌓인 패킷을 전부 pendingList로 옮기고 한 번에 전송
+            // SAEA BufferList를 쓰면 여러 segment를 한 번의 SendAsync로 전송 가능
+            while (_sendQueue.Count > 0)
+                _pendingList.Add(_sendQueue.Dequeue());
+
+            _sendArgs.BufferList = _pendingList;
 
             bool pending = _socket.SendAsync(_sendArgs);
             if (!pending)
@@ -114,13 +135,24 @@ namespace ServerCore
 
         private void OnSendCompleted(object sender, SocketAsyncEventArgs args)
         {
-            if (args.BytesTransferred > 0 && args.SocketError == SocketError.Success)
+            lock (_lock)
             {
-                OnSend(args.BytesTransferred);
-            }
-            else
-            {
-                Disconnect();
+                if (args.BytesTransferred > 0 && args.SocketError == SocketError.Success)
+                {
+                    // 전송 완료 → pendingList 비움
+                    _sendArgs.BufferList = null;
+                    _pendingList.Clear();
+
+                    OnSend(args.BytesTransferred);
+
+                    // 완료되는 사이 새 패킷이 들어왔으면 이어서 전송
+                    if (_sendQueue.Count > 0)
+                        RegisterSend();
+                }
+                else
+                {
+                    Disconnect();
+                }
             }
         }
     }

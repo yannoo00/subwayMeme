@@ -40,9 +40,11 @@ namespace ServerCore
             if (args.SocketError == SocketError.Success)
             {
                 // 팩토리로 Session 생성 후 시작
+                // Start() 내부에서 RecvAsync가 즉시 완료되며 소켓이 닫힐 수 있으므로 RemoteEndPoint를 Start() 호출 전에 미리 저장
+                System.Net.EndPoint remoteEndPoint = args.AcceptSocket.RemoteEndPoint;
                 Session session = _sessionFactory.Invoke();
                 session.Start(args.AcceptSocket);
-                session.OnConnected(args.AcceptSocket.RemoteEndPoint);
+                session.OnConnected(remoteEndPoint);
             }
             else
             {
