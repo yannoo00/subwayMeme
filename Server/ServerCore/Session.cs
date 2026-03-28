@@ -7,12 +7,13 @@ namespace ServerCore
 {
     public abstract class Session
     {
+        // 전체 세션 ID counter 
         private static int _nextId = 0;
 
         public int SessionId { get; private set; }
 
-        private Socket _socket;
-        private int _disconnected = 0;
+        private Socket _socket; // TCP 소켓
+        private int _disconnected = 0; //중복 연결 해제 방지용 플래그
 
         private RecvBuffer _recvBuffer = new RecvBuffer(65535);
 
@@ -30,6 +31,7 @@ namespace ServerCore
             SessionId = Interlocked.Increment(ref _nextId);
             _socket   = socket;
 
+            //EventHandler<TEventArgs>(object sender, TEventArgs e);        
             _recvArgs.Completed += new EventHandler<SocketAsyncEventArgs>(OnRecvCompleted);
             _sendArgs.Completed += new EventHandler<SocketAsyncEventArgs>(OnSendCompleted);
 
@@ -39,6 +41,7 @@ namespace ServerCore
         public void Disconnect()
         {
             // Interlocked.Exchange로 중복 호출 방지
+            // 이 때 Exchange는 이전 값을 반환하므로 _disconnected가 이미 1이면 종료(이미 연결 해제됨)
             if (Interlocked.Exchange(ref _disconnected, 1) == 1) return;
 
             OnDisconnected(_socket.RemoteEndPoint);
