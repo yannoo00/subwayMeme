@@ -1,0 +1,113 @@
+syntax = "proto3";
+
+option csharp_namespace = "LobbyProto";
+
+// ===================================================
+//  패킷 ID 열거형
+//  C_ : Client to Server
+//  S_ : Server to Client
+// ===================================================
+enum PacketId {
+  NONE = 0;
+
+  C_CONNECTED  = 1;
+  S_CONNECTED  = 2;
+
+  C_CREATE_ROOM = 10;
+  C_JOIN_ROOM   = 11;
+  C_LEAVE_ROOM  = 12;
+  C_GET_ROOMS   = 13;
+
+  S_ROOM_LIST    = 20;
+  S_ROOM_CREATED = 21;
+  S_PLAYER_JOINED = 22;
+  S_PLAYER_LEFT   = 23;
+  S_GAME_READY    = 24;
+  S_ERROR         = 25;
+}
+
+// ===================================================
+//  공통 메시지
+// ===================================================
+
+// 클라 -> 서버: 최초 접속 시 자신을 알림
+message C_Connected {
+  string player_name = 1;
+}
+
+// 서버 -> 클라: 접속 수락, 서버가 발급한 ID 전달
+message S_Connected {
+  int32 player_id = 1;
+}
+
+// ===================================================
+//  방 관련 메시지
+// ===================================================
+
+// 방 생성 요청
+message C_CreateRoom {
+  string room_name = 1;
+  int32  max_players = 2;
+}
+
+// 방 참가 요청
+message C_JoinRoom {
+  int32 room_id = 1;
+}
+
+// 방 나가기
+message C_LeaveRoom {
+}
+
+// 현재 방 목록 요청
+message C_GetRooms {
+}
+
+// 방 목록 응답
+message S_RoomList {
+  repeated RoomInfo rooms = 1;
+}
+
+// 방 생성 완료
+message S_RoomCreated {
+  RoomInfo room = 1;
+}
+
+// 다른 플레이어 입장 알림
+message S_PlayerJoined {
+  PlayerInfo player = 1;
+}
+
+// 서버다른 플레이어 퇴장 알림
+message S_PlayerLeft {
+  int32 player_id = 1;
+}
+
+// 게임 시작 준비 (Game Server 포트 전달)
+message S_GameReady {
+  int32  port     = 1;
+  string host     = 2;
+  int32  room_id  = 3;
+}
+
+// 에러 응답
+message S_Error {
+  int32  code    = 1;
+  string message = 2;
+}
+
+// ===================================================
+//  공통 서브 타입 (다른 메시지 안에서 사용)
+// ===================================================
+
+message RoomInfo {
+  int32  room_id     = 1;
+  string room_name   = 2;
+  int32  cur_players = 3;
+  int32  max_players = 4;
+}
+
+message PlayerInfo {
+  int32  player_id   = 1;
+  string player_name = 2;
+}

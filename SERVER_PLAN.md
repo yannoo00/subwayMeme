@@ -185,23 +185,48 @@ Client/Assets/Scripts/Network/
 - [ ] 게임오버 / 재시작 처리
 - [ ] 로컬 JSON 저장 시스템 (PlayerPersistentData)
 
-### 1단계: 소켓 파이프라인
-- [ ] ServerCore: Session / Listener / RecvBuffer / SendBuffer
-- [ ] LobbyServer: ServerCore 참조, 접속 수락 확인
-- [ ] Client: ServerSession으로 Lobby 접속 + 패킷 1개 주고받기
+### 1단계: 소켓 파이프라인 ✅ 완료
+- [x] ServerCore: Session / Listener / RecvBuffer / SendBuffer
+- [x] ServerCore: PacketSession.cs — [size 2byte][packetId 2byte] 헤더 파싱, sealed OnRecv, 완성된 패킷만 OnRecvPacket으로 올림
+- [x] LobbyServer: ServerCore 참조, 에코 서버로 접속 수락 확인
 
-### 2단계: Protobuf 세팅
-- [ ] Common/Protos/lobby.proto 작성
-- [ ] protoc 빌드 스크립트 작성 (서버/클라 동시 생성)
-- [ ] PacketHandler 등록 구조 구현
+### 2단계: Protobuf 세팅 ✅ 완료
+- [x] Common/Protos/lobby.proto 작성 (PacketId 열거형 + 전체 로비 패킷 정의)
+- [x] Common/Protos/gen.bat — protoc 빌드 스크립트 (ASCII 인코딩 필수, 절대경로 사용)
+- [x] LobbyServer.csproj에 Google.Protobuf 3.29.3 NuGet 추가
+- [x] protoc 실행 → LobbyServer/Packet/Generated/Lobby.cs 생성 확인
+- [x] LobbyServer/Packet/LobbyPacketHandler.cs — PacketId 배열 디스패처 + MakePacket 유틸
+- [x] LobbySession: Session → PacketSession 상속으로 전환
+- [x] dotnet build 통과 확인
 
-### 3단계: 로비 시스템
-- [ ] 방 만들기 / 참가 / 목록
-- [ ] 인원 충족 시 GameServer 프로세스 spawn
-- [ ] 클라에 Game Server 포트 전달
+### 3단계: 로비 시스템 ← 다음 시작점
+- [ ] LobbyServer/Lobby/LobbyPlayer.cs — 로비 내 플레이어 상태
+- [ ] LobbyServer/Lobby/Room.cs — 대기방 (플레이어 목록, 상태)
+- [ ] LobbyServer/Lobby/RoomManager.cs — 방 목록 관리 (thread-safe)
+- [ ] LobbyPacketHandler의 TODO 채우기 (C_CreateRoom, C_JoinRoom, C_GetRooms 실제 로직)
+- [ ] 인원 충족 시 GameServer 프로세스 spawn (ProcessManager.cs)
+- [ ] 클라에 Game Server 포트 전달 (S_GameReady)
 
 ### 4단계: 게임 세션 동기화
+- [ ] GameServer 프로젝트 구현 시작 (Program.cs — 인자로 포트/방ID 수신)
 - [ ] 플레이어 위치 동기화
 - [ ] 공격 이벤트 브로드캐스트
 - [ ] 적 스폰 서버 권위로 이전
 - [ ] 스테이지 타이머 서버 관리
+
+## 주요 구현 메모
+
+### gen.bat 관련
+- `.bat` 파일은 반드시 **ASCII 인코딩**으로 저장 (한글 주석 금지)
+- `%~dp0`는 trailing `\` 포함 → `--proto_path="%PROTO_DIR%"` 에서 `\"` 로 끝나면 protoc(C++ 런타임)가 닫는 따옴표로 인식 못 함
+- 해결: PROTO_DIR도 절대경로 하드코딩, trailing `\` 없이
+
+### PacketSession 구조
+- `Session.OnRecv()` → `PacketSession`이 sealed로 구현 (자식이 오버라이드 불가)
+- 자식(LobbySession)은 `OnRecvPacket(ushort id, ArraySegment<byte> body)` 만 구현
+- while 루프로 한 번의 Recv 콜백에 붙어온 여러 패킷 한번에 처리
+
+### LobbyPacketHandler 구조
+- `Handlers[]` 배열, 인덱스 = PacketId 값 (O(1) 조회)
+- `MakePacket(PacketId, IMessage)` — [size 2byte][id 2byte][protobuf body] 조립
+- 핸들러 내 TODO 주석 위치: Handle_C_CreateRoom, Handle_C_JoinRoom, Handle_C_LeaveRoom, Handle_C_GetRooms
