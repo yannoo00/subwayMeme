@@ -1,5 +1,6 @@
 using System;
 using System.Net;
+using LobbyProto;
 using ServerCore;
 
 namespace LobbyServer
@@ -14,6 +15,17 @@ namespace LobbyServer
         public override void OnDisconnected(EndPoint endPoint)
         {
             Console.WriteLine($"[LobbySession] 해제: {endPoint} / SessionId: {SessionId}");
+
+            // 방에 있었다면 자동 퇴장 처리
+            var result = RoomManager.Instance.LeaveRoom(this);
+            if (result.Ok)
+            {
+                var notifyBytes = LobbyPacketHandler.MakePacket(PacketId.SPlayerLeft, new S_PlayerLeft { PlayerId = result.Data.Leaver.PlayerId });
+                foreach (var s in result.Data.Remaining)
+                    s.Send(notifyBytes);
+            }
+
+            RoomManager.Instance.UnregisterPlayer(SessionId);
         }
 
         // PacketSession이 헤더를 파싱하고, 완성된 패킷 1개씩 여기로 올려줌
