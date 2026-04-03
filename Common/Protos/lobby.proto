@@ -10,20 +10,22 @@ option csharp_namespace = "LobbyProto";
 enum PacketId {
   NONE = 0;
 
-  C_CONNECTED  = 1;
-  S_CONNECTED  = 2;
+  C_CONNECTED     = 1;
+  S_CONNECTED     = 2;
 
-  C_CREATE_ROOM = 10;
-  C_JOIN_ROOM   = 11;
-  C_LEAVE_ROOM  = 12;
-  C_GET_ROOMS   = 13;
+  C_CREATE_ROOM   = 10;
+  C_JOIN_ROOM     = 11;
+  C_LEAVE_ROOM    = 12;
+  C_GET_ROOMS     = 13;
+  C_START_GAME    = 14;
 
-  S_ROOM_LIST    = 20;
-  S_ROOM_CREATED = 21;
+  S_ROOM_LIST     = 20;
+  S_ROOM_CREATED  = 21;
   S_PLAYER_JOINED = 22;
   S_PLAYER_LEFT   = 23;
-  S_GAME_READY    = 24;
-  S_ERROR         = 25;
+  S_GAME_READY      = 24;
+  S_ERROR           = 25;
+  S_CREATOR_CHANGED = 26;
 }
 
 // ===================================================
@@ -63,6 +65,10 @@ message C_LeaveRoom {
 message C_GetRooms {
 }
 
+// 게임 시작 요청 (방장만 가능)
+message C_StartGame {
+}
+
 // 방 목록 응답
 message S_RoomList {
   repeated RoomInfo rooms = 1;
@@ -88,6 +94,11 @@ message S_GameReady {
   int32  port     = 1;
   string host     = 2;
   int32  room_id  = 3;
+}
+
+// 방장 위임 알림
+message S_CreatorChanged {
+  int32 new_creator_id = 1;
 }
 
 // 에러 응답

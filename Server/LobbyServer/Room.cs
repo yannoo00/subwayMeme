@@ -8,17 +8,19 @@ namespace LobbyServer
         public int RoomId { get; }
         public string RoomName { get; }
         public int MaxPlayers { get; }
+        public int CreatorSessionId { get; private set; }
 
         readonly Dictionary<int, (LobbySession session, string playerName)> _players = new();
 
         public int PlayerCount => _players.Count;
         public bool IsFull => _players.Count >= MaxPlayers;
 
-        public Room(int roomId, string roomName, int maxPlayers)
+        public Room(int roomId, string roomName, int maxPlayers, int creatorSessionId)
         {
             RoomId = roomId;
             RoomName = roomName;
             MaxPlayers = maxPlayers;
+            CreatorSessionId = creatorSessionId;
         }
 
         public bool TryAdd(LobbySession session, string playerName)
@@ -29,6 +31,18 @@ namespace LobbyServer
         }
 
         public bool Remove(int sessionId) => _players.Remove(sessionId);
+
+        // 방장이 나갔을 때 남은 플레이어 중 첫 번째에게 방장 위임
+        // 위임할 대상이 없으면 -1 반환
+        public int MigrateCreator()
+        {
+            foreach (var (sid, _) in _players)
+            {
+                CreatorSessionId = sid;
+                return sid;
+            }
+            return -1;
+        }
 
         public RoomInfo ToRoomInfo() => new RoomInfo
         {
@@ -44,7 +58,6 @@ namespace LobbyServer
             return new PlayerInfo { PlayerId = sessionId, PlayerName = name };
         }
 
-        // 특정 세션을 제외한 나머지 세션 목록
         public List<LobbySession> GetOtherSessions(int excludeSessionId)
         {
             var list = new List<LobbySession>();
@@ -53,7 +66,6 @@ namespace LobbyServer
             return list;
         }
 
-        // 모든 세션 목록 (입장 알림을 기존 멤버에게 보낼 때 입장 전에 캡처)
         public List<LobbySession> GetAllSessions()
         {
             var list = new List<LobbySession>();

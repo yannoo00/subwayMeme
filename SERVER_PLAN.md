@@ -200,10 +200,10 @@ Client/Assets/Scripts/Network/
 - [x] dotnet build 통과 확인
 
 ### 3단계: 로비 시스템 ← 다음 시작점
-- [ ] LobbyServer/Lobby/LobbyPlayer.cs — 로비 내 플레이어 상태
-- [ ] LobbyServer/Lobby/Room.cs — 대기방 (플레이어 목록, 상태)
-- [ ] LobbyServer/Lobby/RoomManager.cs — 방 목록 관리 (thread-safe)
-- [ ] LobbyPacketHandler의 TODO 채우기 (C_CreateRoom, C_JoinRoom, C_GetRooms 실제 로직)
+- [x] LobbyServer/Lobby/LobbyPlayer.cs — 로비 내 플레이어 상태
+- [x] LobbyServer/Lobby/Room.cs — 대기방 (플레이어 목록, 상태)
+- [x] LobbyServer/Lobby/RoomManager.cs — 방 목록 관리 (thread-safe)
+- [x] LobbyPacketHandler의 TODO 채우기 (C_CreateRoom, C_JoinRoom, C_GetRooms 실제 로직)
 - [ ] 인원 충족 시 GameServer 프로세스 spawn (ProcessManager.cs)
 - [ ] 클라에 Game Server 포트 전달 (S_GameReady)
 

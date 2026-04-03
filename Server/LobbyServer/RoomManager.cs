@@ -17,8 +17,9 @@ namespace LobbyServer
 
     public record CreateRoomData(RoomInfo Room);
     public record JoinRoomData(RoomInfo Room, PlayerInfo Joiner, List<LobbySession> Others);
-    public record LeaveRoomData(PlayerInfo Leaver, List<LobbySession> Remaining);
-
+    // NewCreatorId: 방장이 나갔을 때 위임된 새 방장 ID (-1이면 위임 없음)
+    public record LeaveRoomData(PlayerInfo Leaver, List<LobbySession> Remaining, int NewCreatorId = -1);
+    public record StartGameData(int GamePort, int RoomId, List<LobbySession> AllSessions);
 
 
 
@@ -32,14 +33,14 @@ namespace LobbyServer
         readonly Dictionary<int, (string playerName, int roomId)> _players = new();
         int _nextRoomId = 1;
 
-        // C_Connected 수신 시 호출 — 플레이어 등록
+        // C_Connected 수신 시 호출 - 플레이어 등록
         public void RegisterPlayer(int sessionId, string playerName)
         {
             lock (_lock)
                 _players[sessionId] = (playerName, -1);
         }
 
-        // 연결 해제 시 호출 — 플레이어 제거
+        // 연결 해제 시 호출 - 플레이어 제거
         public void UnregisterPlayer(int sessionId)
         {
             lock (_lock)
@@ -54,7 +55,7 @@ namespace LobbyServer
                 if (!_players.TryGetValue(creator.SessionId, out var p) || p.roomId != -1)
                     return RoomResult<CreateRoomData>.Fail("이미 방에 있습니다.");
 
-                var room = new Room(_nextRoomId++, roomName, maxPlayers);
+                var room = new Room(_nextRoomId++, roomName, maxPlayers, creator.SessionId);
                 room.TryAdd(creator, p.playerName);
                 _rooms[room.RoomId] = room;
                 _players[creator.SessionId] = (p.playerName, room.RoomId);
@@ -62,7 +63,7 @@ namespace LobbyServer
             }
         }
 
-        // 방 참가 (others: 입장 직전 기존 멤버 — S_PlayerJoined 브로드캐스트 대상)
+        // 방 참가
         public RoomResult<JoinRoomData> JoinRoom(LobbySession joiner, int roomId)
         {
             lock (_lock)
@@ -79,7 +80,7 @@ namespace LobbyServer
             }
         }
 
-        // 방 퇴장 (remaining: S_PlayerLeft 브로드캐스트 대상)
+        // 방 퇴장
         public RoomResult<LeaveRoomData> LeaveRoom(LobbySession leaver)
         {
             lock (_lock)
@@ -90,13 +91,42 @@ namespace LobbyServer
                 var room = _rooms[p.roomId];
                 var leaverInfo = room.GetPlayerInfo(leaver.SessionId);
                 var remaining = room.GetOtherSessions(leaver.SessionId);
+                bool wasCreator = (room.CreatorSessionId == leaver.SessionId);
                 room.Remove(leaver.SessionId);
                 _players[leaver.SessionId] = (p.playerName, -1);
 
                 if (room.PlayerCount == 0)
+                {
                     _rooms.Remove(room.RoomId);
+                    return RoomResult<LeaveRoomData>.Success(new(leaverInfo, remaining));
+                }
 
-                return RoomResult<LeaveRoomData>.Success(new(leaverInfo, remaining));
+                // 방장이 나갔으면 새 방장 위임
+                int newCreatorId = wasCreator ? room.MigrateCreator() : -1;
+                return RoomResult<LeaveRoomData>.Success(new(leaverInfo, remaining, newCreatorId));
+            }
+        }
+
+        // 게임 시작 (방장만 호출 가능)
+        // ProcessManager로 GameServer 프로세스를 띄우고 포트와 전체 세션 목록을 반환
+        public RoomResult<StartGameData> StartGame(LobbySession requester)
+        {
+            lock (_lock)
+            {
+                if (!_players.TryGetValue(requester.SessionId, out var p) || p.roomId == -1)
+                    return RoomResult<StartGameData>.Fail("방에 있지 않습니다.");
+
+                var room = _rooms[p.roomId];
+
+                if (room.CreatorSessionId != requester.SessionId)
+                    return RoomResult<StartGameData>.Fail("방장만 게임을 시작할 수 있습니다.");
+
+                int? port = ProcessManager.Instance.Spawn(room.RoomId);
+                if (!port.HasValue)
+                    return RoomResult<StartGameData>.Fail("게임 서버를 시작하지 못했습니다.");
+
+                var allSessions = room.GetAllSessions();
+                return RoomResult<StartGameData>.Success(new(port.Value, room.RoomId, allSessions));
             }
         }
 

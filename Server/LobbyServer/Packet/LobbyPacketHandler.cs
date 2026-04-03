@@ -5,10 +5,6 @@ using ServerCore;
 
 namespace LobbyServer
 {
-    //  패킷 핸들러 모음
-    //  각 메서드는 PacketId 하나에 대응.
-    //  실제 게임 로직은 여기서 호출한다.
-    
     public class LobbyPacketHandler
     {
         // PacketId -> 핸들러 함수 테이블
@@ -17,7 +13,6 @@ namespace LobbyServer
 
         static LobbyPacketHandler()
         {
-            // PacketId 최대값 + 1 크기로 배열 초기화 (인덱스 = PacketId 값)
             int maxId = (int)PacketId.SError + 1;
             Handlers = new Action<PacketSession, ArraySegment<byte>>[maxId];
 
@@ -26,6 +21,7 @@ namespace LobbyServer
             Handlers[(int)PacketId.CJoinRoom]   = Handle_C_JoinRoom;
             Handlers[(int)PacketId.CLeaveRoom]  = Handle_C_LeaveRoom;
             Handlers[(int)PacketId.CGetRooms]   = Handle_C_GetRooms;
+            Handlers[(int)PacketId.CStartGame]  = Handle_C_StartGame;
         }
 
         // 핸들러 구현 ============================================================
@@ -52,8 +48,7 @@ namespace LobbyServer
                 return;
             }
 
-            var res = new S_RoomCreated { Room = result.Data.Room };
-            session.Send(MakePacket(PacketId.SRoomCreated, res));
+            session.Send(MakePacket(PacketId.SRoomCreated, new S_RoomCreated { Room = result.Data.Room }));
         }
 
         static void Handle_C_JoinRoom(PacketSession session, ArraySegment<byte> body)
@@ -84,10 +79,17 @@ namespace LobbyServer
             var result = RoomManager.Instance.LeaveRoom((LobbySession)session);
             if (!result.Ok) return;
 
-            // 남은 멤버들에게 퇴장 알림
             var notifyBytes = MakePacket(PacketId.SPlayerLeft, new S_PlayerLeft { PlayerId = result.Data.Leaver.PlayerId });
             foreach (var s in result.Data.Remaining)
                 s.Send(notifyBytes);
+
+            // 방장이 나갔으면 남은 플레이어들에게 새 방장 알림
+            if (result.Data.NewCreatorId != -1)
+            {
+                var creatorBytes = MakePacket(PacketId.SCreatorChanged, new S_CreatorChanged { NewCreatorId = result.Data.NewCreatorId });
+                foreach (var s in result.Data.Remaining)
+                    s.Send(creatorBytes);
+            }
         }
 
         static void Handle_C_GetRooms(PacketSession session, ArraySegment<byte> body)
@@ -97,6 +99,29 @@ namespace LobbyServer
             var res = new S_RoomList();
             res.Rooms.AddRange(RoomManager.Instance.GetAllRooms());
             session.Send(MakePacket(PacketId.SRoomList, res));
+        }
+
+        static void Handle_C_StartGame(PacketSession session, ArraySegment<byte> body)
+        {
+            Console.WriteLine($"[Lobby] C_StartGame: sessionId={session.SessionId}");
+
+            var result = RoomManager.Instance.StartGame((LobbySession)session);
+            if (!result.Ok)
+            {
+                session.Send(MakePacket(PacketId.SError, new S_Error { Code = 3, Message = result.Error }));
+                return;
+            }
+
+            // 방의 모든 플레이어에게 게임 서버 포트 전달
+            var readyBytes = MakePacket(PacketId.SGameReady, new S_GameReady
+            {
+                Port   = result.Data.GamePort,
+                Host   = ProcessManager.GameServerHost,
+                RoomId = result.Data.RoomId,
+            });
+
+            foreach (var s in result.Data.AllSessions)
+                s.Send(readyBytes);
         }
 
         // 공통 유틸 =====================================================================
