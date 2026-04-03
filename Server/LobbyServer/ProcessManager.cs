@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using Microsoft.Extensions.Configuration;
 
 namespace LobbyServer
 {
@@ -9,21 +10,39 @@ namespace LobbyServer
     {
         public static readonly ProcessManager Instance = new();
 
-        // 개발 환경 기준 경로: LobbyServer/bin/Debug/net9.0/ 에서 4단계 상위 -> Server/ -> GameServer/bin/Debug/net9.0/
-        // 배포 시 이 경로를 환경에 맞게 수정
-        static readonly string GameServerExePath = Path.GetFullPath(
-            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "GameServer", "bin", "Debug", "net9.0", "GameServer.exe")
-        );
-
         const int BASE_PORT = 7771;
         const int MAX_ROOMS = 50;
 
-        // GameServer가 접속하는 호스트 (클라이언트에게 전달할 주소)
-        // 로컬 테스트: "127.0.0.1", 실제 서버: 서버 공인 IP로 변경
-        public const string GameServerHost = "127.0.0.1";
+        public readonly string GameServerHost;
+        readonly string _gameServerExePath;
 
         readonly object _lock = new();
         readonly HashSet<int> _usedPorts = new();
+
+        ProcessManager()
+        {
+            var env = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Development";
+
+            var config = new ConfigurationBuilder()
+                .SetBasePath(AppContext.BaseDirectory)
+                .AddJsonFile("appsettings.json", optional: false)
+                .Build();
+
+            // DOTNET_ENVIRONMENT 값에 해당하는 섹션 읽기
+            var section = config.GetSection(env);
+            GameServerHost = section["GameServerHost"] ?? "127.0.0.1";
+            string buildConfig = section["BuildConfig"] ?? "Debug";
+            string exeName = OperatingSystem.IsWindows() ? "GameServer.exe" : "GameServer";
+
+            _gameServerExePath = Path.GetFullPath(
+                Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..",
+                             "GameServer", "bin", buildConfig, "net9.0", exeName)
+            );
+
+            Console.WriteLine($"[ProcessManager] 환경: {env}");
+            Console.WriteLine($"[ProcessManager] GameServer 경로: {_gameServerExePath}");
+            Console.WriteLine($"[ProcessManager] GameServer 호스트: {GameServerHost}");
+        }
 
         // GameServer 프로세스 spawn
         // 성공 시 할당된 포트 반환, 실패 시 null
@@ -42,7 +61,7 @@ namespace LobbyServer
                 {
                     var psi = new ProcessStartInfo
                     {
-                        FileName = GameServerExePath,
+                        FileName = _gameServerExePath,
                         Arguments = $"{port} {roomId}",
                         UseShellExecute = false,
                     };
@@ -60,7 +79,7 @@ namespace LobbyServer
             }
         }
 
-        // GameServer 종료 시 포트 반납 (GameServer가 Lobby HTTP로 종료 보고 시 호출 예정)
+        // GameServer 종료 시 포트 반납 (4단계: LobbyReporter HTTP 보고 시 호출 예정)
         public void Release(int port)
         {
             lock (_lock)
