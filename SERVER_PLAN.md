@@ -73,14 +73,20 @@ Lobby ↔ Game Server 내부 통신은 localhost HTTP (REST)로 충분.
 
 ## 권한 분리
 
-| 항목 | 권한 |
-|------|------|
-| 플레이어 이동 | 클라 입력 → 서버 브로드캐스트 |
-| 공격 이벤트 | 클라 입력 → 서버 브로드캐스트 |
-| 데미지 판정 | 서버 권위 |
-| 적 스폰 | 서버 권위 |
-| 스테이지 타이머 | 서버 권위 |
-| 무기 애니메이션 | 순수 클라 표현 (서버 무관) |
+| 항목 | 권한 | 비고 |
+|------|------|------|
+| 플레이어 이동 | 클라 입력 → 서버 릴레이 | C_Move → S_Move |
+| 공격 판정 | 클라 보고 + 서버 검증 | C_Attack에 히트 대상 포함, 서버가 쿨타임/거리 검증 |
+| 적 AI | 호스트 클라 NavMesh 실행 → 서버 릴레이 | C_EnemySync → S_EnemySync |
+| 적 HP/사망 | 서버 권위 | S_EnemyDamaged, S_EnemyDied |
+| 적 스폰 타이밍 | 서버 권위 | S_EnemySpawn |
+| 적 공격 → 플레이어 피격 | 호스트 보고 → 서버 판정 | C_EnemyAttack → S_PlayerDamaged |
+| 스테이지 타이머 | 서버 권위 | S_TimerSync |
+| 경로 선택 | 방장만 | C_SelectRoute |
+| 하차/탑승 | 개인 요청 → 서버가 전원 확인 후 진행 | 전원 완료 시 S_AllExited / S_AllBoarded |
+| 맵 seed | 서버 생성 | S_GameStart에 포함 |
+| 호스트 이탈 | 서버가 다른 클라를 새 호스트로 지정 | S_HostChanged |
+| 무기 애니메이션 | 순수 클라 표현 (서버 무관) | |
 
 ## 패킷 프로토콜
 
@@ -92,36 +98,53 @@ Lobby ↔ Game Server 내부 통신은 localhost HTTP (REST)로 충분.
 패킷 정의는 `Common/Protos/`의 .proto 파일로 작성.
 `protoc`으로 서버(C#)와 클라(Unity C#) 코드를 동시에 자동 생성.
 
-### 패킷 목록 (예정)
+### 패킷 목록
 
-```protobuf
-// 공통
-C_Connected
-S_Connected
+#### 로비 (lobby.proto / LobbyProto)
+```
+C_Connected / S_Connected          // 접속
+C_CreateRoom / S_RoomCreated       // 방 생성
+C_JoinRoom / S_PlayerJoined        // 방 참가
+C_LeaveRoom / S_PlayerLeft         // 방 퇴장
+C_GetRooms / S_RoomList            // 방 목록
+C_StartGame / S_GameReady          // 게임 시작 (GameServer 포트 전달)
+S_CreatorChanged / S_Error         // 방장 위임 / 에러
+```
 
-// 로비 (Lobby Server)
-C_CreateRoom      // 방 만들기
-C_JoinRoom        // 방 참가
-C_LeaveRoom       // 방 나가기
-S_RoomList        // 방 목록 응답
-S_RoomCreated     // 방 생성 완료
-S_PlayerJoined    // 다른 플레이어 입장 알림
-S_GameReady       // 게임 시작 준비 (접속할 Game Server 포트 전달)
+#### 게임 (game.proto / GameProto)
+```
+// 접속/초기화
+C_EnterGame / S_EnterGame          // 게임서버 접속 (로비 playerId 사용)
+S_PlayerEntered / S_PlayerLeft     // 입장/퇴장 알림
+S_HostChanged                      // 호스트 변경
 
-// 게임 세션 (Game Server)
-C_PlayerMove      // 위치/회전 전송
-S_PlayerMove      // 다른 플레이어 위치 브로드캐스트
-C_PlayerAttack    // 공격 입력
-S_PlayerAttack    // 공격 브로드캐스트
-S_EnemySpawn      // 서버가 적 스폰 지시
-S_EnemyMove       // 적 위치 동기화
-S_TakeDamage      // 데미지 결과 전달
-S_StageTimer      // 타이머 동기화
+// 게임 시작/종료
+C_Ready / S_GameStart              // 씬 로딩 완료 → 게임 시작 (seed 포함)
+S_GameClear / S_GameOver           // 클리어 / 게임오버
 
-// 게임 흐름
-S_StageStart      // 스테이지 시작
-S_StageEnd        // 스테이지 종료
-S_GameOver        // 게임오버
+// 이동
+C_Move / S_Move                    // 플레이어 위치 동기화
+
+// 전투 (클라 보고 + 서버 검증)
+C_Attack / S_Attack                // 공격 입력 / 애니메이션 브로드캐스트
+S_EnemyDamaged / S_EnemyDied       // 적 피격/사망 (서버 권위)
+S_PlayerDamaged / S_PlayerDied     // 플레이어 피격/사망
+
+// 적 (호스트 AI + 서버 권위)
+S_EnemySpawn                       // 서버가 스폰 명령
+C_EnemySync / S_EnemySync          // 호스트가 AI 결과 보고 → 서버 릴레이
+C_EnemyAttack                      // 호스트가 적 공격 보고 → 서버가 S_PlayerDamaged
+
+// 스테이지 진행
+S_WaveStart / S_TimerSync          // 웨이브 시작 / 타이머 동기화
+S_StationArrived / S_SubwayStarted // 역 도착 / 지하철 출발
+C_ExitSubway / S_PlayerExited / S_AllExited     // 하차 (개인 요청 → 전원 확인)
+C_BoardSubway / S_PlayerBoarded / S_AllBoarded  // 탑승 (개인 요청 → 전원 확인)
+C_SelectRoute                      // 방장 경로 선택
+S_StationSkipped                   // 역 스킵 (미하차)
+
+// 상호작용
+C_Interact / S_InteractResult      // 상점/회복 등
 ```
 
 ## 서버 프로젝트 구조
@@ -199,20 +222,28 @@ Client/Assets/Scripts/Network/
 - [x] LobbySession: Session → PacketSession 상속으로 전환
 - [x] dotnet build 통과 확인
 
-### 3단계: 로비 시스템 ← 다음 시작점
+### 3단계: 로비 시스템 ✅ 완료
 - [x] LobbyServer/Lobby/LobbyPlayer.cs — 로비 내 플레이어 상태
 - [x] LobbyServer/Lobby/Room.cs — 대기방 (플레이어 목록, 상태)
 - [x] LobbyServer/Lobby/RoomManager.cs — 방 목록 관리 (thread-safe)
 - [x] LobbyPacketHandler의 TODO 채우기 (C_CreateRoom, C_JoinRoom, C_GetRooms 실제 로직)
-- [ ] 인원 충족 시 GameServer 프로세스 spawn (ProcessManager.cs)
-- [ ] 클라에 Game Server 포트 전달 (S_GameReady)
+- [x] ProcessManager.cs — GameServer 프로세스 spawn + 포트 할당
+- [x] S_GameReady로 클라에 Game Server 포트 전달
 
-### 4단계: 게임 세션 동기화
-- [ ] GameServer 프로젝트 구현 시작 (Program.cs — 인자로 포트/방ID 수신)
-- [ ] 플레이어 위치 동기화
-- [ ] 공격 이벤트 브로드캐스트
-- [ ] 적 스폰 서버 권위로 이전
-- [ ] 스테이지 타이머 서버 관리
+### 4단계: 게임 세션 동기화 ← 진행 중
+- [x] game.proto 작성 (GameProto 네임스페이스, 전체 패킷 정의 완료)
+- [x] gen.bat 업데이트 (game.proto → GameServer + Client 양쪽 생성)
+- [x] GameServer.csproj에 Google.Protobuf NuGet 추가
+- [x] GamePacketHandler.cs — PacketId 배열 디스패처 + MakePacket 유틸 (TODO 골격)
+- [x] GameSession.cs — GamePacketHandler 연결
+- [x] dotnet build 통과 확인
+- [ ] GameRoom.cs — 게임 룸 (플레이어 목록, 호스트 관리, 준비 카운트)
+- [ ] GamePlayer.cs — 서버 측 플레이어 상태 (HP, 위치)
+- [ ] EnemyManager.cs — 적 상태 관리 (HP, ID 발급, 스폰 스케줄)
+- [ ] GamePacketHandler TODO 구현 (C_EnterGame, C_Ready, C_Move 등)
+- [ ] 호스트 이탈 시 S_HostChanged 처리
+- [ ] 스테이지 타이머 서버 관리 (S_WaveStart, S_TimerSync)
+- [ ] 하차/탑승 전원 확인 로직 (S_AllExited, S_AllBoarded)
 
 ## 주요 구현 메모
 

@@ -1,0 +1,310 @@
+syntax = "proto3";
+
+option csharp_namespace = "GameProto";
+
+// ===================================================
+//  패킷 ID 열거형
+//  C_ : Client to Server
+//  S_ : Server to Client
+// ===================================================
+enum GamePacketId {
+  NONE = 0;
+
+  // --- 접속/초기화 ---
+  C_ENTER_GAME      = 1;
+  S_ENTER_GAME      = 2;
+  S_PLAYER_ENTERED  = 3;
+  S_PLAYER_LEFT     = 4;
+  S_HOST_CHANGED    = 5;
+
+  // --- 게임 시작/종료 ---
+  C_READY            = 10;
+  S_GAME_START       = 11;
+  S_GAME_CLEAR       = 12;
+  S_GAME_OVER        = 13;
+
+  // --- 플레이어 이동 ---
+  C_MOVE             = 20;
+  S_MOVE             = 21;
+
+  // --- 전투 (클라 보고 + 서버 검증) ---
+  C_ATTACK           = 30;
+  S_ATTACK           = 31;
+  S_ENEMY_DAMAGED    = 32;
+  S_ENEMY_DIED       = 33;
+  S_PLAYER_DAMAGED   = 34;
+  S_PLAYER_DIED      = 35;
+
+  // --- 적 동기화 (호스트 AI + 서버 권위) ---
+  S_ENEMY_SPAWN      = 40;
+  C_ENEMY_SYNC       = 41;
+  S_ENEMY_SYNC       = 42;
+  C_ENEMY_ATTACK     = 43;
+
+  // --- 스테이지 진행 ---
+  S_WAVE_START       = 50;
+  S_TIMER_SYNC       = 51;
+  S_STATION_ARRIVED  = 52;
+  S_SUBWAY_STARTED   = 53;
+  C_EXIT_SUBWAY      = 54;
+  S_PLAYER_EXITED    = 55;
+  S_ALL_EXITED       = 56;
+  C_BOARD_SUBWAY     = 57;
+  S_PLAYER_BOARDED   = 58;
+  C_SELECT_ROUTE     = 59;
+  S_ALL_BOARDED      = 60;
+  S_STATION_SKIPPED  = 61;
+
+  // --- 상호작용 ---
+  C_INTERACT         = 70;
+  S_INTERACT_RESULT  = 71;
+}
+
+// ===================================================
+//  공통 서브타입
+// ===================================================
+
+message GamePlayerInfo {
+  int32  player_id   = 1;
+  string player_name = 2;
+  bool   is_host     = 3;
+}
+
+message EnemySyncData {
+  int32 enemy_id         = 1;
+  float pos_x            = 2;
+  float pos_y            = 3;
+  float pos_z            = 4;
+  float rot_y            = 5;
+  int32 state            = 6;   // 0=Idle, 1=Chase, 2=Attack
+  int32 target_player_id = 7;
+}
+
+// ===================================================
+//  1. 접속/초기화
+// ===================================================
+
+// 클라 -> 서버: 게임서버 접속 (로비에서 받은 ID 사용)
+message C_EnterGame {
+  int32  player_id   = 1;
+  string player_name = 2;
+}
+
+// 서버 -> 클라: 접속 수락 + 현재 플레이어 목록
+message S_EnterGame {
+  bool   is_host = 1;
+  repeated GamePlayerInfo players = 2;
+}
+
+// 서버 -> 클라: 새 플레이어 입장 브로드캐스트
+message S_PlayerEntered {
+  GamePlayerInfo player = 1;
+}
+
+// 서버 -> 클라: 플레이어 퇴장 브로드캐스트
+message S_PlayerLeft {
+  int32 player_id = 1;
+}
+
+// 서버 -> 클라: 호스트 변경 (호스트 이탈 시)
+message S_HostChanged {
+  int32 new_host_id = 1;
+}
+
+// ===================================================
+//  2. 게임 시작/종료
+// ===================================================
+
+// 클라 -> 서버: 씬 로딩 완료 보고
+message C_Ready {
+}
+
+// 서버 -> 클라: 전원 준비 완료, 게임 시작
+message S_GameStart {
+  int32 map_seed = 1;
+}
+
+// 서버 -> 클라: 종착역 도달, 게임 클리어
+message S_GameClear {
+}
+
+// 서버 -> 클라: 전원 사망 등 게임 오버
+message S_GameOver {
+}
+
+// ===================================================
+//  3. 플레이어 이동 동기화
+// ===================================================
+
+// 클라 -> 서버: 자기 위치/상태 전송 (초당 10~15회)
+message C_Move {
+  float pos_x      = 1;
+  float pos_y      = 2;
+  float pos_z      = 3;
+  float rot_y      = 4;   // PlayerModel 수평 회전
+  bool  is_moving  = 5;
+  bool  is_dodging = 6;
+}
+
+// 서버 -> 클라: 다른 플레이어 위치 브로드캐스트
+message S_Move {
+  int32 player_id  = 1;
+  float pos_x      = 2;
+  float pos_y      = 3;
+  float pos_z      = 4;
+  float rot_y      = 5;
+  bool  is_moving  = 6;
+  bool  is_dodging = 7;
+}
+
+// ===================================================
+//  4. 전투 (클라 보고 + 서버 검증)
+// ===================================================
+
+// 클라 -> 서버: 공격 입력 + 히트 대상 보고
+message C_Attack {
+  int32 weapon_id = 1;
+  repeated int32 hit_enemy_ids = 2;
+}
+
+// 서버 -> 클라: 다른 플레이어 공격 애니메이션 브로드캐스트
+message S_Attack {
+  int32 player_id = 1;
+  int32 weapon_id = 2;
+}
+
+// 서버 -> 클라: 적 피격 결과 (서버 검증 후)
+message S_EnemyDamaged {
+  int32 enemy_id   = 1;
+  int32 current_hp = 2;
+}
+
+// 서버 -> 클라: 적 사망 확정
+message S_EnemyDied {
+  int32 enemy_id = 1;
+}
+
+// 서버 -> 클라: 플레이어 피격
+message S_PlayerDamaged {
+  int32 player_id  = 1;
+  int32 damage     = 2;
+  int32 current_hp = 3;
+}
+
+// 서버 -> 클라: 플레이어 사망
+message S_PlayerDied {
+  int32 player_id = 1;
+}
+
+// ===================================================
+//  5. 적 동기화 (호스트 AI + 서버 권위)
+// ===================================================
+
+// 서버 -> 클라: 적 스폰 명령
+message S_EnemySpawn {
+  int32  enemy_id   = 1;   // 서버가 부여한 고유 ID
+  string enemy_type = 2;   // EnemyData 이름 (prefab 매칭용)
+  float  pos_x      = 3;
+  float  pos_y      = 4;
+  float  pos_z      = 5;
+}
+
+// 호스트 -> 서버: 적 위치/상태 일괄 보고 (초당 10회)
+message C_EnemySync {
+  repeated EnemySyncData enemies = 1;
+}
+
+// 서버 -> 비호스트: 적 위치/상태 브로드캐스트
+message S_EnemySync {
+  repeated EnemySyncData enemies = 1;
+}
+
+// 호스트 -> 서버: 적이 플레이어를 공격함 보고
+message C_EnemyAttack {
+  int32 enemy_id         = 1;
+  int32 target_player_id = 2;
+  int32 damage           = 3;
+}
+
+// ===================================================
+//  6. 스테이지 진행
+// ===================================================
+
+// 서버 -> 클라: 웨이브 시작
+message S_WaveStart {
+  int32 wave_index = 1;
+  float duration   = 2;
+}
+
+// 서버 -> 클라: 타이머 동기화 (주기적)
+message S_TimerSync {
+  float remaining = 1;
+  float total     = 2;
+}
+
+// 서버 -> 클라: 역 도착, Exit 활성화
+message S_StationArrived {
+}
+
+// 서버 -> 클라: 지하철 출발
+message S_SubwayStarted {
+}
+
+// 클라 -> 서버: 하차 요청 (개인 신호)
+message C_ExitSubway {
+}
+
+// 서버 -> 클라: 누가 하차 요청했는지 브로드캐스트
+message S_PlayerExited {
+  int32 player_id    = 1;
+  int32 exited_count = 2;   // 현재까지 하차 요청한 인원
+  int32 total_count  = 3;   // 전체 인원
+}
+
+// 서버 -> 클라: 전원 하차 완료 -> Station 씬 전환
+message S_AllExited {
+}
+
+// 클라 -> 서버: 탑승 요청 (개인 신호)
+message C_BoardSubway {
+}
+
+// 서버 -> 클라: 누가 탑승 요청했는지 브로드캐스트
+message S_PlayerBoarded {
+  int32 player_id     = 1;
+  int32 boarded_count = 2;
+  int32 total_count   = 3;
+}
+
+// 방장 -> 서버: 다음 역 선택
+message C_SelectRoute {
+  int32 node_index = 1;   // StageMap에서의 노드 인덱스
+}
+
+// 서버 -> 클라: 전원 탑승 + 경로 선택 완료 -> Subway 씬 전환
+message S_AllBoarded {
+  int32 node_index = 1;
+}
+
+// 서버 -> 클라: 역 스킵 (미하차 타이머 초과)
+message S_StationSkipped {
+  int32 node_index = 1;   // 서버가 랜덤 선택한 다음 역
+}
+
+// ===================================================
+//  7. 상호작용 (역 내부)
+// ===================================================
+
+// 클라 -> 서버: 상호작용 요청
+message C_Interact {
+  int32 object_id = 1;
+  int32 type      = 2;   // 0=Heal, 1=Shop, 2=Vending
+}
+
+// 서버 -> 클라: 상호작용 결과
+message S_InteractResult {
+  bool  success    = 1;
+  int32 player_id  = 2;
+  int32 current_hp = 3;
+  int32 gold       = 4;
+}

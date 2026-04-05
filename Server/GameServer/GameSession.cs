@@ -14,12 +14,27 @@ namespace GameServer
         public override void OnDisconnected(EndPoint endPoint)
         {
             Console.WriteLine($"[GameSession] 해제: {endPoint} / SessionId: {SessionId}");
+
+            // TODO: GameRoom에서 플레이어 제거, S_PlayerLeft 브로드캐스트
+            // TODO: 호스트였으면 S_HostChanged 브로드캐��트
         }
 
         public override void OnRecvPacket(ushort id, ArraySegment<byte> body)
         {
-            // 4단계에서 GamePacketHandler 연결 예정
-            Console.WriteLine($"[GameSession] 패킷 수신: id={id}, size={body.Count}");
+            if (id >= GamePacketHandler.Handlers.Length)
+            {
+                Console.WriteLine($"[GameSession] 알 수 없는 PacketId: {id}");
+                return;
+            }
+
+            var handler = GamePacketHandler.Handlers[id];
+            if (handler == null)
+            {
+                Console.WriteLine($"[GameSession] 핸들러 미등록 PacketId: {id}");
+                return;
+            }
+
+            handler.Invoke(this, body);
         }
 
         public override void OnSend(int numOfBytes) { }

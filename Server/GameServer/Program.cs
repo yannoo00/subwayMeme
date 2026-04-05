@@ -1,6 +1,7 @@
 using System;
 using System.Net;
 using ServerCore;
+using GameServer;
 
 // LobbyServer가 Process.Start("GameServer.exe", "{port} {roomId}") 로 실행
 if (args.Length < 2 || !int.TryParse(args[0], out int port) || !int.TryParse(args[1], out int roomId))
