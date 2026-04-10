@@ -260,36 +260,44 @@ Client/Assets/Scripts/Network/
 - [ ] C_Attack 검증 로직 (쿨타임/거리)
 - [ ] LobbyReporter.cs — 게임 종료 시 LobbyServer에 HTTP 보고
 
-### 5단계: Unity 클라이언트 연동 ← 다음 작업
+### 5단계: Unity 클라이언트 연동 ← 진행 중
 #### 5-1. 네트워크 파이프라인
-- [ ] `MainThreadDispatcher.cs` — ConcurrentQueue + Update() 로 수신 패킷을 메인 스레드에 전달
-- [ ] `ServerSession.cs` — TcpClient + async/await 수신 루프, [size][id][body] 헤더 파싱 후 큐 적재
-- [ ] `PacketDispatcher.cs` — 패킷 ID → Action 핸들러 딕셔너리, 등록/호출
+- [x] `MainThreadDispatcher.cs` — ConcurrentQueue + Update() 로 수신 패킷을 메인 스레드에 전달
+- [x] `ServerSession.cs` — TcpClient + async/await 수신 루프, [size][id][body] 헤더 파싱, ReadExactAsync로 단편화 처리
+- [x] `PacketDispatcher.cs` — 패킷 ID → Action 핸들러 딕셔너리 (순수 C# 싱글톤)
+- [x] `NetworkManager.cs` — MonoBehaviour 싱글톤, 연결 관리, 로컬 상태(PlayerId/IsHost/Port), 송신 유틸
 
 #### 5-2. 로비 패킷 처리
-- [ ] `LobbyPacketHandler.cs` (Unity) — S_ 수신 처리
-  - [ ] S_Connected → 로컬 PlayerId 저장
-  - [ ] S_RoomCreated / S_PlayerJoined / S_PlayerLeft → 방 UI 갱신
-  - [ ] S_RoomList → 방 목록 UI 갱신
-  - [ ] S_CreatorChanged → 방장 표시 갱신
-  - [ ] S_GameReady → GameServer 포트 저장 후 게임씬 로드
+- [x] `LobbyPacketHandler.cs` (Unity) — S_ 수신 처리 (핵심 로직 완료, UI 연동 TODO)
+  - [x] S_Connected → NetworkManager.MyPlayerId 저장
+  - [x] S_RoomCreated / S_PlayerJoined / S_PlayerLeft → TODO: 방 UI 갱신
+  - [x] S_RoomList → TODO: 방 목록 UI 갱신
+  - [x] S_CreatorChanged → TODO: 방장 표시 갱신
+  - [x] S_GameReady → GameServerPort 저장, TODO: 게임씬 로드 후 ConnectToGameAsync
 
 #### 5-3. 게임 패킷 처리
-- [ ] `GamePacketHandler.cs` (Unity) — S_ 수신 처리
-  - [ ] S_EnterGame → 플레이어 목록 초기화, 호스트 여부 저장
-  - [ ] S_PlayerEntered / S_PlayerLeft → 다른 플레이어 오브젝트 생성/제거
-  - [ ] S_HostChanged → 호스트 권한 전환 (NavMesh 활성화 등)
-  - [ ] S_GameStart → seed로 맵 생성, 게임 시작
-  - [ ] S_Move → 다른 플레이어 위치 보간 (Lerp)
-  - [ ] S_Attack → 다른 플레이어 공격 애니메이션 재생
-  - [ ] S_EnemySpawn / S_EnemySync / S_EnemyDamaged / S_EnemyDied → 적 상태 반영
-  - [ ] S_PlayerDamaged / S_PlayerDied → 피격 UI, 사망 처리
-  - [ ] S_WaveStart / S_TimerSync → 웨이브/타이머 UI
-  - [ ] S_AllExited / S_AllBoarded → 씬 전환 트리거
-  - [ ] S_GameClear / S_GameOver → 결과 화면
+- [x] `ClientGamePacketHandler.cs` (Unity) — S_ 수신 처리 (핵심 로직 완료, 게임오브젝트 연동 TODO)
+  - [x] S_EnterGame → IsHost 저장, TODO: 플레이어 오브젝트 초기화
+  - [x] S_PlayerEntered / S_PlayerLeft → TODO: 다른 플레이어 오브젝트 생성/제거
+  - [x] S_HostChanged → NetworkManager.IsHost 갱신, TODO: NavMesh 권한 전환
+  - [x] S_GameStart → TODO: MapGenerator seed 전달, GameManager.StartGame()
+  - [x] S_Move → TODO: 다른 플레이어 위치 Lerp
+  - [x] S_Attack → TODO: 공격 애니메이션 재생
+  - [x] S_EnemySpawn / S_EnemySync / S_EnemyDamaged / S_EnemyDied → TODO: 적 상태 반영
+  - [x] S_PlayerDamaged / S_PlayerDied → TODO: 피격 UI, GameManager.EndGame()
+  - [x] S_WaveStart / S_TimerSync → TODO: 웨이브/타이머 UI
+  - [x] S_AllExited → SceneLoader.LoadStation() 연결 완료
+  - [x] S_AllBoarded → SceneLoader.LoadSubway() 연결 완료
+  - [x] S_GameClear / S_GameOver → TODO: 결과 UI, GameManager.EndGame()
 
-#### 5-4. 게임씬 연동
-- [ ] 로비씬: LobbyServer 접속, 방 생성/참가 UI → C_ 패킷 송신
+#### 5-4. 게임씬 연동 ← 다음 작업
+- [ ] SceneLoader에 로비씬 추가 (현재 Station/Subway만 있음)
+- [ ] S_GameReady → 씬 로드 완료 콜백에서 ConnectToGameAsync() 호출 연결
+- [ ] 로비 UI: 방 생성/참가/목록 버튼 → C_ 패킷 송신
+- [ ] 게임씬: 다른 플레이어 오브젝트 프리팹 및 PlayerManager 구현
+- [ ] PlayerController → C_Move / C_Attack 송신 연결
+- [ ] 호스트 전용: C_EnemySync / C_EnemyAttack 송신 연결
+- [ ] 씬 로드 완료 시 C_Ready 송신
 - [ ] 게임씬 로드 후 GameServer 접속 → C_EnterGame 송신
 - [ ] 씬 로딩 완료 시 C_Ready 송신
 - [ ] PlayerController → 이동/공격 입력 시 C_Move / C_Attack 송신
