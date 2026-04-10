@@ -1,5 +1,6 @@
 using System;
 using System.Net;
+using GameProto;
 using ServerCore;
 
 namespace GameServer
@@ -15,8 +16,26 @@ namespace GameServer
         {
             Console.WriteLine($"[GameSession] 해제: {endPoint} / SessionId: {SessionId}");
 
-            // TODO: GameRoom에서 플레이어 제거, S_PlayerLeft 브로드캐스트
-            // TODO: 호스트였으면 S_HostChanged 브로드캐��트
+            var result = GameRoom.Instance.Remove(SessionId);
+            if (result.Leaver == null) return;
+
+            // 나머지 플레이어에게 퇴장 알림
+            var leftBytes = GamePacketHandler.MakePacket(
+                GamePacketId.SPlayerLeft,
+                new S_PlayerLeft { PlayerId = result.Leaver.PlayerId });
+            foreach (var s in result.Remaining)
+                s.Send(leftBytes);
+
+            // 호스트가 나갔으면 새 호스트 지정 알림
+            if (result.NewHostPlayerId != -1)
+            {
+                Console.WriteLine($"[GameSession] 호스트 이탈 -> 새 호스트: playerId={result.NewHostPlayerId}");
+                var hostBytes = GamePacketHandler.MakePacket(
+                    GamePacketId.SHostChanged,
+                    new S_HostChanged { NewHostId = result.NewHostPlayerId });
+                foreach (var s in result.Remaining)
+                    s.Send(hostBytes);
+            }
         }
 
         public override void OnRecvPacket(ushort id, ArraySegment<byte> body)

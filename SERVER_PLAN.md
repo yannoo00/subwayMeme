@@ -230,20 +230,70 @@ Client/Assets/Scripts/Network/
 - [x] ProcessManager.cs — GameServer 프로세스 spawn + 포트 할당
 - [x] S_GameReady로 클라에 Game Server 포트 전달
 
-### 4단계: 게임 세션 동기화 ← 진행 중
+### 4단계: 게임 세션 동기화 (서버) ← 진행 중
 - [x] game.proto 작성 (GameProto 네임스페이스, 전체 패킷 정의 완료)
 - [x] gen.bat 업데이트 (game.proto → GameServer + Client 양쪽 생성)
 - [x] GameServer.csproj에 Google.Protobuf NuGet 추가
-- [x] GamePacketHandler.cs — PacketId 배열 디스패처 + MakePacket 유틸 (TODO 골격)
-- [x] GameSession.cs — GamePacketHandler 연결
+- [x] GamePacketHandler.cs — PacketId 배열 디스패처 + MakePacket 유틸
+- [x] GameSession.cs — GamePacketHandler 연결, OnDisconnected 호스트 migration 처리
+- [x] GamePlayer.cs — 서버 측 플레이어 상태 (PlayerId, IsHost, IsReady, Hp)
+- [x] GameRoom.cs — thread-safe 싱글턴, result record 패턴 (RemoveResult 등 6종)
+  - [x] Add / Remove (호스트 이탈 시 자동 migration)
+  - [x] MarkReady → 전원 준비 시 seed 생성
+  - [x] MarkExited / MarkBoarded / SelectRoute → 하차/탑승 전원 확인
+  - [x] ApplyPlayerDamage → 서버 권위 플레이어 HP 관리
+  - [x] ResetStageState → 역 이동 후 카운터 리셋
+- [x] GamePacketHandler 핸들러 전체 구현
+  - [x] C_EnterGame → S_EnterGame + S_PlayerEntered
+  - [x] C_Ready → S_GameStart (seed 포함)
+  - [x] C_Move → S_Move 릴레이
+  - [x] C_Attack → S_Attack + S_EnemyDamaged 브로드캐스트
+  - [x] C_EnemySync → S_EnemySync 릴레이 (호스트 검증)
+  - [x] C_EnemyAttack → S_PlayerDamaged / S_PlayerDied (서버 HP 적용)
+  - [x] C_ExitSubway → S_PlayerExited / S_AllExited
+  - [x] C_BoardSubway + C_SelectRoute → S_PlayerBoarded / S_AllBoarded
+  - [x] C_Interact → S_InteractResult
+- [x] 호스트 이탈 시 S_HostChanged 브로드캐스트
 - [x] dotnet build 통과 확인
-- [ ] GameRoom.cs — 게임 룸 (플레이어 목록, 호스트 관리, 준비 카운트)
-- [ ] GamePlayer.cs — 서버 측 플레이어 상태 (HP, 위치)
-- [ ] EnemyManager.cs — 적 상태 관리 (HP, ID 발급, 스폰 스케줄)
-- [ ] GamePacketHandler TODO 구현 (C_EnterGame, C_Ready, C_Move 등)
-- [ ] 호스트 이탈 시 S_HostChanged 처리
-- [ ] 스테이지 타이머 서버 관리 (S_WaveStart, S_TimerSync)
-- [ ] 하차/탑승 전원 확인 로직 (S_AllExited, S_AllBoarded)
+- [ ] EnemyManager.cs — 적 HP 서버 권위 관리, 스폰 ID 발급
+- [ ] StageTimer.cs — S_WaveStart / S_TimerSync 서버 주도 발송
+- [ ] C_Attack 검증 로직 (쿨타임/거리)
+- [ ] LobbyReporter.cs — 게임 종료 시 LobbyServer에 HTTP 보고
+
+### 5단계: Unity 클라이언트 연동 ← 다음 작업
+#### 5-1. 네트워크 파이프라인
+- [ ] `MainThreadDispatcher.cs` — ConcurrentQueue + Update() 로 수신 패킷을 메인 스레드에 전달
+- [ ] `ServerSession.cs` — TcpClient + async/await 수신 루프, [size][id][body] 헤더 파싱 후 큐 적재
+- [ ] `PacketDispatcher.cs` — 패킷 ID → Action 핸들러 딕셔너리, 등록/호출
+
+#### 5-2. 로비 패킷 처리
+- [ ] `LobbyPacketHandler.cs` (Unity) — S_ 수신 처리
+  - [ ] S_Connected → 로컬 PlayerId 저장
+  - [ ] S_RoomCreated / S_PlayerJoined / S_PlayerLeft → 방 UI 갱신
+  - [ ] S_RoomList → 방 목록 UI 갱신
+  - [ ] S_CreatorChanged → 방장 표시 갱신
+  - [ ] S_GameReady → GameServer 포트 저장 후 게임씬 로드
+
+#### 5-3. 게임 패킷 처리
+- [ ] `GamePacketHandler.cs` (Unity) — S_ 수신 처리
+  - [ ] S_EnterGame → 플레이어 목록 초기화, 호스트 여부 저장
+  - [ ] S_PlayerEntered / S_PlayerLeft → 다른 플레이어 오브젝트 생성/제거
+  - [ ] S_HostChanged → 호스트 권한 전환 (NavMesh 활성화 등)
+  - [ ] S_GameStart → seed로 맵 생성, 게임 시작
+  - [ ] S_Move → 다른 플레이어 위치 보간 (Lerp)
+  - [ ] S_Attack → 다른 플레이어 공격 애니메이션 재생
+  - [ ] S_EnemySpawn / S_EnemySync / S_EnemyDamaged / S_EnemyDied → 적 상태 반영
+  - [ ] S_PlayerDamaged / S_PlayerDied → 피격 UI, 사망 처리
+  - [ ] S_WaveStart / S_TimerSync → 웨이브/타이머 UI
+  - [ ] S_AllExited / S_AllBoarded → 씬 전환 트리거
+  - [ ] S_GameClear / S_GameOver → 결과 화면
+
+#### 5-4. 게임씬 연동
+- [ ] 로비씬: LobbyServer 접속, 방 생성/참가 UI → C_ 패킷 송신
+- [ ] 게임씬 로드 후 GameServer 접속 → C_EnterGame 송신
+- [ ] 씬 로딩 완료 시 C_Ready 송신
+- [ ] PlayerController → 이동/공격 입력 시 C_Move / C_Attack 송신
+- [ ] 호스트 전용: NavMesh 결과 → C_EnemySync, 적 공격 → C_EnemyAttack 송신
 
 ## 주요 구현 메모
 

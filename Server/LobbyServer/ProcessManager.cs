@@ -53,7 +53,7 @@ namespace LobbyServer
                 int port = AllocatePort();
                 if (port == -1)
                 {
-                    Console.WriteLine("[ProcessManager] 사용 가능한 포트 없음");
+                    Console.WriteLine("[ProcessManager] 사용 가능한 포트 없음"); 
                     return null;
                 }
 
@@ -79,7 +79,7 @@ namespace LobbyServer
             }
         }
 
-        // GameServer 종료 시 포트 반납 (4단계: LobbyReporter HTTP 보고 시 호출 예정)
+        // GameServer 종료 시 포트 반납
         public void Release(int port)
         {
             lock (_lock)
