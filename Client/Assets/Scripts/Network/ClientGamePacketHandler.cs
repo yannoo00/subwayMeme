@@ -2,7 +2,7 @@ using GameProto;
 using UnityEngine;
 
 // 게임 서버에서 오는 S_ 패킷 처리
-// 항상 메인 스레드에서 호출됨 (MainThreadDispatcher 경유)
+// 항상 메인 스레드에서 호출됨 (UnitySynchronizationContext)
 public static class ClientGamePacketHandler
 {
     // 게임 서버 입장 완료: 내 역할(호스트 여부)과 현재 플레이어 목록 수신

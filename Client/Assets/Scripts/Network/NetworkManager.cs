@@ -77,7 +77,7 @@ public class NetworkManager : MonoBehaviour
 
     // === Private 메서드 ===
 
-    // 수신 패킷 ID → 핸들러 함수 등록
+    // 수신 패킷 ID에 핸들러 함수 등록
     // Dispatch는 항상 메인 스레드에서 호출되므로 스레드 안전
     private void RegisterHandlers()
     {

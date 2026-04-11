@@ -17,7 +17,7 @@ public class PacketDispatcher
         _handlers[packetId] = handler;
     }
 
-    // ServerSession 수신 스레드 → MainThreadDispatcher → 여기서 호출 (메인 스레드)
+    // ServerSession의 ReceiveLoopAsync에서 호출 (메인 스레드)
     public void Dispatch(ushort packetId, byte[] body)
     {
         if (_handlers.TryGetValue(packetId, out var handler))

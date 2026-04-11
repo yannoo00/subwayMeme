@@ -48,7 +48,7 @@ public class ServerSession : MonoBehaviour
 
             Debug.Log($"[ServerSession] 접속 성공: {host}:{port}");
 
-            // 수신 루프 시작 — async라 스레드풀에서 돌지만 await 필요 없음
+            // 수신 루프 시작 — UnitySynchronizationContext에 의해 메인 스레드에서 실행
             // 예외는 루프 내부에서 처리
             _ = ReceiveLoopAsync(_cts.Token);
         }
@@ -83,7 +83,7 @@ public class ServerSession : MonoBehaviour
                 // 1단계: 헤더 4바이트를 정확히 읽기
                 byte[] header = await ReadExactAsync(HEADER_SIZE, ct);
 
-                // 2단계: 헤더 파싱 (서버와 동일하게 Little-Endian)
+                // 2단계: 헤더 파싱 (서버와 동일하게 LittleEndian)
                 ushort totalSize = BitConverter.ToUInt16(header, 0);
                 ushort packetId  = BitConverter.ToUInt16(header, 2);
 
@@ -93,10 +93,8 @@ public class ServerSession : MonoBehaviour
                     ? await ReadExactAsync(bodySize, ct)
                     : Array.Empty<byte>();
 
-                // 4단계: 메인 스레드에서 패킷 처리
-                // PacketDispatcher는 다음 단계에서 구현
-                MainThreadDispatcher.Instance.Enqueue(() =>
-                    PacketDispatcher.Instance.Dispatch(packetId, body));
+                // 4단계: 패킷 처리 (이미 메인 스레드)
+                PacketDispatcher.Instance.Dispatch(packetId, body);
             }
         }
         catch (OperationCanceledException)
@@ -106,7 +104,7 @@ public class ServerSession : MonoBehaviour
         catch (Exception e)
         {
             Debug.LogError($"[ServerSession] 수신 오류: {e.Message}");
-            MainThreadDispatcher.Instance.Enqueue(OnDisconnected);
+            OnDisconnected();
         }
     }
 

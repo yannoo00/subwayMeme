@@ -2,7 +2,7 @@ using LobbyProto;
 using UnityEngine;
 
 // 로비 서버에서 오는 S_ 패킷 처리
-// 항상 메인 스레드에서 호출됨 (MainThreadDispatcher 경유)
+// 항상 메인 스레드에서 호출됨 (UnitySynchronizationContext)
 public static class LobbyPacketHandler
 {
     // 접속 확인: 서버가 발급한 PlayerId를 로컬에 저장
