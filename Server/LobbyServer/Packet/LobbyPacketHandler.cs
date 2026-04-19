@@ -116,7 +116,7 @@ namespace LobbyServer
             var readyBytes = MakePacket(PacketId.SGameReady, new S_GameReady
             {
                 Port   = result.Data.GamePort,
-                Host   = ProcessManager.GameServerHost,
+                Host   = ProcessManager.Instance.GameServerHost,
                 RoomId = result.Data.RoomId,
             });
 
