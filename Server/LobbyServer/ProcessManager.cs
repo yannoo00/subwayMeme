@@ -34,9 +34,10 @@ namespace LobbyServer
             string buildConfig = section["BuildConfig"] ?? "Debug";
             string exeName = OperatingSystem.IsWindows() ? "GameServer.exe" : "GameServer";
 
+            string tfm = $"net{Environment.Version.Major}.{Environment.Version.Minor}";
             _gameServerExePath = Path.GetFullPath(
                 Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..",
-                             "GameServer", "bin", buildConfig, "net10.0", exeName)
+                             "GameServer", "bin", buildConfig, tfm, exeName)
             );
 
             Console.WriteLine($"[ProcessManager] 환경: {env}");
