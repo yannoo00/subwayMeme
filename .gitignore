@@ -77,3 +77,7 @@ Thumbs.db
 
 # Cache
 [Cc]ache/
+
+# .NET server build output
+Server/**/bin/
+Server/**/obj/
