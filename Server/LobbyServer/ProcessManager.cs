@@ -36,7 +36,7 @@ namespace LobbyServer
 
             _gameServerExePath = Path.GetFullPath(
                 Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..",
-                             "GameServer", "bin", buildConfig, "net9.0", exeName)
+                             "GameServer", "bin", buildConfig, "net10.0", exeName)
             );
 
             Console.WriteLine($"[ProcessManager] 환경: {env}");
