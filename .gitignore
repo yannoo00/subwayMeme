@@ -27,6 +27,7 @@ asset_import_overrides.json
 ExportedObj/
 .consulo/
 *.csproj
+!Server/**/*.csproj
 *.unityproj
 *.sln
 *.slnx
