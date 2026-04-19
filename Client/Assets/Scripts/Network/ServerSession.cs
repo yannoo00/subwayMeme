@@ -48,7 +48,7 @@ public class ServerSession : MonoBehaviour
 
             Debug.Log($"[ServerSession] 접속 성공: {host}:{port}");
 
-            // 수신 루프 시작 — UnitySynchronizationContext에 의해 메인 스레드에서 실행
+            // 수신 루프 시작
             // 예외는 루프 내부에서 처리
             _ = ReceiveLoopAsync(_cts.Token);
         }
@@ -93,7 +93,7 @@ public class ServerSession : MonoBehaviour
                     ? await ReadExactAsync(bodySize, ct)
                     : Array.Empty<byte>();
 
-                // 4단계: 패킷 처리 (이미 메인 스레드)
+                // 4단계: 패킷 처리
                 PacketDispatcher.Instance.Dispatch(packetId, body);
             }
         }
