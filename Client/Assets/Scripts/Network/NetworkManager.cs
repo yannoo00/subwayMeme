@@ -25,6 +25,10 @@ public class NetworkManager : MonoBehaviour
     public bool   IsHost         { get; set; }
     public int    GameServerPort { get; set; }
 
+    // 현재 연결 대상에 맞는 디스패처를 반환
+    // ServerSession이 수신한 패킷을 올바른 핸들러로 전달하기 위해 사용
+    public PacketDispatcher CurrentDispatcher { get; private set; }
+
     private const int HEADER_SIZE = 4;
 
     // === Unity 생명주기 ===
@@ -43,6 +47,7 @@ public class NetworkManager : MonoBehaviour
         }
 
         RegisterHandlers();
+        CurrentDispatcher = PacketDispatcher.Lobby; // 시작 시 로비 연결 상태
     }
 
     // === Public 메서드 ===
@@ -50,7 +55,8 @@ public class NetworkManager : MonoBehaviour
     // 로비 서버 접속 후 C_Connected 자동 전송
     public async Task ConnectToLobbyAsync(string playerName)
     {
-        MyPlayerName = playerName;
+        MyPlayerName      = playerName;
+        CurrentDispatcher = PacketDispatcher.Lobby;
         await ServerSession.Instance.ConnectAsync(_serverHost, _lobbyPort);
         SendLobby(PacketId.CConnected, new C_Connected { PlayerName = playerName });
     }
@@ -59,6 +65,7 @@ public class NetworkManager : MonoBehaviour
     // S_GameReady 수신 후 씬 로드가 완료된 시점에 호출
     public async Task ConnectToGameAsync()
     {
+        CurrentDispatcher = PacketDispatcher.Game;
         await ServerSession.Instance.ConnectAsync(_serverHost, GameServerPort);
         SendGame(GamePacketId.CEnterGame, new C_EnterGame
         {
@@ -77,44 +84,43 @@ public class NetworkManager : MonoBehaviour
 
     // === Private 메서드 ===
 
-    // 수신 패킷 ID에 핸들러 함수 등록
-    // Dispatch는 항상 메인 스레드에서 호출되므로 스레드 안전
+    // 로비/게임 핸들러를 각각 별도 디스패처에 등록
+    // 두 프로토콜이 같은 패킷 ID를 사용해도 서로 간섭하지 않음
     private void RegisterHandlers()
     {
-        var d = PacketDispatcher.Instance;
+        var lobby = PacketDispatcher.Lobby;
+        lobby.Register((ushort)PacketId.SConnected,      LobbyPacketHandler.Handle_S_Connected);
+        lobby.Register((ushort)PacketId.SRoomCreated,    LobbyPacketHandler.Handle_S_RoomCreated);
+        lobby.Register((ushort)PacketId.SRoomList,       LobbyPacketHandler.Handle_S_RoomList);
+        lobby.Register((ushort)PacketId.SPlayerJoined,   LobbyPacketHandler.Handle_S_PlayerJoined);
+        lobby.Register((ushort)PacketId.SPlayerLeft,     LobbyPacketHandler.Handle_S_PlayerLeft);
+        lobby.Register((ushort)PacketId.SCreatorChanged, LobbyPacketHandler.Handle_S_CreatorChanged);
+        lobby.Register((ushort)PacketId.SGameReady,      LobbyPacketHandler.Handle_S_GameReady);
+        lobby.Register((ushort)PacketId.SError,          LobbyPacketHandler.Handle_S_Error);
 
-        // 로비 패킷
-        d.Register((ushort)PacketId.SConnected,      LobbyPacketHandler.Handle_S_Connected);
-        d.Register((ushort)PacketId.SRoomCreated,    LobbyPacketHandler.Handle_S_RoomCreated);
-        d.Register((ushort)PacketId.SRoomList,       LobbyPacketHandler.Handle_S_RoomList);
-        d.Register((ushort)PacketId.SPlayerJoined,   LobbyPacketHandler.Handle_S_PlayerJoined);
-        d.Register((ushort)PacketId.SPlayerLeft,     LobbyPacketHandler.Handle_S_PlayerLeft);
-        d.Register((ushort)PacketId.SCreatorChanged, LobbyPacketHandler.Handle_S_CreatorChanged);
-        d.Register((ushort)PacketId.SGameReady,      LobbyPacketHandler.Handle_S_GameReady);
-        d.Register((ushort)PacketId.SError,          LobbyPacketHandler.Handle_S_Error);
-
-        // 게임 패킷
-        d.Register((ushort)GamePacketId.SEnterGame,     ClientGamePacketHandler.Handle_S_EnterGame);
-        d.Register((ushort)GamePacketId.SPlayerEntered, ClientGamePacketHandler.Handle_S_PlayerEntered);
-        d.Register((ushort)GamePacketId.SPlayerLeft,    ClientGamePacketHandler.Handle_S_PlayerLeft);
-        d.Register((ushort)GamePacketId.SHostChanged,   ClientGamePacketHandler.Handle_S_HostChanged);
-        d.Register((ushort)GamePacketId.SGameStart,     ClientGamePacketHandler.Handle_S_GameStart);
-        d.Register((ushort)GamePacketId.SMove,          ClientGamePacketHandler.Handle_S_Move);
-        d.Register((ushort)GamePacketId.SAttack,        ClientGamePacketHandler.Handle_S_Attack);
-        d.Register((ushort)GamePacketId.SEnemySpawn,    ClientGamePacketHandler.Handle_S_EnemySpawn);
-        d.Register((ushort)GamePacketId.SEnemySync,     ClientGamePacketHandler.Handle_S_EnemySync);
-        d.Register((ushort)GamePacketId.SEnemyDamaged,  ClientGamePacketHandler.Handle_S_EnemyDamaged);
-        d.Register((ushort)GamePacketId.SEnemyDied,     ClientGamePacketHandler.Handle_S_EnemyDied);
-        d.Register((ushort)GamePacketId.SPlayerDamaged, ClientGamePacketHandler.Handle_S_PlayerDamaged);
-        d.Register((ushort)GamePacketId.SPlayerDied,    ClientGamePacketHandler.Handle_S_PlayerDied);
-        d.Register((ushort)GamePacketId.SWaveStart,     ClientGamePacketHandler.Handle_S_WaveStart);
-        d.Register((ushort)GamePacketId.STimerSync,     ClientGamePacketHandler.Handle_S_TimerSync);
-        d.Register((ushort)GamePacketId.SPlayerExited,  ClientGamePacketHandler.Handle_S_PlayerExited);
-        d.Register((ushort)GamePacketId.SAllExited,     ClientGamePacketHandler.Handle_S_AllExited);
-        d.Register((ushort)GamePacketId.SPlayerBoarded, ClientGamePacketHandler.Handle_S_PlayerBoarded);
-        d.Register((ushort)GamePacketId.SAllBoarded,    ClientGamePacketHandler.Handle_S_AllBoarded);
-        d.Register((ushort)GamePacketId.SGameClear,     ClientGamePacketHandler.Handle_S_GameClear);
-        d.Register((ushort)GamePacketId.SGameOver,      ClientGamePacketHandler.Handle_S_GameOver);
+        var game = PacketDispatcher.Game;
+        game.Register((ushort)GamePacketId.SEnterGame,     ClientGamePacketHandler.Handle_S_EnterGame);
+        game.Register((ushort)GamePacketId.SPlayerEntered, ClientGamePacketHandler.Handle_S_PlayerEntered);
+        game.Register((ushort)GamePacketId.SPlayerLeft,    ClientGamePacketHandler.Handle_S_PlayerLeft);
+        game.Register((ushort)GamePacketId.SHostChanged,   ClientGamePacketHandler.Handle_S_HostChanged);
+        game.Register((ushort)GamePacketId.SGameStart,     ClientGamePacketHandler.Handle_S_GameStart);
+        game.Register((ushort)GamePacketId.SMove,          ClientGamePacketHandler.Handle_S_Move);
+        game.Register((ushort)GamePacketId.SAttack,        ClientGamePacketHandler.Handle_S_Attack);
+        game.Register((ushort)GamePacketId.SEnemySpawn,    ClientGamePacketHandler.Handle_S_EnemySpawn);
+        game.Register((ushort)GamePacketId.SEnemySync,     ClientGamePacketHandler.Handle_S_EnemySync);
+        game.Register((ushort)GamePacketId.SEnemyDamaged,  ClientGamePacketHandler.Handle_S_EnemyDamaged);
+        game.Register((ushort)GamePacketId.SEnemyDied,     ClientGamePacketHandler.Handle_S_EnemyDied);
+        game.Register((ushort)GamePacketId.SPlayerDamaged, ClientGamePacketHandler.Handle_S_PlayerDamaged);
+        game.Register((ushort)GamePacketId.SPlayerDied,    ClientGamePacketHandler.Handle_S_PlayerDied);
+        game.Register((ushort)GamePacketId.SWaveStart,     ClientGamePacketHandler.Handle_S_WaveStart);
+        game.Register((ushort)GamePacketId.STimerSync,     ClientGamePacketHandler.Handle_S_TimerSync);
+        game.Register((ushort)GamePacketId.SPlayerExited,  ClientGamePacketHandler.Handle_S_PlayerExited);
+        game.Register((ushort)GamePacketId.SAllExited,     ClientGamePacketHandler.Handle_S_AllExited);
+        game.Register((ushort)GamePacketId.SPlayerBoarded, ClientGamePacketHandler.Handle_S_PlayerBoarded);
+        game.Register((ushort)GamePacketId.SAllBoarded,    ClientGamePacketHandler.Handle_S_AllBoarded);
+        game.Register((ushort)GamePacketId.SGameClear,     ClientGamePacketHandler.Handle_S_GameClear);
+        game.Register((ushort)GamePacketId.SGameOver,      ClientGamePacketHandler.Handle_S_GameOver);
+        game.Register((ushort)GamePacketId.SInteractResult,ClientGamePacketHandler.Handle_S_InteractResult);
     }
 
     // 서버의 MakePacket과 동일한 헤더 구조: [size 2byte][packetId 2byte][body]

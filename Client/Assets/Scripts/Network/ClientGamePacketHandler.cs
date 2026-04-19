@@ -15,6 +15,9 @@ public static class ClientGamePacketHandler
 
         // TODO: 다른 플레이어 오브젝트 생성 (pkt.Players 순회)
         // TODO: 호스트라면 NavMesh / 적 AI 권한 활성화
+
+        // 씬 로드 + 서버 접속 완료 신호 — 서버가 전원 준비 확인 후 S_GameStart 발행
+        NetworkManager.Instance.SendGame(GamePacketId.CReady, new C_Ready());
     }
 
     // 다른 플레이어 추가 입장
@@ -55,8 +58,8 @@ public static class ClientGamePacketHandler
 
         Debug.Log($"[Game] S_GameStart: seed={pkt.MapSeed}");
 
-        // TODO: MapGenerator.Instance.Generate(pkt.MapSeed)
-        // TODO: GameManager.Instance.StartGame()
+        // TODO: MapGenerator는 Station 씬 로드 시 소멸하므로, 씬 전환 전에 seed를 넘기는 흐름으로 추후 연결 필요
+        GameManager.Instance.StartGame();
     }
 
     // 다른 플레이어 이동: 해당 오브젝트 위치 보간 적용
@@ -233,5 +236,18 @@ public static class ClientGamePacketHandler
 
         // TODO: 게임오버 UI 표시
         GameManager.Instance.EndGame();
+    }
+
+    // 상호작용 결과 (자판기, 상점 등)
+    public static void Handle_S_InteractResult(byte[] body)
+    {
+        var pkt = S_InteractResult.Parser.ParseFrom(body);
+
+        Debug.Log($"[Game] S_InteractResult: success={pkt.Success}, hp={pkt.CurrentHp}, gold={pkt.Gold}");
+
+        if (!pkt.Success) return;
+
+        // TODO: pkt.CurrentHp로 HP바 갱신
+        // TODO: pkt.Gold로 골드 UI 갱신
     }
 }

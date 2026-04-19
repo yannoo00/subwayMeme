@@ -1,29 +1,138 @@
-/* === MainMenu === */
+/* === MainMenu + Lobby === */
 
-.main-menu-panel {
+/* 전체 화면 패널 공통 */
+.full-panel {
     position: absolute;
     width: 100%;
     height: 100%;
     background-color: rgb(0, 0, 0);
     align-items: center;
     justify-content: center;
+    flex-direction: column;
 }
 
-.start-button {
-    width: 200px;
-    height: 60px;
-    font-size: 24px;
+.game-title {
+    color: white;
+    font-size: 48px;
+    -unity-font-style: bold;
+    margin-bottom: 48px;
+}
+
+/* 버튼 공통 */
+.menu-button {
+    width: 240px;
+    height: 56px;
+    font-size: 20px;
     color: white;
     background-color: rgb(50, 120, 220);
     border-width: 2px;
     border-color: rgb(100, 180, 255);
     border-radius: 8px;
+    margin: 8px;
 }
 
-.start-button:hover {
-    background-color: rgb(70, 150, 250);
+.menu-button:hover   { background-color: rgb(70, 150, 250); }
+.menu-button:active  { background-color: rgb(30, 90, 180); }
+.menu-button:disabled {
+    background-color: rgb(50, 50, 60);
+    border-color: rgb(90, 90, 100);
+    color: rgb(120, 120, 130);
 }
 
-.start-button:active {
-    background-color: rgb(30, 90, 180);
+.menu-button--small {
+    width: 130px;
+    font-size: 16px;
+}
+
+.menu-button--danger {
+    background-color: rgb(150, 35, 35);
+    border-color: rgb(210, 70, 70);
+}
+.menu-button--danger:hover { background-color: rgb(190, 55, 55); }
+
+/* 다이얼로그 박스 */
+.dialog-box {
+    background-color: rgba(15, 18, 30, 0.96);
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: rgba(90, 140, 255, 0.3);
+    padding: 36px 44px;
+    min-width: 380px;
+    align-items: center;
+}
+
+.dialog-box--wide {
+    min-width: 580px;
+}
+
+.dialog-title {
+    color: white;
+    font-size: 24px;
+    -unity-font-style: bold;
+    margin-bottom: 20px;
+}
+
+/* 텍스트 입력 */
+.text-input {
+    width: 300px;
+    height: 40px;
+    margin-bottom: 20px;
+    font-size: 16px;
+    color: white;
+    background-color: rgb(28, 30, 45);
+    border-color: rgb(70, 95, 180);
+    border-radius: 4px;
+    border-width: 1px;
+}
+
+/* 스크롤 리스트 */
+.list-scroll {
+    width: 100%;
+    height: 240px;
+    background-color: rgba(0, 0, 0, 0.35);
+    border-radius: 6px;
+    margin-bottom: 16px;
+}
+
+/* 방 목록 항목 버튼 */
+.room-entry-button {
+    width: 100%;
+    height: 50px;
+    font-size: 16px;
+    color: white;
+    background-color: rgba(45, 75, 145, 0.5);
+    border-width: 0;
+    border-bottom-width: 1px;
+    border-color: rgba(90, 125, 200, 0.3);
+    border-radius: 0;
+    margin: 0;
+    padding: 0 16px;
+    -unity-text-align: middle-left;
+}
+.room-entry-button:hover { background-color: rgba(65, 105, 195, 0.7); }
+
+/* 플레이어 목록 항목 */
+.player-entry {
+    height: 42px;
+    font-size: 16px;
+    color: white;
+    padding: 0 16px;
+    border-bottom-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    -unity-text-align: middle-left;
+}
+
+/* 버튼 가로 배치 행 */
+.button-row {
+    flex-direction: row;
+    justify-content: flex-end;
+    width: 100%;
+    margin-top: 8px;
+}
+
+/* 방 인원 수 */
+.room-count {
+    color: rgba(190, 210, 255, 0.75);
+    font-size: 14px;
+    margin-bottom: 12px;
 }

@@ -1,5 +1,56 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
-    <ui:VisualElement name="main-menu-panel" class="main-menu-panel">
-        <ui:Button name="start-button" text="Start" class="start-button" />
+
+    <!-- 초기 메인 메뉴 -->
+    <ui:VisualElement name="main-menu-panel" class="full-panel">
+        <ui:Label text="SUBWAY" class="game-title" />
+        <ui:Button name="singleplay-button" text="싱글플레이" class="menu-button" />
+        <ui:Button name="multiplay-button"  text="멀티플레이" class="menu-button" />
     </ui:VisualElement>
+
+    <!-- 닉네임 입력 -->
+    <ui:VisualElement name="name-input-panel" class="full-panel" style="display: none;">
+        <ui:VisualElement class="dialog-box">
+            <ui:Label text="닉네임 입력" class="dialog-title" />
+            <ui:TextField name="name-field" class="text-input" />
+            <ui:Button name="connect-button" text="접속" class="menu-button" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+
+    <!-- 방 목록 -->
+    <ui:VisualElement name="room-list-panel" class="full-panel" style="display: none;">
+        <ui:VisualElement class="dialog-box dialog-box--wide">
+            <ui:Label text="방 목록" class="dialog-title" />
+            <ui:ScrollView name="room-scroll" class="list-scroll" />
+            <ui:VisualElement class="button-row">
+                <ui:Button name="refresh-button"     text="새로고침" class="menu-button menu-button--small" />
+                <ui:Button name="create-room-button" text="방 만들기" class="menu-button" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+
+    <!-- 방 만들기 -->
+    <ui:VisualElement name="create-room-panel" class="full-panel" style="display: none;">
+        <ui:VisualElement class="dialog-box">
+            <ui:Label text="방 만들기" class="dialog-title" />
+            <ui:TextField name="room-name-field" class="text-input" />
+            <ui:VisualElement class="button-row">
+                <ui:Button name="cancel-create-button"  text="취소"    class="menu-button menu-button--danger" />
+                <ui:Button name="confirm-create-button" text="만들기"  class="menu-button" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+
+    <!-- 대기방 -->
+    <ui:VisualElement name="waiting-room-panel" class="full-panel" style="display: none;">
+        <ui:VisualElement class="dialog-box dialog-box--wide">
+            <ui:Label name="room-name-label"  text="대기방" class="dialog-title" />
+            <ui:Label name="room-count-label" text="0 / 4"  class="room-count" />
+            <ui:ScrollView name="player-scroll" class="list-scroll" />
+            <ui:VisualElement class="button-row">
+                <ui:Button name="leave-room-button"  text="나가기"    class="menu-button menu-button--danger" />
+                <ui:Button name="start-game-button"  text="게임 시작" class="menu-button" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+
 </ui:UXML>

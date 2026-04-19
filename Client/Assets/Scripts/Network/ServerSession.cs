@@ -40,6 +40,10 @@ public class ServerSession : MonoBehaviour
     {
         try
         {
+            // 로비 to 게임 서버처럼 재연결 시 기존 연결을 먼저 정리
+            // 정리 안 하면 이전 ReceiveLoopAsync가 끝나지 않을 수 있음 
+            Disconnect();
+
             _cts    = new CancellationTokenSource();
             _client = new TcpClient();
 
@@ -93,8 +97,8 @@ public class ServerSession : MonoBehaviour
                     ? await ReadExactAsync(bodySize, ct)
                     : Array.Empty<byte>();
 
-                // 4단계: 패킷 처리
-                PacketDispatcher.Instance.Dispatch(packetId, body);
+                // 4단계: 현재 연결 대상(로비/게임)의 디스패처로 전달
+                NetworkManager.Instance.CurrentDispatcher.Dispatch(packetId, body);
             }
         }
         catch (OperationCanceledException)

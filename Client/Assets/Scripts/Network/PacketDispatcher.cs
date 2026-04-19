@@ -5,7 +5,8 @@ using UnityEngine;
 // MonoBehaviour 불필요 - Unity 생명주기 없이 딕셔너리 조회만 하므로 순수 C# 싱글톤
 public class PacketDispatcher
 {
-    public static readonly PacketDispatcher Instance = new();
+    public static readonly PacketDispatcher Lobby = new(); 
+    public static readonly PacketDispatcher Game  = new(); 
 
     private readonly Dictionary<ushort, Action<byte[]>> _handlers = new();
 
