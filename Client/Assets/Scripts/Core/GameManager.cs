@@ -74,12 +74,12 @@ public class GameManager : MonoBehaviour
 
 
     //게임 진행 관련
-    public void StartGame()
+    public void StartGame(int seed)
     {
         Time.timeScale = 1f;
         ChangeState(GameState.Playing);
-        
-        StageManager.Instance._TryGame();
+
+        StageManager.Instance._TryGame(seed);
     }
 
     public void PauseGame()

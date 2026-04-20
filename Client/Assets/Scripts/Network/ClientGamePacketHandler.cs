@@ -58,8 +58,7 @@ public static class ClientGamePacketHandler
 
         Debug.Log($"[Game] S_GameStart: seed={pkt.MapSeed}");
 
-        // TODO: MapGenerator는 Station 씬 로드 시 소멸하므로, 씬 전환 전에 seed를 넘기는 흐름으로 추후 연결 필요
-        GameManager.Instance.StartGame();
+        GameManager.Instance.StartGame((int)pkt.MapSeed);
     }
 
     // 다른 플레이어 이동: 해당 오브젝트 위치 보간 적용

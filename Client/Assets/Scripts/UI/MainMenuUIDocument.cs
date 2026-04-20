@@ -139,7 +139,8 @@ public class MainMenuUIDocument : MonoBehaviour
     private void OnSingleplayClicked()
     {
         _mainMenuPanel.style.display = DisplayStyle.None;
-        GameManager.Instance.StartGame();
+        int seed = UnityEngine.Random.Range(0, int.MaxValue);
+        GameManager.Instance.StartGame(seed);
     }
 
     private void OnMultiplayClicked()
@@ -298,10 +299,7 @@ public class MainMenuUIDocument : MonoBehaviour
     // S_GameReady 수신 후: 씬 전환 (게임 서버 접속)
     public void OnGameReadyReceived()
     {
-        SceneLoader.Instance.LoadStation(() =>
-        {
-            _ = NetworkManager.Instance.ConnectToGameAsync();
-        });
+        _ = NetworkManager.Instance.ConnectToGameAsync();
     }
 
     // === Private 헬퍼 ===

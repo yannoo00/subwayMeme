@@ -110,9 +110,8 @@ public class StageManager : MonoBehaviour
 
     // 게임 1트 시작
     // GameManager에서만 사용하고, 직접 호출되는 일은 없어야 함
-    public void _TryGame()
+    public void _TryGame(int seed)
     {
-        int seed = Random.Range(0, int.MaxValue);
         _stageMap = _mapGenerator.GenerateMap(seed);
 
         StageEvents.MapGenerated(_stageMap);
