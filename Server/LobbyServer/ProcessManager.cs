@@ -47,14 +47,14 @@ namespace LobbyServer
 
         // GameServer 프로세스 spawn
         // 성공 시 할당된 포트 반환, 실패 시 null
-        public int? Spawn(int roomId)
+        public int? Spawn(int roomId, int playerCount)
         {
             lock (_lock)
             {
                 int port = AllocatePort();
                 if (port == -1)
                 {
-                    Console.WriteLine("[ProcessManager] 사용 가능한 포트 없음"); 
+                    Console.WriteLine("[ProcessManager] 사용 가능한 포트 없음");
                     return null;
                 }
 
@@ -63,12 +63,12 @@ namespace LobbyServer
                     var psi = new ProcessStartInfo
                     {
                         FileName = _gameServerExePath,
-                        Arguments = $"{port} {roomId}",
+                        Arguments = $"{port} {roomId} {playerCount}",
                         UseShellExecute = false,
                     };
 
                     Process.Start(psi);
-                    Console.WriteLine($"[ProcessManager] GameServer 시작: port={port}, roomId={roomId}");
+                    Console.WriteLine($"[ProcessManager] GameServer 시작: port={port}, roomId={roomId}, playerCount={playerCount}");
                     return port;
                 }
                 catch (Exception e)

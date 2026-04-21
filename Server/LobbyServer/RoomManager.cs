@@ -121,7 +121,7 @@ namespace LobbyServer
                 if (room.CreatorSessionId != requester.SessionId)
                     return RoomResult<StartGameData>.Fail("방장만 게임을 시작할 수 있습니다.");
 
-                int? port = ProcessManager.Instance.Spawn(room.RoomId);
+                int? port = ProcessManager.Instance.Spawn(room.RoomId, room.PlayerCount);
                 if (!port.HasValue)
                     return RoomResult<StartGameData>.Fail("게임 서버를 시작하지 못했습니다.");
 

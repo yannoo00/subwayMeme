@@ -21,12 +21,23 @@ namespace GameServer
 
         readonly object _lock = new();
         readonly Dictionary<int, GamePlayer> _players = new(); // key: SessionId
+        int _expectedCount = 0; // 로비에서 확정된 참가 인원 (Program.cs에서 Init으로 설정)
 
         // 스테이지 진행 상태 (하차/탑승 카운터는 역마다 리셋)
         readonly HashSet<int> _exitedIds  = new();
         readonly HashSet<int> _boardedIds = new();
         bool _routeSelected = false;
         int  _selectedNode  = -1;
+
+
+        // ==== 초기화 =============================================================
+
+        // Program.cs에서 GameServer 시작 직후 호출
+        public void Init(int expectedCount)
+        {
+            lock (_lock)
+                _expectedCount = expectedCount;
+        }
 
 
         // ==== 플레이어 관리 ======================================================
@@ -95,7 +106,7 @@ namespace GameServer
 
         // ==== 게임 시작 준비 =====================================================
 
-        // 준비: 전원 ready 시 seed 생성
+        // 준비: 전원 입장 + 전원 ready 시에만 seed 생성
         public ReadyResult MarkReady(int sessionId)
         {
             lock (_lock)
@@ -104,7 +115,11 @@ namespace GameServer
                     return new ReadyResult(false, 0, null);
 
                 player.IsReady = true;
-                if (!_players.Values.All(p => p.IsReady))
+
+                // 아직 입장하지 않은 플레이어가 있으면 대기
+                bool allEntered = _players.Count == _expectedCount;
+                bool allReady   = _players.Values.All(p => p.IsReady);
+                if (!allEntered || !allReady)
                     return new ReadyResult(false, 0, null);
 
                 int seed = new Random().Next(1, int.MaxValue);

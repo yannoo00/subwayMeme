@@ -3,14 +3,18 @@ using System.Net;
 using ServerCore;
 using GameServer;
 
-// LobbyServer가 Process.Start("GameServer.exe", "{port} {roomId}") 로 실행
-if (args.Length < 2 || !int.TryParse(args[0], out int port) || !int.TryParse(args[1], out int roomId))
+// LobbyServer가 Process.Start("GameServer.exe", "{port} {roomId} {playerCount}") 로 실행
+if (args.Length < 3
+    || !int.TryParse(args[0], out int port)
+    || !int.TryParse(args[1], out int roomId)
+    || !int.TryParse(args[2], out int playerCount))
 {
-    Console.WriteLine("[GameServer] 인자 오류. 사용법: GameServer.exe <port> <roomId>");
+    Console.WriteLine("[GameServer] 인자 오류. 사용법: GameServer.exe <port> <roomId> <playerCount>");
     return;
 }
 
-Console.WriteLine($"[GameServer] 시작: port={port}, roomId={roomId}");
+Console.WriteLine($"[GameServer] 시작: port={port}, roomId={roomId}, playerCount={playerCount}");
+GameRoom.Instance.Init(playerCount);
 
 IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, port);
 
