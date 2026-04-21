@@ -13,10 +13,13 @@ public static class ClientGamePacketHandler
 
         Debug.Log($"[Game] S_EnterGame: isHost={pkt.IsHost}, players={pkt.Players.Count}");
 
-        // TODO: 다른 플레이어 오브젝트 생성 (pkt.Players 순회)
+        // pkt.Players에는 나 자신도 포함되어 있어서 내 PlayerId는 PlayerRegistry 안에서 걸러냄
+        // 씬이 아직 로드되지 않았으므로 목록만 저장하고 실제 스폰은 sceneLoaded에서 처리
+        PlayerRegistry.Instance.CachePlayers(pkt.Players);
+
         // TODO: 호스트라면 NavMesh / 적 AI 권한 활성화
 
-        // 씬 로드 + 서버 접속 완료 신호 — 서버가 전원 준비 확인 후 S_GameStart 발행
+        // 씬 로드 + 서버 접속 완료 신호 - 서버가 전원 준비 확인 후 S_GameStart 발행
         NetworkManager.Instance.SendGame(GamePacketId.CReady, new C_Ready());
     }
 
@@ -27,7 +30,8 @@ public static class ClientGamePacketHandler
 
         Debug.Log($"[Game] S_PlayerEntered: playerId={pkt.Player.PlayerId}, name={pkt.Player.PlayerName}");
 
-        // TODO: 해당 플레이어 오브젝트 생성 및 등록
+        // 게임 도중 난입은 현재 지원하지 않음
+        // 스폰은 sceneLoaded 시점에 CachePlayers로 일괄 처리
     }
 
     // 플레이어 퇴장
@@ -37,7 +41,7 @@ public static class ClientGamePacketHandler
 
         Debug.Log($"[Game] S_PlayerLeft: playerId={pkt.PlayerId}");
 
-        // TODO: 해당 플레이어 오브젝트 제거
+        PlayerRegistry.Instance.RemovePlayer(pkt.PlayerId);
     }
 
     // 호스트 변경: 내가 새 호스트인지 확인 후 권한 전환
