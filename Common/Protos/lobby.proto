@@ -19,13 +19,14 @@ enum PacketId {
   C_GET_ROOMS     = 13;
   C_START_GAME    = 14;
 
-  S_ROOM_LIST     = 20;
-  S_ROOM_CREATED  = 21;
-  S_PLAYER_JOINED = 22;
-  S_PLAYER_LEFT   = 23;
+  S_ROOM_LIST       = 20;
+  S_ROOM_CREATED    = 21;
+  S_PLAYER_JOINED   = 22;
+  S_PLAYER_LEFT     = 23;
   S_GAME_READY      = 24;
   S_ERROR           = 25;
   S_CREATOR_CHANGED = 26;
+  S_ROOM_JOINED     = 27;
 }
 
 // ===================================================
@@ -74,9 +75,16 @@ message S_RoomList {
   repeated RoomInfo rooms = 1;
 }
 
-// 방 생성 완료
+// 방 생성 완료 (생성자 수신)
 message S_RoomCreated {
   RoomInfo room = 1;
+}
+
+// 방 참가 완료 (참가자 수신)
+// players: 방에 있는 모든 플레이어 (본인 포함)
+message S_RoomJoined {
+  RoomInfo room = 1;
+  repeated PlayerInfo players = 2;
 }
 
 // 다른 플레이어 입장 알림

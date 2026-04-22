@@ -58,6 +58,15 @@ namespace LobbyServer
             return new PlayerInfo { PlayerId = sessionId, PlayerName = name };
         }
 
+        // 방에 현재 있는 모든 플레이어의 PlayerInfo 목록
+        public List<PlayerInfo> GetAllPlayerInfos()
+        {
+            var list = new List<PlayerInfo>();
+            foreach (var (sid, (_, name)) in _players)
+                list.Add(new PlayerInfo { PlayerId = sid, PlayerName = name });
+            return list;
+        }
+
         public List<LobbySession> GetOtherSessions(int excludeSessionId)
         {
             var list = new List<LobbySession>();

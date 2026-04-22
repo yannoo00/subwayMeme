@@ -17,7 +17,7 @@ public static class LobbyPacketHandler
         MainMenuUIDocument.Instance?.ShowRoomListPanel();
     }
 
-    // 방 생성 또는 참가 성공: 대기방 화면으로 전환
+    // 방 생성 완료 (생성자만 수신): 대기방 화면으로 전환, 본인만 목록에 추가
     public static void Handle_S_RoomCreated(byte[] body)
     {
         var pkt = S_RoomCreated.Parser.ParseFrom(body);
@@ -25,6 +25,16 @@ public static class LobbyPacketHandler
         Debug.Log($"[Lobby] S_RoomCreated: roomId={pkt.Room.RoomId}, name={pkt.Room.RoomName}");
 
         MainMenuUIDocument.Instance?.ShowWaitingRoom(pkt.Room);
+    }
+
+    // 방 참가 완료 (참가자만 수신): 대기방 화면 전환 + 현재 방 전체 멤버 세팅
+    public static void Handle_S_RoomJoined(byte[] body)
+    {
+        var pkt = S_RoomJoined.Parser.ParseFrom(body);
+
+        Debug.Log($"[Lobby] S_RoomJoined: roomId={pkt.Room.RoomId}, players={pkt.Players.Count}");
+
+        MainMenuUIDocument.Instance?.ShowWaitingRoomWithPlayers(pkt.Room, new List<PlayerInfo>(pkt.Players));
     }
 
     // 방 목록 수신: 방 목록 UI 갱신

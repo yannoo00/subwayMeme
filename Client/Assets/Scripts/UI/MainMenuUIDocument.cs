@@ -257,8 +257,7 @@ public class MainMenuUIDocument : MonoBehaviour
         }
     }
 
-    // S_RoomCreated 수신 후: 대기방 화면으로 전환
-    // 방 생성과 참가 모두 이 패킷으로 처리됨
+    // S_RoomCreated 수신 후 (방 생성): 대기방 전환, 본인만 목록에 추가
     public void ShowWaitingRoom(RoomInfo room)
     {
         _maxPlayers = room.MaxPlayers;
@@ -267,6 +266,22 @@ public class MainMenuUIDocument : MonoBehaviour
         _playerScroll.Clear();
 
         AddPlayerEntry(NetworkManager.Instance.MyPlayerId, NetworkManager.Instance.MyPlayerName);
+        UpdatePlayerCount();
+
+        _startGameButton.SetEnabled(_isRoomCreator);
+        ShowPanel(_waitingRoomPanel);
+    }
+
+    // S_RoomJoined 수신 후 (방 참가): 대기방 전환, 전체 멤버 목록으로 세팅
+    public void ShowWaitingRoomWithPlayers(RoomInfo room, List<PlayerInfo> players)
+    {
+        _maxPlayers = room.MaxPlayers;
+        _roomNameLabel.text = room.RoomName;
+        _playerLabels.Clear();
+        _playerScroll.Clear();
+
+        foreach (var p in players)
+            AddPlayerEntry(p.PlayerId, p.PlayerName);
         UpdatePlayerCount();
 
         _startGameButton.SetEnabled(_isRoomCreator);

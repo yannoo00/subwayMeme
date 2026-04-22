@@ -114,9 +114,9 @@ public class PlayerRegistry : MonoBehaviour
     // 없으면 원점 반환
     private Vector3 FindSpawnPosition()
     {
-        GameObject spawnPoint = GameObject.FindWithTag("SpawnPoint");
+        GameObject spawnPoint = GameObject.FindWithTag("PlayerSpawnPoint");
         if (spawnPoint == null)
-            Debug.LogWarning("[PlayerRegistry] SpawnPoint 태그 오브젝트를 찾지 못했습니다. 원점에 스폰합니다.");
+            Debug.LogWarning("[PlayerRegistry] PlayerSpawnPoint 태그 오브젝트를 찾지 못했습니다. 원점에 스폰합니다.");
         return spawnPoint != null ? spawnPoint.transform.position : Vector3.zero;
     }
 }

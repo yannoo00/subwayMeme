@@ -91,6 +91,7 @@ public class NetworkManager : MonoBehaviour
         var lobby = PacketDispatcher.Lobby;
         lobby.Register((ushort)PacketId.SConnected,      LobbyPacketHandler.Handle_S_Connected);
         lobby.Register((ushort)PacketId.SRoomCreated,    LobbyPacketHandler.Handle_S_RoomCreated);
+        lobby.Register((ushort)PacketId.SRoomJoined,     LobbyPacketHandler.Handle_S_RoomJoined);
         lobby.Register((ushort)PacketId.SRoomList,       LobbyPacketHandler.Handle_S_RoomList);
         lobby.Register((ushort)PacketId.SPlayerJoined,   LobbyPacketHandler.Handle_S_PlayerJoined);
         lobby.Register((ushort)PacketId.SPlayerLeft,     LobbyPacketHandler.Handle_S_PlayerLeft);

@@ -16,7 +16,7 @@ namespace LobbyServer
     }
 
     public record CreateRoomData(RoomInfo Room);
-    public record JoinRoomData(RoomInfo Room, PlayerInfo Joiner, List<LobbySession> Others);
+    public record JoinRoomData(RoomInfo Room, PlayerInfo Joiner, List<PlayerInfo> AllPlayers, List<LobbySession> Others);
     // NewCreatorId: 방장이 나갔을 때 위임된 새 방장 ID (-1이면 위임 없음)
     public record LeaveRoomData(PlayerInfo Leaver, List<LobbySession> Remaining, int NewCreatorId = -1);
     public record StartGameData(int GamePort, int RoomId, List<LobbySession> AllSessions);
@@ -73,10 +73,14 @@ namespace LobbyServer
                 if (!_rooms.TryGetValue(roomId, out var room) || room.IsFull)
                     return RoomResult<JoinRoomData>.Fail("방이 없거나 가득 찼습니다.");
 
-                var others = room.GetAllSessions(); // 입장 전에 캡처
+                var others = room.GetAllSessions(); // 입장 전에 캡처 (기존 멤버만)
                 room.TryAdd(joiner, p.playerName);
                 _players[joiner.SessionId] = (p.playerName, roomId);
-                return RoomResult<JoinRoomData>.Success(new(room.ToRoomInfo(), room.GetPlayerInfo(joiner.SessionId), others));
+                return RoomResult<JoinRoomData>.Success(new(
+                    room.ToRoomInfo(),
+                    room.GetPlayerInfo(joiner.SessionId),
+                    room.GetAllPlayerInfos(),   // 참가 후 전체 멤버 (본인 포함)
+                    others));
             }
         }
 

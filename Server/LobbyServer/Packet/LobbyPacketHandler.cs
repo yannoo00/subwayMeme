@@ -63,8 +63,10 @@ namespace LobbyServer
                 return;
             }
 
-            // 입장한 본인에게 방 정보 전송
-            session.Send(MakePacket(PacketId.SRoomCreated, new S_RoomCreated { Room = result.Data.Room }));
+            // 입장한 본인에게 방 정보 + 현재 방 전체 멤버 전송
+            var joinedRes = new S_RoomJoined { Room = result.Data.Room };
+            joinedRes.Players.AddRange(result.Data.AllPlayers);
+            session.Send(MakePacket(PacketId.SRoomJoined, joinedRes));
 
             // 기존 멤버들에게 새 플레이어 입장 알림
             var notifyBytes = MakePacket(PacketId.SPlayerJoined, new S_PlayerJoined { Player = result.Data.Joiner });
