@@ -132,7 +132,7 @@ public class StageManager : MonoBehaviour
         _currentMapType = MapType.Station;
         SceneLoader.Instance.LoadStation(() =>
         {
-            StageEvents.MapOpenRequested(MapOpenReason.RouteSelection, _stageMap.floors[0]);
+            StageEvents.SubwayArrived(null);
         });
     }
 
@@ -267,10 +267,12 @@ public class StageManager : MonoBehaviour
     // 탑승 시도 시 호출 (SubwayEntrance에서 호출)
     public void HandlePlayerBoarding()
     {
-        Debug.Log("Boarding Trial!");
-
         if (_stayingCoroutine != null) StopCoroutine(_stayingCoroutine);
-        var nextNodes = _stageMap.currentNode.nextNodes;
+
+        // 첫 탑승 시 currentNode가 없으므로 floors[0] 전체를 선택지로 사용
+        var nextNodes = _stageMap.currentNode != null
+            ? _stageMap.currentNode.nextNodes
+            : _stageMap.floors[0];
 
         StageEvents.MapOpenRequested(MapOpenReason.RouteSelection, nextNodes);
     }

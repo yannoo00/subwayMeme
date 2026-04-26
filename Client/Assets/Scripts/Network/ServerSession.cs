@@ -36,12 +36,12 @@ public class ServerSession : MonoBehaviour
         Disconnect();    
     }
 
-    public async Task ConnectAsync(string host, int port)
+    public async Task<bool> ConnectAsync(string host, int port)
     {
         try
         {
             // 로비 to 게임 서버처럼 재연결 시 기존 연결을 먼저 정리
-            // 정리 안 하면 이전 ReceiveLoopAsync가 끝나지 않을 수 있음 
+            // 정리 안 하면 이전 ReceiveLoopAsync가 끝나지 않을 수 있음
             Disconnect();
 
             _cts    = new CancellationTokenSource();
@@ -55,10 +55,12 @@ public class ServerSession : MonoBehaviour
             // 수신 루프 시작
             // 예외는 루프 내부에서 처리
             _ = ReceiveLoopAsync(_cts.Token);
+            return true;
         }
         catch (Exception e)
         {
             Debug.LogError($"[ServerSession] 접속 실패: {e.Message}");
+            return false;
         }
     }
     public void Disconnect()

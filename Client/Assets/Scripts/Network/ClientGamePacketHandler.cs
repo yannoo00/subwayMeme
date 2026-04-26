@@ -54,7 +54,7 @@ public static class ClientGamePacketHandler
 
         Debug.Log($"[Game] S_PlayerEntered: playerId={pkt.Player.PlayerId}, name={pkt.Player.PlayerName}");
 
-        // TODO: PlayerRegistry.Instance.SpawnRemotePlayer(pkt.Player)
+        PlayerRegistry.Instance.SpawnRemotePlayer(pkt.Player);
     }
 
     // 플레이어 퇴장
@@ -92,10 +92,15 @@ public static class ClientGamePacketHandler
 
         var pkt = S_Move.Parser.ParseFrom(body);
 
-        // TODO: playerId로 다른 플레이어 오브젝트 검색
-        // TODO: transform.position Lerp 적용 (pkt.PosX, PosY, PosZ)
-        // TODO: transform.rotation 적용 (pkt.RotY)
-        // TODO: 애니메이터 파라미터 갱신 (pkt.IsMoving, IsDodging)
+        var np = PlayerRegistry.Instance.Get(pkt.PlayerId);
+        if (np == null) return;
+
+        np.SetTargetState(
+            new UnityEngine.Vector3(pkt.PosX, pkt.PosY, pkt.PosZ),
+            pkt.RotY,
+            pkt.IsMoving,
+            pkt.IsDodging
+        );
     }
 
     // 다른 플레이어 공격 애니메이션 재생
@@ -261,13 +266,23 @@ public static class ClientGamePacketHandler
     // 전원 탑승 + 경로 확정: 지하철 씬으로 전환
     public static void Handle_S_AllBoarded(byte[] body)
     {
-        if (GameManager.Instance.CurrentState != GameState.Playing) return;
-
         var pkt = S_AllBoarded.Parser.ParseFrom(body);
+        Debug.Log($"[Game] S_AllBoarded 수신: nodeIndex={pkt.NodeIndex}, CurrentState={GameManager.Instance.CurrentState}");
 
-        Debug.Log($"[Game] S_AllBoarded: nodeIndex={pkt.NodeIndex}");
+        // 상태 체크를 하되, 무시될 경우 로그를 남깁니다.
+        if (GameManager.Instance.CurrentState != GameState.Playing)
+        {
+            Debug.LogWarning($"[Game] S_AllBoarded 무시됨: 현재 상태가 {GameManager.Instance.CurrentState}입니다.");
+            return;
+        }
 
         StageNode nextNode = StageManager.Instance.GetNodeByIndex(pkt.NodeIndex);
+        if (nextNode == null)
+        {
+            Debug.LogError($"[Game] S_AllBoarded 에러: index {pkt.NodeIndex}에 해당하는 노드가 없습니다.");
+            return;
+        }
+
         StageManager.Instance.MoveToNode(nextNode);
     }
 

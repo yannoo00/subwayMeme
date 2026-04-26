@@ -85,8 +85,8 @@ public static class LobbyPacketHandler
         Debug.Log($"[Lobby] S_GameReady: port={pkt.Port}, roomId={pkt.RoomId}");
 
         NetworkManager.Instance.GameServerPort = pkt.Port;
-        MainMenuUIDocument.Instance?.OnGameReadyReceived();
         GameManager.Instance.OnEnteringGame();
+        MainMenuUIDocument.Instance?.OnGameReadyReceived();
     }
 
     // 서버 에러 수신

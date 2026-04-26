@@ -22,6 +22,7 @@ namespace GameServer
         readonly object _lock = new();
         readonly Dictionary<int, GamePlayer> _players = new(); // key: SessionId
         int _expectedCount = 0; // 로비에서 확정된 참가 인원 (Program.cs에서 Init으로 설정)
+        int _hostPlayerId  = -1; // 로비 방장의 PlayerId (접속 순서와 무관하게 호스트 결정)
 
         // 스테이지 진행 상태 (하차/탑승 카운터는 역마다 리셋)
         readonly HashSet<int> _exitedIds  = new();
@@ -33,21 +34,24 @@ namespace GameServer
         // ==== 초기화 =============================================================
 
         // Program.cs에서 GameServer 시작 직후 호출
-        public void Init(int expectedCount)
+        public void Init(int expectedCount, int hostPlayerId)
         {
             lock (_lock)
+            {
                 _expectedCount = expectedCount;
+                _hostPlayerId  = hostPlayerId;
+            }
         }
 
 
         // ==== 플레이어 관리 ======================================================
 
-        // 입장: 최초 입장자가 호스트
+        // 입장: 로비 방장(hostPlayerId)이 호스트
         public GamePlayer Add(GameSession session, int playerId, string playerName)
         {
             lock (_lock)
             {
-                bool isHost = _players.Count == 0;
+                bool isHost = (playerId == _hostPlayerId);
                 var player  = new GamePlayer(session, playerId, playerName, isHost);
                 _players[session.SessionId] = player;
                 return player;

@@ -2,13 +2,12 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 
+// 패킷 처리의 기준이 되는 상태
 public enum GameState
 {
     Menu,           // 메인메뉴, 로비
 
     EnteringGame,   // 게임씬 로드 완료 ~ S_GameStart 수신 전 (C_EnterGame, S_EnterGame, C_Ready 처리)
-
-    SelectingRoute, // S_GameStart 수신 후 ~ 방장이 경로 선택 완료 전 (노선도 UI 표시)
 
     SceneLoading,   // 씬 전환 중 (S_AllBoarded/S_AllExited ~ 씬 로드 완료)
                     // 이 구간에서 오는 게임 패킷은 전부 무시
@@ -84,7 +83,7 @@ public class GameManager : MonoBehaviour
     public void StartGame(int seed)
     {
         Time.timeScale = 1f;
-        ChangeState(GameState.SelectingRoute);
+        ChangeState(GameState.Playing);
 
         StageManager.Instance._TryGame(seed);
     }

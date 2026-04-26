@@ -62,11 +62,30 @@ public class NetworkManager : MonoBehaviour
     }
 
     // 게임 서버 접속 후 C_EnterGame 자동 전송
-    // S_GameReady 수신 후 씬 로드가 완료된 시점에 호출
+    // GameServer 프로세스 시작 직후에 호출되므로 준비될 때까지 재시도
     public async Task ConnectToGameAsync()
     {
         CurrentDispatcher = PacketDispatcher.Game;
-        await ServerSession.Instance.ConnectAsync(_serverHost, GameServerPort);
+
+        const int maxRetries  = 10;
+        const int retryDelayMs = 500;
+
+        bool connected = false;
+        for (int i = 0; i < maxRetries; i++)
+        {
+            connected = await ServerSession.Instance.ConnectAsync(_serverHost, GameServerPort);
+            if (connected) break;
+
+            Debug.Log($"[NetworkManager] 게임 서버 재시도 {i + 1}/{maxRetries}...");
+            await Task.Delay(retryDelayMs);
+        }
+
+        if (!connected)
+        {
+            Debug.LogError("[NetworkManager] 게임 서버 접속 실패 (최대 재시도 횟수 초과)");
+            return;
+        }
+
         SendGame(GamePacketId.CEnterGame, new C_EnterGame
         {
             PlayerId   = MyPlayerId,

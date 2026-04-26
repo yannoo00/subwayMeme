@@ -19,7 +19,7 @@ namespace LobbyServer
     public record JoinRoomData(RoomInfo Room, PlayerInfo Joiner, List<PlayerInfo> AllPlayers, List<LobbySession> Others);
     // NewCreatorId: 방장이 나갔을 때 위임된 새 방장 ID (-1이면 위임 없음)
     public record LeaveRoomData(PlayerInfo Leaver, List<LobbySession> Remaining, int NewCreatorId = -1);
-    public record StartGameData(int GamePort, int RoomId, List<LobbySession> AllSessions);
+    public record StartGameData(int GamePort, int RoomId, List<LobbySession> AllSessions, int HostPlayerId);
 
 
 
@@ -125,12 +125,12 @@ namespace LobbyServer
                 if (room.CreatorSessionId != requester.SessionId)
                     return RoomResult<StartGameData>.Fail("방장만 게임을 시작할 수 있습니다.");
 
-                int? port = ProcessManager.Instance.Spawn(room.RoomId, room.PlayerCount);
+                int? port = ProcessManager.Instance.Spawn(room.RoomId, room.PlayerCount, room.CreatorSessionId);
                 if (!port.HasValue)
                     return RoomResult<StartGameData>.Fail("게임 서버를 시작하지 못했습니다.");
 
                 var allSessions = room.GetAllSessions();
-                return RoomResult<StartGameData>.Success(new(port.Value, room.RoomId, allSessions));
+                return RoomResult<StartGameData>.Success(new(port.Value, room.RoomId, allSessions, room.CreatorSessionId));
             }
         }
 

@@ -29,8 +29,7 @@ public class MainMenuUIDocument : MonoBehaviour
     private VisualElement _waitingRoomPanel;
 
     // 메인 메뉴
-    private Button _singleplayButton;
-    private Button _multiplayButton;
+    private Button _playButton;
 
     // 닉네임 입력
     private TextField _nameField;
@@ -90,8 +89,7 @@ public class MainMenuUIDocument : MonoBehaviour
         _createRoomPanel  = root.Q("create-room-panel");
         _waitingRoomPanel = root.Q("waiting-room-panel");
 
-        _singleplayButton = root.Q<Button>("singleplay-button");
-        _multiplayButton  = root.Q<Button>("multiplay-button");
+        _playButton = root.Q<Button>("play-button");
 
         _nameField     = root.Q<TextField>("name-field");
         _connectButton = root.Q<Button>("connect-button");
@@ -110,8 +108,7 @@ public class MainMenuUIDocument : MonoBehaviour
         _leaveRoomButton = root.Q<Button>("leave-room-button");
         _startGameButton = root.Q<Button>("start-game-button");
 
-        _singleplayButton.clicked   += OnSingleplayClicked;
-        _multiplayButton.clicked    += OnMultiplayClicked;
+        _playButton.clicked         += OnPlayClicked;
         _connectButton.clicked      += OnConnectClicked;
         _refreshButton.clicked      += OnRefreshClicked;
         _createRoomButton.clicked   += OnCreateRoomClicked;
@@ -123,8 +120,7 @@ public class MainMenuUIDocument : MonoBehaviour
 
     private void UnbindUI()
     {
-        if (_singleplayButton   != null) _singleplayButton.clicked   -= OnSingleplayClicked;
-        if (_multiplayButton    != null) _multiplayButton.clicked    -= OnMultiplayClicked;
+        if (_playButton         != null) _playButton.clicked         -= OnPlayClicked;
         if (_connectButton      != null) _connectButton.clicked      -= OnConnectClicked;
         if (_refreshButton      != null) _refreshButton.clicked      -= OnRefreshClicked;
         if (_createRoomButton   != null) _createRoomButton.clicked   -= OnCreateRoomClicked;
@@ -136,14 +132,7 @@ public class MainMenuUIDocument : MonoBehaviour
 
     // === 버튼 핸들러 ===
 
-    private void OnSingleplayClicked()
-    {
-        _mainMenuPanel.style.display = DisplayStyle.None;
-        int seed = UnityEngine.Random.Range(0, int.MaxValue);
-        GameManager.Instance.StartGame(seed);
-    }
-
-    private void OnMultiplayClicked()
+    private void OnPlayClicked()
     {
         ShowPanel(_nameInputPanel);
     }

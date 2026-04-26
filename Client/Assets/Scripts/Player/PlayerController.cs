@@ -1,4 +1,5 @@
 using System.Collections;
+using GameProto;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -23,6 +24,16 @@ public class PlayerController : MonoBehaviour
     private bool _isDodging = false;
     private float _lastDodgeTime = -Mathf.Infinity;
 
+    // 이동 동기화: 20Hz 고정 주기 + Dead Zone 필터
+    private const float SEND_INTERVAL  = 0.05f;   // 20Hz
+    private const float POS_THRESHOLD  = 0.01f;   // 위치 변화 임계값 (m)
+    private const float ROT_THRESHOLD  = 1f;       // 회전 변화 임계값 (도)
+    private float   _lastSendTime;
+    private Vector3 _lastSentPos;
+    private float   _lastSentRotY;
+    private bool    _lastSentIsMoving;
+    private bool    _lastSentIsDodging;
+
 
     private void Awake()
     {
@@ -34,7 +45,7 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if (GameManager.Instance.CurrentState == GameState.Menu) return;
+        if (GameManager.Instance.CurrentState != GameState.Playing) return;
         if (Keyboard.current == null) return;
         if (_isDodging) return;
         if (!_stats.IsAlive) return;
@@ -52,7 +63,11 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        if (input == Vector2.zero) return;
+        if (input == Vector2.zero)
+        {
+            TrySendMove(isMoving: false, isDodging: false);
+            return;
+        }
 
         // 카메라의 수평 forward/right를 기준으로 월드 이동 방향 계산
         // Y축 성분 제거 후 정규화: 경사면에서도 수평 이동 보장
@@ -74,8 +89,44 @@ public class PlayerController : MonoBehaviour
 
         // 이동은 PlayerRoot 위치 기준, 방향은 PlayerModel forward 참조
         transform.position += rotateTarget.forward * _moveSpeed * Time.deltaTime;
+
+        TrySendMove(isMoving: true, isDodging: false);
     }
 
+
+    // === 이동 동기화 ===
+
+    // 20Hz 주기 + Dead Zone 필터: 변화가 없으면 전송 생략
+    // 상태(IsMoving, IsDodging) 변화는 Dead Zone 무시하고 즉시 전송
+    private void TrySendMove(bool isMoving, bool isDodging)
+    {
+        if (GameManager.Instance.CurrentState != GameState.Playing) return;
+
+        bool stateChanged = isMoving != _lastSentIsMoving || isDodging != _lastSentIsDodging;
+        if (!stateChanged && Time.time - _lastSendTime < SEND_INTERVAL) return;
+
+        float rotY = (_playerModel != null ? _playerModel : transform).eulerAngles.y;
+        bool posChanged = Vector3.Distance(transform.position, _lastSentPos) >= POS_THRESHOLD;
+        bool rotChanged = Mathf.Abs(Mathf.DeltaAngle(rotY, _lastSentRotY)) >= ROT_THRESHOLD;
+
+        if (!stateChanged && !posChanged && !rotChanged) return;
+
+        NetworkManager.Instance.SendGame(GamePacketId.CMove, new C_Move
+        {
+            PosX      = transform.position.x,
+            PosY      = transform.position.y,
+            PosZ      = transform.position.z,
+            RotY      = rotY,
+            IsMoving  = isMoving,
+            IsDodging = isDodging,
+        });
+
+        _lastSentPos       = transform.position;
+        _lastSentRotY      = rotY;
+        _lastSentIsMoving  = isMoving;
+        _lastSentIsDodging = isDodging;
+        _lastSendTime      = Time.time;
+    }
 
     private bool CanDodge()
     {
@@ -100,17 +151,21 @@ public class PlayerController : MonoBehaviour
         float elapsed = 0f;
         float startTime = Time.time;
 
+        TrySendMove(isMoving: false, isDodging: true);
+
         while (elapsed < _dodgeDuration)
         {
             elapsed = Time.time - startTime;
             // 초반에 빠르고 후반에 느려지는 커브로 자연스러운 닷지 느낌
             float t = 1f - (elapsed / _dodgeDuration);
             transform.position += dodgeDir * (_dodgeDistance * t * Time.deltaTime / _dodgeDuration);
+            TrySendMove(isMoving: false, isDodging: true);
             yield return null;
         }
 
         // 무적 프레임 종료
         if (_stats != null) _stats.IsInvincible = false;
         _isDodging = false;
+        TrySendMove(isMoving: false, isDodging: false);
     }
 }

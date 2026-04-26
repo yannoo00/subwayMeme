@@ -248,7 +248,8 @@ public class MapUIDocument : MonoBehaviour
         _currentReason = reason;
         _panel.style.display = DisplayStyle.Flex;
         _isOpen = true;
-        GameManager.Instance.ChangeState(GameState.Menu);
+        UnityEngine.Cursor.lockState = CursorLockMode.None;
+        UnityEngine.Cursor.visible   = true;
 
         if (reason == MapOpenReason.RouteSelection)
         {
@@ -262,7 +263,8 @@ public class MapUIDocument : MonoBehaviour
     {
         _panel.style.display = DisplayStyle.None;
         _isOpen = false;
-        GameManager.Instance.ChangeState(GameState.Playing);
+        UnityEngine.Cursor.lockState = UnityEngine.CursorLockMode.Locked;
+        UnityEngine.Cursor.visible   = false;
     }
 
 

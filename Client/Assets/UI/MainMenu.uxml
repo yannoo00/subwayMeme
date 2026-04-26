@@ -3,8 +3,7 @@
     <!-- 초기 메인 메뉴 -->
     <ui:VisualElement name="main-menu-panel" class="full-panel">
         <ui:Label text="SUBWAY" class="game-title" />
-        <ui:Button name="singleplay-button" text="싱글플레이" class="menu-button" />
-        <ui:Button name="multiplay-button"  text="멀티플레이" class="menu-button" />
+        <ui:Button name="play-button"  text="게임 시작" class="menu-button" />
     </ui:VisualElement>
 
     <!-- 닉네임 입력 -->
