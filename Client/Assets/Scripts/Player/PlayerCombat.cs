@@ -21,7 +21,7 @@ public class PlayerCombat : MonoBehaviour
 
     private void Update()
     {
-        if (GameManager.Instance.CurrentState == GameState.UI) return;
+        if (GameManager.Instance.CurrentState == GameState.Menu) return;
         if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
         {
             Attack();

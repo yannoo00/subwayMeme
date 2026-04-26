@@ -13,7 +13,7 @@ public class MouseLook : MonoBehaviour
 
     void Update()
     {
-        if (GameManager.Instance.CurrentState == GameState.UI) return;
+        if (GameManager.Instance.CurrentState == GameState.Menu) return;
         if (Mouse.current == null) return;
 
         float mouseX = Mouse.current.delta.x.ReadValue() * _sensitivityX;

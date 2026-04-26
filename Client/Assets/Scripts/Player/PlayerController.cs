@@ -34,7 +34,7 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if (GameManager.Instance.CurrentState == GameState.UI) return;
+        if (GameManager.Instance.CurrentState == GameState.Menu) return;
         if (Keyboard.current == null) return;
         if (_isDodging) return;
         if (!_stats.IsAlive) return;

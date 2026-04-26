@@ -248,7 +248,7 @@ public class MapUIDocument : MonoBehaviour
         _currentReason = reason;
         _panel.style.display = DisplayStyle.Flex;
         _isOpen = true;
-        GameManager.Instance.ChangeState(GameState.UI);
+        GameManager.Instance.ChangeState(GameState.Menu);
 
         if (reason == MapOpenReason.RouteSelection)
         {

@@ -58,6 +58,18 @@ public class StageManager : MonoBehaviour
     }
 
 
+
+
+    /*
+        게임 흐름:
+            게임 서버 시작 -> 일단 station 진입하고 바로 경로 선택 -> subway로 이동
+            subway에서 타이머 발동 -> 시간 지나면 역 도착 -> 하차 시간 안에 모든 플레이어가 하차 요청 -> station으로 이동
+            -> station에서 웨이브 시작 + station 타입에 따른 이벤트 발동 -> 지하철 도착 시 이동 요청 가능
+            -> 모든 플레이어가 요청 보냈을 때, 방장이 다시 경로 선택. 경로에 따라 이동
+            -> 반복...
+    */
+
+
     // 주행 타이머: wave.duration만큼 진행 후 역 도착 이벤트 발행
     private IEnumerator SubwayMovingTimer(float duration)
     {
@@ -110,6 +122,7 @@ public class StageManager : MonoBehaviour
 
     // 게임 1트 시작
     // GameManager에서만 사용하고, 직접 호출되는 일은 없어야 함
+    // 여기서는 플레이어 위치 동기화 안해줘도 됨 어차피 바로 map ui 열리고 선택 -> subway가서 동기화 해줄거
     public void _TryGame(int seed)
     {
         _stageMap = _mapGenerator.GenerateMap(seed);
@@ -124,15 +137,10 @@ public class StageManager : MonoBehaviour
     }
 
 
-    // 역 하차: SubwayExit 컴포넌트에서 플레이어 상호작용 시 호출
+    // 역 하차: SubwayExit 또는 서버(S_AllExited)에서 호출
+    // _canExit 검사는 SubwayExit.Interact()에서 처리하므로 여기서는 하지 않음
     public void StartStation()
     {
-        if (!_canExit)
-        {
-            Debug.Log("[StageManager] 아직 하차할 수 없습니다. (주행 타이머 미종료)");
-            return;
-        }
-
         _canExit = false;
         _isSubwayActive = false;
         _currentMapType = MapType.Station;
@@ -144,12 +152,20 @@ public class StageManager : MonoBehaviour
 
         if (_stageMap.currentNode.floor >= _stageMap.floors.Count - 1)
         {
-            SceneLoader.Instance.LoadStation(() => GameClear());
+            GameManager.Instance.OnSceneTransitionStart();
+            SceneLoader.Instance.LoadStation(() =>
+            {
+                GameManager.Instance.OnSceneTransitionEnd();
+                GameClear();
+            });
             return;
         }
 
+        GameManager.Instance.OnSceneTransitionStart();
         SceneLoader.Instance.LoadStation(() =>
         {
+            GameManager.Instance.OnSceneTransitionEnd();
+
             // wave를 선택해 SpawnManager에 전달, duration으로 역 웨이브 타이머 시작
             WaveData wave = _stageMap.currentNode.stageData?.GetRandomWave();
             if (wave != null)
@@ -176,8 +192,10 @@ public class StageManager : MonoBehaviour
 
         Debug.Log($"[StageManager] 지하철 출발 - floor: {_stageMap.currentNode.floor}");
 
+        GameManager.Instance.OnSceneTransitionStart();
         SceneLoader.Instance.LoadSubway(() =>
         {
+            GameManager.Instance.OnSceneTransitionEnd();
             StageEvents.SubwayStarted(_stageMap.currentNode);
 
             // wave를 선택해 SpawnManager에 전달, duration으로 주행 타이머 시작
@@ -196,7 +214,7 @@ public class StageManager : MonoBehaviour
     }
 
 
-    // 다음 역 선택 시 호출 (노선도 UI에서 호출)
+    // 맵 이동: 노드 선택 후 StartSubway 호출 (subway 씬 로드)
     public void MoveToNode(StageNode nextNode)
     {
         _stageMap.currentNode = nextNode;

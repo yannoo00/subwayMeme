@@ -77,7 +77,7 @@ public static class LobbyPacketHandler
         MainMenuUIDocument.Instance?.UpdateCreatorStatus(pkt.NewCreatorId);
     }
 
-    // 게임 서버 준비 완료: 포트 저장 후 씬 로드 → 게임 서버 접속
+    // 게임 서버 준비 완료: 포트 저장 후 씬 로드 -> 게임 서버 접속
     public static void Handle_S_GameReady(byte[] body)
     {
         var pkt = S_GameReady.Parser.ParseFrom(body);
@@ -86,6 +86,7 @@ public static class LobbyPacketHandler
 
         NetworkManager.Instance.GameServerPort = pkt.Port;
         MainMenuUIDocument.Instance?.OnGameReadyReceived();
+        GameManager.Instance.OnEnteringGame();
     }
 
     // 서버 에러 수신

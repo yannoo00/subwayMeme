@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 // 게임 내 원격 플레이어 오브젝트를 관리하는 싱글톤
-// S_EnterGame으로 받은 목록을 보관하다가 씬 로드 시점에 스폰
+// S_EnterGame 수신 시 즉시 스폰 (씬이 이미 로드된 상태)
 // 이후 씬 전환마다 기존 오브젝트를 새 씬의 SpawnPoint로 이동
 public class PlayerRegistry : MonoBehaviour
 {
@@ -14,10 +14,6 @@ public class PlayerRegistry : MonoBehaviour
     [SerializeField] private GameObject _remotePlayerPrefab;
 
     private readonly Dictionary<int, NetworkPlayer> _remotePlayers = new();
-
-    // S_EnterGame에서 받은 플레이어 목록을 씬 로드 전까지 임시 보관
-    // sceneLoaded에서 스폰 후 Clear()
-    private readonly List<GamePlayerInfo> _pendingInfos = new();
 
     // === Unity 생명주기 ===
 
@@ -46,15 +42,21 @@ public class PlayerRegistry : MonoBehaviour
 
     // === Public 메서드 ===
 
-    // S_EnterGame 수신 시 호출: 씬 로드 전이므로 목록만 저장
-    public void CachePlayers(IEnumerable<GamePlayerInfo> players)
+    // S_EnterGame 수신 시 호출: 씬이 이미 로드된 상태이므로 즉시 스폰
+    public void SpawnPlayers(IEnumerable<GamePlayerInfo> players)
     {
-        _pendingInfos.Clear();
+        Vector3 spawnPos = FindSpawnPosition();
         foreach (var info in players)
         {
             if (info.PlayerId == NetworkManager.Instance.MyPlayerId) continue;
-            _pendingInfos.Add(info);
+            SpawnRemotePlayer(info, spawnPos);
         }
+    }
+
+    // S_PlayerEntered 수신 시 호출: 게임 도중 새 플레이어 입장
+    public void SpawnRemotePlayer(GamePlayerInfo info)
+    {
+        SpawnRemotePlayer(info, FindSpawnPosition());
     }
 
     // S_PlayerLeft 수신 시 호출
@@ -68,7 +70,7 @@ public class PlayerRegistry : MonoBehaviour
         }
     }
 
-    // PlayerId로 원격 플레이어 조회 (Step 2에서 S_Move 처리 시 사용)
+    // PlayerId로 원격 플레이어 조회
     public NetworkPlayer Get(int playerId)
     {
         _remotePlayers.TryGetValue(playerId, out var np);
@@ -77,21 +79,10 @@ public class PlayerRegistry : MonoBehaviour
 
     // === Private 메서드 ===
 
+    // 씬 전환 시 기존 스폰된 오브젝트를 새 씬의 SpawnPoint로 이동
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         Vector3 spawnPos = FindSpawnPosition();
-
-        // 첫 씬 로드: _pendingInfos의 정보로 오브젝트 스폰
-        if (_pendingInfos.Count > 0)
-        {
-            foreach (var info in _pendingInfos)
-                SpawnRemotePlayer(info, spawnPos);
-
-            _pendingInfos.Clear();
-            return;
-        }
-
-        // 이후 씬 전환: 이미 스폰된 오브젝트를 새 씬의 SpawnPoint로 이동
         foreach (var np in _remotePlayers.Values)
             np.transform.position = spawnPos;
     }
@@ -110,8 +101,6 @@ public class PlayerRegistry : MonoBehaviour
         Debug.Log($"[PlayerRegistry] 원격 플레이어 스폰: {info.PlayerName} (id={info.PlayerId})");
     }
 
-    // 새로 로드된 씬에서 "SpawnPoint" 태그 오브젝트를 찾아 위치 반환
-    // 없으면 원점 반환
     private Vector3 FindSpawnPosition()
     {
         GameObject spawnPoint = GameObject.FindWithTag("PlayerSpawnPoint");

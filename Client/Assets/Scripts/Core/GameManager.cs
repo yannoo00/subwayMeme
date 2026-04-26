@@ -2,26 +2,33 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 
-
-
 public enum GameState
 {
-    UI,
-    Playing,
+    Menu,           // 메인메뉴, 로비
+
+    EnteringGame,   // 게임씬 로드 완료 ~ S_GameStart 수신 전 (C_EnterGame, S_EnterGame, C_Ready 처리)
+
+    SelectingRoute, // S_GameStart 수신 후 ~ 방장이 경로 선택 완료 전 (노선도 UI 표시)
+
+    SceneLoading,   // 씬 전환 중 (S_AllBoarded/S_AllExited ~ 씬 로드 완료)
+                    // 이 구간에서 오는 게임 패킷은 전부 무시
+
+    Playing,        // 인게임 (이동, 전투, 타이머 등 동기화 패킷 처리)
+
+    GameOver,
+    GameClear,
 }
 
 
 public class GameManager : MonoBehaviour
 {
-    //singleton
-    public static GameManager Instance { get; private set; } 
+    public static GameManager Instance { get; private set; }
 
-    //state
-    private GameState _currentState;
-    public GameState CurrentState => _currentState; 
+    public GameState CurrentState { get; private set; }
 
-    
-    // 생명주기
+
+    // === 생명주기 ===
+
     private void Awake()
     {
         if (Instance == null)
@@ -36,75 +43,86 @@ public class GameManager : MonoBehaviour
         }
     }
 
-
     private void Start()
     {
-        ChangeState(GameState.UI);
+        ChangeState(GameState.Menu);
     }
 
-    private void Update()
-    {
+    private void Update() { }
 
 
-    } 
-
-
-
-    //public methods 
+    // === Public 메서드 ===
 
     public void ChangeState(GameState newState)
     {
-        _currentState = newState;
+        CurrentState = newState;
 
-    
         switch (newState)
         {
-            case GameState.UI:
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-                break;
-
             case GameState.Playing:
                 Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;
                 break;
+
+            default:
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+                break;
         }
     }
 
 
+    // === 게임 흐름 ===
 
-    //게임 진행 관련
+    // S_GameReady 수신 시 호출: 게임씬 로드 시작 전 상태 전환
+    public void OnEnteringGame()
+    {
+        ChangeState(GameState.EnteringGame);
+    }
+
+    // S_GameStart 수신 시 호출: 맵 생성 후 노선도 UI 표시
     public void StartGame(int seed)
     {
         Time.timeScale = 1f;
-        ChangeState(GameState.Playing);
+        ChangeState(GameState.SelectingRoute);
 
         StageManager.Instance._TryGame(seed);
     }
 
-    public void PauseGame()
+    // S_AllBoarded / S_AllExited 수신 시 호출: 씬 전환 시작
+    public void OnSceneTransitionStart()
     {
-        if (_currentState == GameState.Playing)
-        {
-            ChangeState(GameState.UI);
-        }
+        ChangeState(GameState.SceneLoading);
     }
 
+    // 씬 로드 완료 콜백에서 호출
+    public void OnSceneTransitionEnd()
+    {
+        ChangeState(GameState.Playing);
+    }
+
+    public void PauseGame()
+    {
+        if (CurrentState == GameState.Playing)
+            ChangeState(GameState.Menu);
+    }
 
     public void ResumeGame()
     {
-        if(_currentState == GameState.UI)
+        if (CurrentState == GameState.Menu)
         {
             Time.timeScale = 1f;
             ChangeState(GameState.Playing);
         }
     }
 
-    
     public void EndGame()
     {
-        ChangeState(GameState.UI);
+        ChangeState(GameState.GameOver);
     }
 
+    public void ClearGame()
+    {
+        ChangeState(GameState.GameClear);
+    }
 }
-
