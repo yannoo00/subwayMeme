@@ -253,7 +253,7 @@ public class MapUIDocument : MonoBehaviour
 
         if (reason == MapOpenReason.RouteSelection)
         {
-            _currentAvailableNodes = nextNodes;
+            _currentAvailableNodes = new List<StageNode>(nextNodes);
             foreach (var node in nextNodes)
                 SetNodeState(node, NodeState.Available);
         }
