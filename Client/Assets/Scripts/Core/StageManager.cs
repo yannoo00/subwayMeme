@@ -258,6 +258,22 @@ public class StageManager : MonoBehaviour
     }
 
 
+
+    public StageNode GetNodeByIndex(int idx)
+    {
+        return _stageMap.GetNodeByIndex(idx);
+    }
+
+    public int GetIndex(StageNode node)
+    {
+        return _stageMap.GetIndex(node);
+    }
+
+
+
+/// <summary>
+/// 나중에 작업예정
+/// </summary>
     private void GameClear()
     {
         Debug.Log("[StageManager] 최종 역 도달! 게임 클리어!");

@@ -1,3 +1,4 @@
+using GameProto;
 using UnityEngine;
 
 // 지하철 탑승구 오브젝트에 붙이는 컴포넌트
@@ -37,7 +38,11 @@ public class SubwayEntrance : MonoBehaviour, IInteractable
             return;
         }
 
-        StageManager.Instance.HandlePlayerBoarding();
+        NetworkManager.Instance.SendGame(GamePacketId.CBoardSubway, new C_BoardSubway());
+
+        // 방장만 노선도 UI 열기 (경로 선택 권한)
+        if (NetworkManager.Instance.IsHost)
+            StageManager.Instance.HandlePlayerBoarding();
     }
 
 

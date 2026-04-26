@@ -6,6 +6,7 @@ option csharp_namespace = "GameProto";
 //  패킷 ID 열거형
 //  C_ : Client to Server
 //  S_ : Server to Client
+// 누가 보낸 패킷인지는 sessionId 로 구분한다. 패킷에서 정보를 줄 필요 없음
 // ===================================================
 enum GamePacketId {
   NONE = 0;

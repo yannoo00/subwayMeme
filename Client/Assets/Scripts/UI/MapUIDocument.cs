@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using GameProto;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -288,7 +289,10 @@ public class MapUIDocument : MonoBehaviour
                 SetNodeState(availNode, NodeState.Normal);
         _currentAvailableNodes.Clear();
 
-        StageManager.Instance.MoveToNode(node);
+        // 씬 전환은 S_AllBoarded 수신 후 처리되므로 여기서는 서버에 선택만 전달
+        // 여기서 직접 moveToNode 하지 않고 서버에서 전원 탑승 수신 후 이동한다. 
+        int nodeIndex = StageManager.Instance.GetIndex(node);
+        NetworkManager.Instance.SendGame(GamePacketId.CSelectRoute, new C_SelectRoute { NodeIndex = nodeIndex });
     }
 
     // 노드의 상태 클래스만 토글
