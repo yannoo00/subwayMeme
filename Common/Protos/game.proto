@@ -36,11 +36,12 @@ enum GamePacketId {
   S_PLAYER_DAMAGED   = 34;
   S_PLAYER_DIED      = 35;
 
-  // --- 적 동기화 (호스트 AI + 서버 권위) ---
+  // --- 적 동기화 (호스트 AI, 서버 릴레이 / HP는 서버 권위) ---
   S_ENEMY_SPAWN      = 40;
   C_ENEMY_SYNC       = 41;
   S_ENEMY_SYNC       = 42;
   C_ENEMY_ATTACK     = 43;
+  C_ENEMY_SPAWNED    = 44;   // 호스트 -> 서버: 스폰 보고, 서버가 ID 발급 후 S_ENEMY_SPAWN 릴레이
 
   // --- 스테이지 진행 ---
   S_WAVE_START       = 50;
@@ -198,10 +199,18 @@ message S_PlayerDied {
 }
 
 // ===================================================
-//  5. 적 동기화 (호스트 AI + 서버 권위)
+//  5. 적 동기화 (호스트 AI, 서버 릴레이 / HP는 서버 권위)
 // ===================================================
 
-// 서버 -> 클라: 적 스폰 명령
+// 호스트 -> 서버: 적 스폰 보고 (호스트 SpawnManager가 결정)
+message C_EnemySpawned {
+  string enemy_type = 1;   // EnemyData 이름 (prefab 매칭용)
+  float  pos_x      = 2;
+  float  pos_y      = 3;
+  float  pos_z      = 4;
+}
+
+// 서버 -> 클라: 적 스폰 브로드캐스트 (서버가 ID 발급)
 message S_EnemySpawn {
   int32  enemy_id   = 1;   // 서버가 부여한 고유 ID
   string enemy_type = 2;   // EnemyData 이름 (prefab 매칭용)
