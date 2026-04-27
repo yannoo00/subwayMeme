@@ -265,6 +265,7 @@ public class StageManager : MonoBehaviour
 
 
     // 탑승 시도 시 호출 (SubwayEntrance에서 호출)
+    // 근데 이제 방장만 받아보는 것임
     public void HandlePlayerBoarding()
     {
         if (_stayingCoroutine != null) StopCoroutine(_stayingCoroutine);

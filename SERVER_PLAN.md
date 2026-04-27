@@ -73,15 +73,19 @@ Lobby ↔ Game Server 내부 통신은 localhost HTTP (REST)로 충분.
 
 ## 권한 분리
 
+### 원칙
+- **서버 권위**: 여러 클라이언트가 동시에 같은 상태를 변경할 수 있는 것 (충돌 가능성)
+- **호스트 권위 + 서버 릴레이**: 단일 출처(호스트)에서만 결정이 나오는 것
+
 | 항목 | 권한 | 비고 |
 |------|------|------|
 | 플레이어 이동 | 클라 입력 → 서버 릴레이 | C_Move → S_Move |
-| 공격 판정 | 클라 보고 + 서버 검증 | C_Attack에 히트 대상 포함, 서버가 쿨타임/거리 검증 |
+| 공격 판정 | 클라 보고, 검증 없음 | C_Attack → S_Attack 애니메이션 브로드캐스트 + 서버 HP 차감 |
 | 적 AI | 호스트 클라 NavMesh 실행 → 서버 릴레이 | C_EnemySync → S_EnemySync |
-| 적 HP/사망 | 서버 권위 | S_EnemyDamaged, S_EnemyDied |
-| 적 스폰 타이밍 | 서버 권위 | S_EnemySpawn |
-| 적 공격 → 플레이어 피격 | 호스트 보고 → 서버 판정 | C_EnemyAttack → S_PlayerDamaged |
-| 스테이지 타이머 | 서버 권위 | S_TimerSync |
+| 적 HP/사망 | **서버 권위** (충돌 가능) | 여러 플레이어가 동시에 같은 적 공격 가능, S_EnemyDamaged/S_EnemyDied |
+| 적 스폰 | 호스트 결정 → 서버 ID 발급 후 릴레이 | C_EnemySpawned → 서버가 ID 할당 → S_EnemySpawn 브로드캐스트 |
+| 적 공격 → 플레이어 피격 | 호스트 보고 → **서버 판정** (충돌 가능) | 여러 적이 동시에 같은 플레이어 공격 가능, C_EnemyAttack → S_PlayerDamaged |
+| 스테이지 타이머 | 서버 권위 | S_TimerSync (1초 주기 전송, 클라는 로컬 타이머 돌리고 서버값으로 보정) |
 | 경로 선택 | 방장만 | C_SelectRoute |
 | 하차/탑승 | 개인 요청 → 서버가 전원 확인 후 진행 | 전원 완료 시 S_AllExited / S_AllBoarded |
 | 맵 seed | 서버 생성 | S_GameStart에 포함 |
@@ -125,13 +129,14 @@ S_GameClear / S_GameOver           // 클리어 / 게임오버
 // 이동
 C_Move / S_Move                    // 플레이어 위치 동기화
 
-// 전투 (클라 보고 + 서버 검증)
-C_Attack / S_Attack                // 공격 입력 / 애니메이션 브로드캐스트
-S_EnemyDamaged / S_EnemyDied       // 적 피격/사망 (서버 권위)
-S_PlayerDamaged / S_PlayerDied     // 플레이어 피격/사망
+// 전투 (클라 보고, 서버 HP 계산)
+C_Attack / S_Attack                // 공격 입력 / 애니메이션 브로드캐스트 (거리/쿨타임 검증 없음)
+S_EnemyDamaged / S_EnemyDied       // 적 피격/사망 (서버 권위 - 동시 공격 충돌 처리)
+S_PlayerDamaged / S_PlayerDied     // 플레이어 피격/사망 (서버 권위 - 동시 피격 충돌 처리)
 
-// 적 (호스트 AI + 서버 권위)
-S_EnemySpawn                       // 서버가 스폰 명령
+// 적 (호스트 AI, 서버 릴레이)
+C_EnemySpawned                     // 호스트가 스폰 보고 → 서버가 ID 발급 후 S_EnemySpawn 릴레이
+S_EnemySpawn                       // 서버가 전체 브로드캐스트 (enemyId 포함)
 C_EnemySync / S_EnemySync          // 호스트가 AI 결과 보고 → 서버 릴레이
 C_EnemyAttack                      // 호스트가 적 공격 보고 → 서버가 S_PlayerDamaged
 
@@ -255,9 +260,9 @@ Client/Assets/Scripts/Network/
   - [x] C_Interact → S_InteractResult
 - [x] 호스트 이탈 시 S_HostChanged 브로드캐스트
 - [x] dotnet build 통과 확인
-- [ ] EnemyManager.cs — 적 HP 서버 권위 관리, 스폰 ID 발급
-- [ ] StageTimer.cs — S_WaveStart / S_TimerSync 서버 주도 발송
-- [ ] C_Attack 검증 로직 (쿨타임/거리)
+- [ ] EnemyManager.cs — 적 HP 서버 권위 관리, 스폰 ID 발급, C_EnemySpawned 수신 → S_EnemySpawn 릴레이 (웨이브 종료 판정 불필요)
+- [ ] StageTimer.cs — S_TimerSync 1초 주기 전송 (S_WaveStart는 호스트 SpawnManager가 트리거, 서버는 타이머 동기화만 담당)
+- ~~C_Attack 검증 로직 (쿨타임/거리) — PVE 게임 특성상 불필요, 드랍~~
 - [ ] LobbyReporter.cs — 게임 종료 시 LobbyServer에 HTTP 보고
 
 ### 5단계: Unity 클라이언트 연동 ← 진행 중
@@ -279,7 +284,7 @@ Client/Assets/Scripts/Network/
 - [x] `ClientGamePacketHandler.cs` (Unity) — S_ 수신 처리 (핵심 로직 완료, 게임오브젝트 연동 TODO)
   - [x] S_EnterGame → IsHost 저장, TODO: 플레이어 오브젝트 초기화
   - [x] S_PlayerEntered / S_PlayerLeft → TODO: 다른 플레이어 오브젝트 생성/제거
-  - [x] S_HostChanged → NetworkManager.IsHost 갱신, TODO: NavMesh 권한 전환
+  - [x] S_HostChanged → NetworkManager.IsHost 갱신, TODO: NavMesh 권한 전환 (개발 후순위 — 호스트 이탈 처리는 기본 기능 완성 후 구현)
   - [x] S_GameStart → TODO: MapGenerator seed 전달, GameManager.StartGame()
   - [x] S_Move → TODO: 다른 플레이어 위치 Lerp
   - [x] S_Attack → TODO: 공격 애니메이션 재생

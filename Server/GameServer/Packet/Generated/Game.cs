@@ -48,42 +48,44 @@ namespace GameProto {
             "X0VuZW15RGllZBIQCghlbmVteV9pZBgBIAEoBSJICg9TX1BsYXllckRhbWFn",
             "ZWQSEQoJcGxheWVyX2lkGAEgASgFEg4KBmRhbWFnZRgCIAEoBRISCgpjdXJy",
             "ZW50X2hwGAMgASgFIiEKDFNfUGxheWVyRGllZBIRCglwbGF5ZXJfaWQYASAB",
-            "KAUiYQoMU19FbmVteVNwYXduEhAKCGVuZW15X2lkGAEgASgFEhIKCmVuZW15",
-            "X3R5cGUYAiABKAkSDQoFcG9zX3gYAyABKAISDQoFcG9zX3kYBCABKAISDQoF",
-            "cG9zX3oYBSABKAIiLgoLQ19FbmVteVN5bmMSHwoHZW5lbWllcxgBIAMoCzIO",
-            "LkVuZW15U3luY0RhdGEiLgoLU19FbmVteVN5bmMSHwoHZW5lbWllcxgBIAMo",
-            "CzIOLkVuZW15U3luY0RhdGEiSwoNQ19FbmVteUF0dGFjaxIQCghlbmVteV9p",
-            "ZBgBIAEoBRIYChB0YXJnZXRfcGxheWVyX2lkGAIgASgFEg4KBmRhbWFnZRgD",
-            "IAEoBSIzCgtTX1dhdmVTdGFydBISCgp3YXZlX2luZGV4GAEgASgFEhAKCGR1",
-            "cmF0aW9uGAIgASgCIi8KC1NfVGltZXJTeW5jEhEKCXJlbWFpbmluZxgBIAEo",
-            "AhINCgV0b3RhbBgCIAEoAiISChBTX1N0YXRpb25BcnJpdmVkIhEKD1NfU3Vi",
-            "d2F5U3RhcnRlZCIOCgxDX0V4aXRTdWJ3YXkiTgoOU19QbGF5ZXJFeGl0ZWQS",
-            "EQoJcGxheWVyX2lkGAEgASgFEhQKDGV4aXRlZF9jb3VudBgCIAEoBRITCgt0",
-            "b3RhbF9jb3VudBgDIAEoBSINCgtTX0FsbEV4aXRlZCIPCg1DX0JvYXJkU3Vi",
-            "d2F5IlAKD1NfUGxheWVyQm9hcmRlZBIRCglwbGF5ZXJfaWQYASABKAUSFQoN",
-            "Ym9hcmRlZF9jb3VudBgCIAEoBRITCgt0b3RhbF9jb3VudBgDIAEoBSIjCg1D",
-            "X1NlbGVjdFJvdXRlEhIKCm5vZGVfaW5kZXgYASABKAUiIgoMU19BbGxCb2Fy",
-            "ZGVkEhIKCm5vZGVfaW5kZXgYASABKAUiJgoQU19TdGF0aW9uU2tpcHBlZBIS",
-            "Cgpub2RlX2luZGV4GAEgASgFIi0KCkNfSW50ZXJhY3QSEQoJb2JqZWN0X2lk",
-            "GAEgASgFEgwKBHR5cGUYAiABKAUiWAoQU19JbnRlcmFjdFJlc3VsdBIPCgdz",
-            "dWNjZXNzGAEgASgIEhEKCXBsYXllcl9pZBgCIAEoBRISCgpjdXJyZW50X2hw",
-            "GAMgASgFEgwKBGdvbGQYBCABKAUqpAUKDEdhbWVQYWNrZXRJZBIICgROT05F",
-            "EAASEAoMQ19FTlRFUl9HQU1FEAESEAoMU19FTlRFUl9HQU1FEAISFAoQU19Q",
-            "TEFZRVJfRU5URVJFRBADEhEKDVNfUExBWUVSX0xFRlQQBBISCg5TX0hPU1Rf",
-            "Q0hBTkdFRBAFEgsKB0NfUkVBRFkQChIQCgxTX0dBTUVfU1RBUlQQCxIQCgxT",
-            "X0dBTUVfQ0xFQVIQDBIPCgtTX0dBTUVfT1ZFUhANEgoKBkNfTU9WRRAUEgoK",
-            "BlNfTU9WRRAVEgwKCENfQVRUQUNLEB4SDAoIU19BVFRBQ0sQHxITCg9TX0VO",
-            "RU1ZX0RBTUFHRUQQIBIQCgxTX0VORU1ZX0RJRUQQIRIUChBTX1BMQVlFUl9E",
-            "QU1BR0VEECISEQoNU19QTEFZRVJfRElFRBAjEhEKDVNfRU5FTVlfU1BBV04Q",
-            "KBIQCgxDX0VORU1ZX1NZTkMQKRIQCgxTX0VORU1ZX1NZTkMQKhISCg5DX0VO",
-            "RU1ZX0FUVEFDSxArEhAKDFNfV0FWRV9TVEFSVBAyEhAKDFNfVElNRVJfU1lO",
-            "QxAzEhUKEVNfU1RBVElPTl9BUlJJVkVEEDQSFAoQU19TVUJXQVlfU1RBUlRF",
-            "RBA1EhEKDUNfRVhJVF9TVUJXQVkQNhITCg9TX1BMQVlFUl9FWElURUQQNxIQ",
-            "CgxTX0FMTF9FWElURUQQOBISCg5DX0JPQVJEX1NVQldBWRA5EhQKEFNfUExB",
-            "WUVSX0JPQVJERUQQOhISCg5DX1NFTEVDVF9ST1VURRA7EhEKDVNfQUxMX0JP",
-            "QVJERUQQPBIVChFTX1NUQVRJT05fU0tJUFBFRBA9Eg4KCkNfSU5URVJBQ1QQ",
-            "RhIVChFTX0lOVEVSQUNUX1JFU1VMVBBHQgyqAglHYW1lUHJvdG9iBnByb3Rv",
-            "Mw=="));
+            "KAUiUQoOQ19FbmVteVNwYXduZWQSEgoKZW5lbXlfdHlwZRgBIAEoCRINCgVw",
+            "b3NfeBgCIAEoAhINCgVwb3NfeRgDIAEoAhINCgVwb3NfehgEIAEoAiJhCgxT",
+            "X0VuZW15U3Bhd24SEAoIZW5lbXlfaWQYASABKAUSEgoKZW5lbXlfdHlwZRgC",
+            "IAEoCRINCgVwb3NfeBgDIAEoAhINCgVwb3NfeRgEIAEoAhINCgVwb3NfehgF",
+            "IAEoAiIuCgtDX0VuZW15U3luYxIfCgdlbmVtaWVzGAEgAygLMg4uRW5lbXlT",
+            "eW5jRGF0YSIuCgtTX0VuZW15U3luYxIfCgdlbmVtaWVzGAEgAygLMg4uRW5l",
+            "bXlTeW5jRGF0YSJLCg1DX0VuZW15QXR0YWNrEhAKCGVuZW15X2lkGAEgASgF",
+            "EhgKEHRhcmdldF9wbGF5ZXJfaWQYAiABKAUSDgoGZGFtYWdlGAMgASgFIjMK",
+            "C1NfV2F2ZVN0YXJ0EhIKCndhdmVfaW5kZXgYASABKAUSEAoIZHVyYXRpb24Y",
+            "AiABKAIiLwoLU19UaW1lclN5bmMSEQoJcmVtYWluaW5nGAEgASgCEg0KBXRv",
+            "dGFsGAIgASgCIhIKEFNfU3RhdGlvbkFycml2ZWQiEQoPU19TdWJ3YXlTdGFy",
+            "dGVkIg4KDENfRXhpdFN1YndheSJOCg5TX1BsYXllckV4aXRlZBIRCglwbGF5",
+            "ZXJfaWQYASABKAUSFAoMZXhpdGVkX2NvdW50GAIgASgFEhMKC3RvdGFsX2Nv",
+            "dW50GAMgASgFIg0KC1NfQWxsRXhpdGVkIg8KDUNfQm9hcmRTdWJ3YXkiUAoP",
+            "U19QbGF5ZXJCb2FyZGVkEhEKCXBsYXllcl9pZBgBIAEoBRIVCg1ib2FyZGVk",
+            "X2NvdW50GAIgASgFEhMKC3RvdGFsX2NvdW50GAMgASgFIiMKDUNfU2VsZWN0",
+            "Um91dGUSEgoKbm9kZV9pbmRleBgBIAEoBSIiCgxTX0FsbEJvYXJkZWQSEgoK",
+            "bm9kZV9pbmRleBgBIAEoBSImChBTX1N0YXRpb25Ta2lwcGVkEhIKCm5vZGVf",
+            "aW5kZXgYASABKAUiLQoKQ19JbnRlcmFjdBIRCglvYmplY3RfaWQYASABKAUS",
+            "DAoEdHlwZRgCIAEoBSJYChBTX0ludGVyYWN0UmVzdWx0Eg8KB3N1Y2Nlc3MY",
+            "ASABKAgSEQoJcGxheWVyX2lkGAIgASgFEhIKCmN1cnJlbnRfaHAYAyABKAUS",
+            "DAoEZ29sZBgEIAEoBSq5BQoMR2FtZVBhY2tldElkEggKBE5PTkUQABIQCgxD",
+            "X0VOVEVSX0dBTUUQARIQCgxTX0VOVEVSX0dBTUUQAhIUChBTX1BMQVlFUl9F",
+            "TlRFUkVEEAMSEQoNU19QTEFZRVJfTEVGVBAEEhIKDlNfSE9TVF9DSEFOR0VE",
+            "EAUSCwoHQ19SRUFEWRAKEhAKDFNfR0FNRV9TVEFSVBALEhAKDFNfR0FNRV9D",
+            "TEVBUhAMEg8KC1NfR0FNRV9PVkVSEA0SCgoGQ19NT1ZFEBQSCgoGU19NT1ZF",
+            "EBUSDAoIQ19BVFRBQ0sQHhIMCghTX0FUVEFDSxAfEhMKD1NfRU5FTVlfREFN",
+            "QUdFRBAgEhAKDFNfRU5FTVlfRElFRBAhEhQKEFNfUExBWUVSX0RBTUFHRUQQ",
+            "IhIRCg1TX1BMQVlFUl9ESUVEECMSEQoNU19FTkVNWV9TUEFXThAoEhAKDENf",
+            "RU5FTVlfU1lOQxApEhAKDFNfRU5FTVlfU1lOQxAqEhIKDkNfRU5FTVlfQVRU",
+            "QUNLECsSEwoPQ19FTkVNWV9TUEFXTkVEECwSEAoMU19XQVZFX1NUQVJUEDIS",
+            "EAoMU19USU1FUl9TWU5DEDMSFQoRU19TVEFUSU9OX0FSUklWRUQQNBIUChBT",
+            "X1NVQldBWV9TVEFSVEVEEDUSEQoNQ19FWElUX1NVQldBWRA2EhMKD1NfUExB",
+            "WUVSX0VYSVRFRBA3EhAKDFNfQUxMX0VYSVRFRBA4EhIKDkNfQk9BUkRfU1VC",
+            "V0FZEDkSFAoQU19QTEFZRVJfQk9BUkRFRBA6EhIKDkNfU0VMRUNUX1JPVVRF",
+            "EDsSEQoNU19BTExfQk9BUkRFRBA8EhUKEVNfU1RBVElPTl9TS0lQUEVEED0S",
+            "DgoKQ19JTlRFUkFDVBBGEhUKEVNfSU5URVJBQ1RfUkVTVUxUEEdCDKoCCUdh",
+            "bWVQcm90b2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::GameProto.GamePacketId), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -106,6 +108,7 @@ namespace GameProto {
             new pbr::GeneratedClrTypeInfo(typeof(global::GameProto.S_EnemyDied), global::GameProto.S_EnemyDied.Parser, new[]{ "EnemyId" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::GameProto.S_PlayerDamaged), global::GameProto.S_PlayerDamaged.Parser, new[]{ "PlayerId", "Damage", "CurrentHp" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::GameProto.S_PlayerDied), global::GameProto.S_PlayerDied.Parser, new[]{ "PlayerId" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::GameProto.C_EnemySpawned), global::GameProto.C_EnemySpawned.Parser, new[]{ "EnemyType", "PosX", "PosY", "PosZ" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::GameProto.S_EnemySpawn), global::GameProto.S_EnemySpawn.Parser, new[]{ "EnemyId", "EnemyType", "PosX", "PosY", "PosZ" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::GameProto.C_EnemySync), global::GameProto.C_EnemySync.Parser, new[]{ "Enemies" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::GameProto.S_EnemySync), global::GameProto.S_EnemySync.Parser, new[]{ "Enemies" }, null, null, null, null),
@@ -135,6 +138,7 @@ namespace GameProto {
   ///  패킷 ID 열거형
   ///  C_ : Client to Server
   ///  S_ : Server to Client
+  /// 누가 보낸 패킷인지는 sessionId 로 구분한다. 패킷에서 정보를 줄 필요 없음
   /// ===================================================
   /// </summary>
   public enum GamePacketId {
@@ -169,12 +173,16 @@ namespace GameProto {
     [pbr::OriginalName("S_PLAYER_DAMAGED")] SPlayerDamaged = 34,
     [pbr::OriginalName("S_PLAYER_DIED")] SPlayerDied = 35,
     /// <summary>
-    /// --- 적 동기화 (호스트 AI + 서버 권위) ---
+    /// --- 적 동기화 (호스트 AI, 서버 릴레이 / HP는 서버 권위) ---
     /// </summary>
     [pbr::OriginalName("S_ENEMY_SPAWN")] SEnemySpawn = 40,
     [pbr::OriginalName("C_ENEMY_SYNC")] CEnemySync = 41,
     [pbr::OriginalName("S_ENEMY_SYNC")] SEnemySync = 42,
     [pbr::OriginalName("C_ENEMY_ATTACK")] CEnemyAttack = 43,
+    /// <summary>
+    /// 호스트 -> 서버: 스폰 보고, 서버가 ID 발급 후 S_ENEMY_SPAWN 릴레이
+    /// </summary>
+    [pbr::OriginalName("C_ENEMY_SPAWNED")] CEnemySpawned = 44,
     /// <summary>
     /// --- 스테이지 진행 ---
     /// </summary>
@@ -4860,7 +4868,322 @@ namespace GameProto {
   }
 
   /// <summary>
-  /// 서버 -> 클라: 적 스폰 명령
+  /// 호스트 -> 서버: 적 스폰 보고 (호스트 SpawnManager가 결정)
+  /// </summary>
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class C_EnemySpawned : pb::IMessage<C_EnemySpawned>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<C_EnemySpawned> _parser = new pb::MessageParser<C_EnemySpawned>(() => new C_EnemySpawned());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<C_EnemySpawned> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[19]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public C_EnemySpawned() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public C_EnemySpawned(C_EnemySpawned other) : this() {
+      enemyType_ = other.enemyType_;
+      posX_ = other.posX_;
+      posY_ = other.posY_;
+      posZ_ = other.posZ_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public C_EnemySpawned Clone() {
+      return new C_EnemySpawned(this);
+    }
+
+    /// <summary>Field number for the "enemy_type" field.</summary>
+    public const int EnemyTypeFieldNumber = 1;
+    private string enemyType_ = "";
+    /// <summary>
+    /// EnemyData 이름 (prefab 매칭용)
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string EnemyType {
+      get { return enemyType_; }
+      set {
+        enemyType_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "pos_x" field.</summary>
+    public const int PosXFieldNumber = 2;
+    private float posX_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float PosX {
+      get { return posX_; }
+      set {
+        posX_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "pos_y" field.</summary>
+    public const int PosYFieldNumber = 3;
+    private float posY_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float PosY {
+      get { return posY_; }
+      set {
+        posY_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "pos_z" field.</summary>
+    public const int PosZFieldNumber = 4;
+    private float posZ_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float PosZ {
+      get { return posZ_; }
+      set {
+        posZ_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as C_EnemySpawned);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(C_EnemySpawned other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (EnemyType != other.EnemyType) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(PosX, other.PosX)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(PosY, other.PosY)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(PosZ, other.PosZ)) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (EnemyType.Length != 0) hash ^= EnemyType.GetHashCode();
+      if (PosX != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(PosX);
+      if (PosY != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(PosY);
+      if (PosZ != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(PosZ);
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (EnemyType.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(EnemyType);
+      }
+      if (PosX != 0F) {
+        output.WriteRawTag(21);
+        output.WriteFloat(PosX);
+      }
+      if (PosY != 0F) {
+        output.WriteRawTag(29);
+        output.WriteFloat(PosY);
+      }
+      if (PosZ != 0F) {
+        output.WriteRawTag(37);
+        output.WriteFloat(PosZ);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (EnemyType.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(EnemyType);
+      }
+      if (PosX != 0F) {
+        output.WriteRawTag(21);
+        output.WriteFloat(PosX);
+      }
+      if (PosY != 0F) {
+        output.WriteRawTag(29);
+        output.WriteFloat(PosY);
+      }
+      if (PosZ != 0F) {
+        output.WriteRawTag(37);
+        output.WriteFloat(PosZ);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (EnemyType.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(EnemyType);
+      }
+      if (PosX != 0F) {
+        size += 1 + 4;
+      }
+      if (PosY != 0F) {
+        size += 1 + 4;
+      }
+      if (PosZ != 0F) {
+        size += 1 + 4;
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(C_EnemySpawned other) {
+      if (other == null) {
+        return;
+      }
+      if (other.EnemyType.Length != 0) {
+        EnemyType = other.EnemyType;
+      }
+      if (other.PosX != 0F) {
+        PosX = other.PosX;
+      }
+      if (other.PosY != 0F) {
+        PosY = other.PosY;
+      }
+      if (other.PosZ != 0F) {
+        PosZ = other.PosZ;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 10: {
+            EnemyType = input.ReadString();
+            break;
+          }
+          case 21: {
+            PosX = input.ReadFloat();
+            break;
+          }
+          case 29: {
+            PosY = input.ReadFloat();
+            break;
+          }
+          case 37: {
+            PosZ = input.ReadFloat();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 10: {
+            EnemyType = input.ReadString();
+            break;
+          }
+          case 21: {
+            PosX = input.ReadFloat();
+            break;
+          }
+          case 29: {
+            PosY = input.ReadFloat();
+            break;
+          }
+          case 37: {
+            PosZ = input.ReadFloat();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  /// <summary>
+  /// 서버 -> 클라: 적 스폰 브로드캐스트 (서버가 ID 발급)
   /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class S_EnemySpawn : pb::IMessage<S_EnemySpawn>
@@ -4877,7 +5200,7 @@ namespace GameProto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[19]; }
+      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[20]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -5232,7 +5555,7 @@ namespace GameProto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[20]; }
+      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[21]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -5422,7 +5745,7 @@ namespace GameProto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[21]; }
+      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[22]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -5612,7 +5935,7 @@ namespace GameProto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[22]; }
+      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[23]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -5887,7 +6210,7 @@ namespace GameProto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[23]; }
+      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[24]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -6125,7 +6448,7 @@ namespace GameProto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[24]; }
+      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[25]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -6363,7 +6686,7 @@ namespace GameProto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[25]; }
+      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[26]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -6527,7 +6850,7 @@ namespace GameProto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[26]; }
+      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[27]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -6691,7 +7014,7 @@ namespace GameProto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[27]; }
+      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[28]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -6855,7 +7178,7 @@ namespace GameProto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[28]; }
+      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[29]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -7136,7 +7459,7 @@ namespace GameProto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[29]; }
+      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[30]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -7300,7 +7623,7 @@ namespace GameProto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[30]; }
+      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[31]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -7464,7 +7787,7 @@ namespace GameProto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[31]; }
+      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[32]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -7739,7 +8062,7 @@ namespace GameProto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[32]; }
+      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[33]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -7943,7 +8266,7 @@ namespace GameProto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[33]; }
+      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[34]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -8144,7 +8467,7 @@ namespace GameProto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[34]; }
+      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[35]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -8348,7 +8671,7 @@ namespace GameProto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[35]; }
+      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[36]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -8589,7 +8912,7 @@ namespace GameProto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[36]; }
+      get { return global::GameProto.GameReflection.Descriptor.MessageTypes[37]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]

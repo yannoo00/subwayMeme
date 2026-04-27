@@ -983,8 +983,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bce205cdeeedfec449532bb6d4c6e173, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
-  _currentHealth: 100
-  _maxHealth: 100
+  _currentHealth: 2100000000
+  _maxHealth: 2100000000
 --- !u!1 &948390128
 GameObject:
   m_ObjectHideFlags: 0

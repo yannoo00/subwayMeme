@@ -38,12 +38,20 @@ public class SubwayEntrance : MonoBehaviour, IInteractable
             return;
         }
 
-        //상호작용하면 내가 탔다는걸 보내줌
+        // 상호작용하면 내가 탔다는걸 보내줌
+        // 지금은 계속 누르면 계속 보내는데 이것도 조절 필요
         NetworkManager.Instance.SendGame(GamePacketId.CBoardSubway, new C_BoardSubway());
 
         // 방장만 노선도 UI 열기 (경로 선택 권한)
         if (NetworkManager.Instance.IsHost)
+        {
             StageManager.Instance.HandlePlayerBoarding();
+        }
+            
+        else
+        {
+            //여기에다가 방장이 아닌 유저는 기냥 대기중? 뭐 그런 UI 띄우든가 해야지 . 
+        }
     }
 
 
