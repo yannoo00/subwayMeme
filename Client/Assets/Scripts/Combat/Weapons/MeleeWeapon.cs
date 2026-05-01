@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -21,19 +22,30 @@ public class MeleeWeapon : WeaponBase
 
         Collider[] hits = Physics.OverlapSphere(attackPosition, _weaponData.range, _targetLayer);
         
+        var hitEnemyIds = new List<int>();
 
         foreach (Collider hit in hits)
         {
-            if (!IsInAttackAngle(hit.transform)) continue; 
+            if (!IsInAttackAngle(hit.transform)) continue;
 
-            Debug.Log("hit ! ");
+            var enemy = hit.GetComponentInParent<Enemy>();
+            bool isNetworkEnemy = enemy != null && enemy.NetworkId > 0;
 
-            if (hit.TryGetComponent<IDamageable>(out var damageable))
-            {
-                damageable.TakeDamage(_weaponData.damage);   
-            }
-            
-            if(!_weaponData.isSplash) break;
+            // 네트워크 적은 서버가 HP 계산 - 로컬 TakeDamage 호출 안 함
+            if (!isNetworkEnemy && hit.TryGetComponent<IDamageable>(out var damageable))
+                damageable.TakeDamage(_weaponData.damage);
+
+            if (isNetworkEnemy)
+                hitEnemyIds.Add(enemy.NetworkId);
+
+            if (!_weaponData.isSplash) break;
+        }
+
+        if (hitEnemyIds.Count > 0)
+        {
+            var pkt = new GameProto.C_Attack { WeaponId = 0, Damage = _weaponData.damage };
+            pkt.HitEnemyIds.AddRange(hitEnemyIds);
+            NetworkManager.Instance.SendGame(GameProto.GamePacketId.CAttack, pkt);
         }
     }
 
@@ -44,6 +56,9 @@ public class MeleeWeapon : WeaponBase
         float angle = Vector3.Angle(transform.forward, directionToTarget);
         return angle <= _weaponData.attackAngle / 2f;
     }
+
+
+
 
     //Debug
     private void OnDrawGizmosSelected()

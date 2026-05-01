@@ -110,8 +110,10 @@ public static class ClientGamePacketHandler
 
         var pkt = S_Attack.Parser.ParseFrom(body);
 
-        // TODO: playerId로 다른 플레이어 오브젝트 검색
-        // TODO: weaponId에 맞는 공격 애니메이션 재생
+        var np = PlayerRegistry.Instance.Get(pkt.PlayerId);
+        if (np == null) return;
+
+        np.TriggerAttackAnim();
     }
 
     // 적 스폰 (서버 권위)
@@ -123,21 +125,29 @@ public static class ClientGamePacketHandler
 
         Debug.Log($"[Game] S_EnemySpawn: enemyId={pkt.EnemyId}, type={pkt.EnemyType}");
 
-        // TODO: enemyType에 맞는 프리팹을 (pkt.PosX, PosY, PosZ)에 스폰
-        // TODO: enemyId를 키로 Dictionary에 등록 (이후 동기화용)
+        var pos = new Vector3(pkt.PosX, pkt.PosY, pkt.PosZ);
+        SpawnManager.Instance.SpawnNetworkEnemy(pkt.EnemyId, pkt.EnemyType, pos);
     }
 
     // 적 위치/상태 동기화 (호스트 → 서버 → 비호스트)
     public static void Handle_S_EnemySync(byte[] body)
     {
         if (GameManager.Instance.CurrentState != GameState.Playing) return;
+        if (NetworkManager.Instance.IsHost) return; // 방장은 자신이 AI를 직접 실행
 
         var pkt = S_EnemySync.Parser.ParseFrom(body);
 
-        // 비호스트만 처리 (호스트는 직접 NavMesh로 계산하므로 무시)
-        if (NetworkManager.Instance.IsHost) return;
+        foreach (var data in pkt.Enemies)
+        {
+            var ne = SpawnManager.Instance.GetNetworkEnemy(data.EnemyId);
+            if (ne == null) continue;
 
-        // TODO: pkt.Enemies 순회하며 각 enemyId 오브젝트 위치 보간 적용
+            ne.SetTargetState(
+                new Vector3(data.PosX, data.PosY, data.PosZ),
+                data.RotY,
+                data.State
+            );
+        }
     }
 
     // 적 피격 (서버 권위 HP)
@@ -147,8 +157,12 @@ public static class ClientGamePacketHandler
 
         var pkt = S_EnemyDamaged.Parser.ParseFrom(body);
 
-        // TODO: enemyId 오브젝트에 피격 이펙트 재생
-        // TODO: pkt.CurrentHp로 HP바 갱신 (CurrentHp == -1이면 호스트가 계산)
+        Debug.Log($"[Game] S_EnemyDamaged: enemyId={pkt.EnemyId}, hp={pkt.CurrentHp}");
+
+        var enemy = SpawnManager.Instance.GetEnemyById(pkt.EnemyId);
+        if (enemy == null) return;
+
+        enemy.ApplyNetworkDamage(pkt.CurrentHp);
     }
 
     // 적 사망
@@ -160,8 +174,7 @@ public static class ClientGamePacketHandler
 
         Debug.Log($"[Game] S_EnemyDied: enemyId={pkt.EnemyId}");
 
-        // TODO: enemyId 오브젝트 사망 처리 (애니메이션 → Destroy)
-        // TODO: Dictionary에서 제거
+        SpawnManager.Instance.DespawnNetworkEnemy(pkt.EnemyId);
     }
 
     // 내 캐릭터 또는 다른 플레이어 피격
@@ -176,13 +189,10 @@ public static class ClientGamePacketHandler
 
         if (isMe)
         {
-            // TODO: 내 HP바 갱신 (pkt.CurrentHp)
-            // TODO: 피격 이펙트, 카메라 쉐이크
+            var playerObj = GameObject.FindWithTag("Player");
+            playerObj?.GetComponent<PlayerStats>()?.ApplyServerDamage(pkt.Damage, pkt.CurrentHp);
         }
-        else
-        {
-            // TODO: 해당 플레이어 오브젝트 피격 이펙트
-        }
+        // else: 다른 플레이어 피격 이펙트는 추후 구현
     }
 
     // 플레이어 사망

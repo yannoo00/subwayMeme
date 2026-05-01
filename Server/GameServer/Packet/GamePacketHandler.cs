@@ -18,8 +18,9 @@ namespace GameServer
             Handlers[(int)GamePacketId.CReady]       = Handle_C_Ready;
             Handlers[(int)GamePacketId.CMove]        = Handle_C_Move;
             Handlers[(int)GamePacketId.CAttack]      = Handle_C_Attack;
-            Handlers[(int)GamePacketId.CEnemySync]   = Handle_C_EnemySync;
-            Handlers[(int)GamePacketId.CEnemyAttack] = Handle_C_EnemyAttack;
+            Handlers[(int)GamePacketId.CEnemySpawned] = Handle_C_EnemySpawned;
+            Handlers[(int)GamePacketId.CEnemySync]    = Handle_C_EnemySync;
+            Handlers[(int)GamePacketId.CEnemyAttack]  = Handle_C_EnemyAttack;
             Handlers[(int)GamePacketId.CExitSubway]  = Handle_C_ExitSubway;
             Handlers[(int)GamePacketId.CBoardSubway] = Handle_C_BoardSubway;
             Handlers[(int)GamePacketId.CSelectRoute] = Handle_C_SelectRoute;
@@ -99,18 +100,54 @@ namespace GameServer
             foreach (var s in GameRoom.Instance.GetOtherSessions(session.SessionId))
                 s.Send(attackBytes);
 
-            // 피격 적마다 S_EnemyDamaged 브로드캐스트
+            // 피격 적마다 HP 계산 후 S_EnemyDamaged 또는 S_EnemyDied 브로드캐스트
             // TODO: 쿨타임/거리 검증 추가
             foreach (int enemyId in pkt.HitEnemyIds)
             {
-                var dmgBytes = MakePacket(GamePacketId.SEnemyDamaged,
-                    new S_EnemyDamaged { EnemyId = enemyId, CurrentHp = -1 });
-                foreach (var s in GameRoom.Instance.GetAllSessions())
-                    s.Send(dmgBytes);
+                var (currentHp, isDead) = EnemyManager.Instance.ApplyDamage(enemyId, pkt.Damage);
+                if (currentHp == -1) continue; // 서버에 미등록 적 (이미 사망 처리 중)
+
+                if (isDead)
+                {
+                    Console.WriteLine($"[Game] S_EnemyDied: enemyId={enemyId}");
+                    var diedBytes = MakePacket(GamePacketId.SEnemyDied, new S_EnemyDied { EnemyId = enemyId });
+                    foreach (var s in GameRoom.Instance.GetAllSessions())
+                        s.Send(diedBytes);
+                }
+                else
+                {
+                    var dmgBytes = MakePacket(GamePacketId.SEnemyDamaged,
+                        new S_EnemyDamaged { EnemyId = enemyId, CurrentHp = currentHp });
+                    foreach (var s in GameRoom.Instance.GetAllSessions())
+                        s.Send(dmgBytes);
+                }
             }
         }
 
         // === 적 동기화 (호스트만 전송) ===
+
+        static void Handle_C_EnemySpawned(PacketSession session, ArraySegment<byte> body)
+        {
+            var pkt    = C_EnemySpawned.Parser.ParseFrom(body.Array, body.Offset, body.Count);
+            var player = GameRoom.Instance.Get(session.SessionId);
+            if (player == null || !player.IsHost) return;
+
+            int enemyId = GameRoom.Instance.GenerateEnemyId();
+            EnemyManager.Instance.RegisterEnemy(enemyId, pkt.MaxHp);
+
+            Console.WriteLine($"[Game] C_EnemySpawned: type={pkt.EnemyType}, pos=({pkt.PosX:F1},{pkt.PosY:F1},{pkt.PosZ:F1}) -> id={enemyId}");
+
+            var spawnBytes = MakePacket(GamePacketId.SEnemySpawn, new S_EnemySpawn
+            {
+                EnemyId   = enemyId,
+                EnemyType = pkt.EnemyType,
+                PosX      = pkt.PosX,
+                PosY      = pkt.PosY,
+                PosZ      = pkt.PosZ,
+            });
+            foreach (var s in GameRoom.Instance.GetAllSessions())
+                s.Send(spawnBytes);
+        }
 
         static void Handle_C_EnemySync(PacketSession session, ArraySegment<byte> body)
         {

@@ -167,6 +167,7 @@ message S_Move {
 message C_Attack {
   int32 weapon_id = 1;
   repeated int32 hit_enemy_ids = 2;
+  int32 damage = 3;
 }
 
 // 서버 -> 클라: 다른 플레이어 공격 애니메이션 브로드캐스트
@@ -208,6 +209,7 @@ message C_EnemySpawned {
   float  pos_x      = 2;
   float  pos_y      = 3;
   float  pos_z      = 4;
+  int32  max_hp     = 5;
 }
 
 // 서버 -> 클라: 적 스폰 브로드캐스트 (서버가 ID 발급)

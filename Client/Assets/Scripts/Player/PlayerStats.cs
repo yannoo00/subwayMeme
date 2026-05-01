@@ -34,6 +34,21 @@ public class PlayerStats: MonoBehaviour, IDamageable
         }        
     }
 
+    // 서버 권위 피격 적용 - 로컬에서 직접 계산하지 않고 서버가 확정한 HP로 설정
+    public void ApplyServerDamage(int damage, int currentHp)
+    {
+        if (!IsAlive) return;
+
+        _currentHealth = currentHp;
+
+        PlayerEvents.PlayerDamaged(damage);
+        PlayerEvents.HealthChanged(_currentHealth, _maxHealth);
+
+        Debug.Log($"[PlayerStats] 서버 피격 적용: -{damage} HP -> {_currentHealth}/{_maxHealth}");
+
+        if (!IsAlive) Die();
+    }
+
     public void Die()
     {
         PlayerEvents.PlayerDied();

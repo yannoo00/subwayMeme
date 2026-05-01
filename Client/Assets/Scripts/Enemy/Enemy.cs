@@ -16,6 +16,9 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     public int          MaxHealth     => _maxHealth;
     public bool         IsAlive       => _currentHealth > 0;
 
+    // 서버가 부여한 네트워크 식별자 - EnemyAttack에서 C_EnemyAttack 패킷 조립 시 사용됨
+    public int NetworkId { get; set; }
+
     public EnemyMove     Move   => _move;
     public EnemyAI       AI     => _ai;
     public EnemyAttack   Attack => _attack;
@@ -51,6 +54,18 @@ public abstract class Enemy : MonoBehaviour, IDamageable
         _currentHealth -= damage;
         _currentHealth = Mathf.Max(_currentHealth, 0);
         Debug.Log($"[Enemy] {gameObject.name} 피격! HP: {_currentHealth}/{_data.maxHealth}");
+
+        if (!IsAlive)
+            Die();
+    }
+
+
+    // 서버 권위 피격 적용 - 서버가 확정한 HP로 직접 설정
+    public void ApplyNetworkDamage(int currentHp)
+    {
+        if (!IsAlive) return;
+
+        _currentHealth = currentHp;
 
         if (!IsAlive)
             Die();

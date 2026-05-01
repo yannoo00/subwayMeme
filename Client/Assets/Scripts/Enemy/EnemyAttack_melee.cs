@@ -38,11 +38,31 @@ public class EnemyAttack_Melee : EnemyAttack
             Debug.Log($"  - {hit.gameObject.name} / 태그: {hit.tag}");
             if (!hit.transform.root.CompareTag("Player") && !hit.CompareTag("Player")) continue;
 
-            IDamageable target = hit.GetComponentInParent<IDamageable>();
-            target?.TakeDamage(_enemy.Data.attackDamage);
-            // 공격 1회당 1명만 타격 (범위 공격이 아닌 단일 타격)
+            // 방장만 공격 판정 권한 보유 - 서버에 보고하면 서버가 S_PlayerDamaged로 브로드캐스트
+            if (NetworkManager.Instance.IsHost)
+            {
+                int targetPlayerId = GetHitPlayerId(hit.gameObject);
+                NetworkManager.Instance.SendGame(GameProto.GamePacketId.CEnemyAttack, new GameProto.C_EnemyAttack
+                {
+                    EnemyId        = _enemy.NetworkId,
+                    TargetPlayerId = targetPlayerId,
+                    Damage         = _enemy.Data.attackDamage
+                });
+            }
+            // 공격 1회당 1명만 타격
             break;
         }
+    }
+
+
+    private int GetHitPlayerId(GameObject hitObj)
+    {
+        // 원격 플레이어라면 NetworkPlayer 컴포넌트에서 PlayerId 조회
+        var np = hitObj.GetComponentInParent<NetworkPlayer>();
+        if (np != null) return np.PlayerId;
+
+        // 로컬 플레이어 (내 캐릭터)
+        return NetworkManager.Instance.MyPlayerId;
     }
 
 

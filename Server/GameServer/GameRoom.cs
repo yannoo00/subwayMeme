@@ -30,6 +30,9 @@ namespace GameServer
         bool _routeSelected = false;
         int  _selectedNode  = -1;
 
+        // 적 ID 발급 카운터 - 게임 세션 내에서 유일한 ID를 부여하기 위해 단조 증가
+        int _nextEnemyId = 1;
+
 
         // ==== 초기화 =============================================================
 
@@ -193,6 +196,16 @@ namespace GameServer
 
 
         // ==== 전투 ===============================================================
+
+        // 적 스폰 시 서버가 고유 ID를 발급 - 클라이언트 간 ID 충돌 방지
+        public int GenerateEnemyId()
+        {
+            lock (_lock)
+            {
+                return _nextEnemyId++;
+            }
+        }
+
 
         // 플레이어 피해 적용 (서버 권위)
         public DamageResult ApplyPlayerDamage(int targetPlayerId, int damage)
