@@ -41,12 +41,10 @@ public class MeleeWeapon : WeaponBase
             if (!_weaponData.isSplash) break;
         }
 
-        if (hitEnemyIds.Count > 0)
-        {
-            var pkt = new GameProto.C_Attack { WeaponId = 0, Damage = _weaponData.damage };
-            pkt.HitEnemyIds.AddRange(hitEnemyIds);
-            NetworkManager.Instance.SendGame(GameProto.GamePacketId.CAttack, pkt);
-        }
+        // 히트 여부와 무관하게 전송 - 다른 플레이어에게 공격 애니메이션 동기화
+        var pkt = new GameProto.C_Attack { WeaponId = 0, Damage = _weaponData.damage };
+        pkt.HitEnemyIds.AddRange(hitEnemyIds);
+        NetworkManager.Instance.SendGame(GameProto.GamePacketId.CAttack, pkt);
     }
 
 

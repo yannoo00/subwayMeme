@@ -13,14 +13,13 @@ public abstract class WeaponBase : MonoBehaviour
     public bool CanAttack => Time.time >= _lastAttackTime + _weaponData.attackCooldown;
 
 
-    public void TryAttack()
+    public bool TryAttack()
     {
-        //Debug.Log("try attack!");
-        if (!CanAttack) return;
+        if (!CanAttack) return false;
 
         _lastAttackTime = Time.time;
-        Debug.Log("perform attack!");
         PerformAttack();
+        return true;
     }
 
 
