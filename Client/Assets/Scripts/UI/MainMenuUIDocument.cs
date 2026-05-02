@@ -27,9 +27,11 @@ public class MainMenuUIDocument : MonoBehaviour
     private VisualElement _roomListPanel;
     private VisualElement _createRoomPanel;
     private VisualElement _waitingRoomPanel;
+    private VisualElement _upgradePanel;
 
     // 메인 메뉴
     private Button _playButton;
+    private Button _upgradeButton;
 
     // 닉네임 입력
     private TextField _nameField;
@@ -56,6 +58,11 @@ public class MainMenuUIDocument : MonoBehaviour
     private readonly Dictionary<int, Label> _playerLabels = new();
     private int  _maxPlayers;
     private bool _isRoomCreator;
+
+    // 강화 화면
+    private Label      _upgradeGoldLabel;
+    private ScrollView _upgradeScroll;
+    private Button     _upgradeBackButton;
 
     // === Unity 생명주기 ===
 
@@ -88,8 +95,10 @@ public class MainMenuUIDocument : MonoBehaviour
         _roomListPanel    = root.Q("room-list-panel");
         _createRoomPanel  = root.Q("create-room-panel");
         _waitingRoomPanel = root.Q("waiting-room-panel");
+        _upgradePanel     = root.Q("upgrade-panel");
 
-        _playButton = root.Q<Button>("play-button");
+        _playButton    = root.Q<Button>("play-button");
+        _upgradeButton = root.Q<Button>("upgrade-button");
 
         _nameField     = root.Q<TextField>("name-field");
         _connectButton = root.Q<Button>("connect-button");
@@ -108,7 +117,12 @@ public class MainMenuUIDocument : MonoBehaviour
         _leaveRoomButton = root.Q<Button>("leave-room-button");
         _startGameButton = root.Q<Button>("start-game-button");
 
+        _upgradeGoldLabel  = root.Q<Label>("upgrade-gold-label");
+        _upgradeScroll     = root.Q<ScrollView>("upgrade-scroll");
+        _upgradeBackButton = root.Q<Button>("upgrade-back-button");
+
         _playButton.clicked         += OnPlayClicked;
+        _upgradeButton.clicked      += OnUpgradeClicked;
         _connectButton.clicked      += OnConnectClicked;
         _refreshButton.clicked      += OnRefreshClicked;
         _createRoomButton.clicked   += OnCreateRoomClicked;
@@ -120,6 +134,8 @@ public class MainMenuUIDocument : MonoBehaviour
 
     private void UnbindUI()
     {
+        if (_upgradeButton      != null) _upgradeButton.clicked      -= OnUpgradeClicked;
+        if (_upgradeBackButton  != null) _upgradeBackButton.clicked  -= OnUpgradeBackClicked;
         if (_playButton         != null) _playButton.clicked         -= OnPlayClicked;
         if (_connectButton      != null) _connectButton.clicked      -= OnConnectClicked;
         if (_refreshButton      != null) _refreshButton.clicked      -= OnRefreshClicked;
@@ -197,6 +213,19 @@ public class MainMenuUIDocument : MonoBehaviour
         NetworkManager.Instance.SendLobby(PacketId.CStartGame, new C_StartGame());
     }
 
+    private void OnUpgradeClicked()
+    {
+        ShowPanel(_upgradePanel);
+        RefreshUpgradePanel();
+        _upgradeBackButton.clicked += OnUpgradeBackClicked;
+    }
+
+    private void OnUpgradeBackClicked()
+    {
+        _upgradeBackButton.clicked -= OnUpgradeBackClicked;
+        ShowPanel(_mainMenuPanel);
+    }
+
     // === 패널 전환 ===
 
     private void ShowPanel(VisualElement target)
@@ -206,6 +235,7 @@ public class MainMenuUIDocument : MonoBehaviour
         _roomListPanel.style.display    = DisplayStyle.None;
         _createRoomPanel.style.display  = DisplayStyle.None;
         _waitingRoomPanel.style.display = DisplayStyle.None;
+        _upgradePanel.style.display     = DisplayStyle.None;
         target.style.display = DisplayStyle.Flex;
     }
 
@@ -304,6 +334,87 @@ public class MainMenuUIDocument : MonoBehaviour
     public void OnGameReadyReceived()
     {
         _ = NetworkManager.Instance.ConnectToGameAsync();
+    }
+
+    // === 강화 화면 ===
+
+    private void RefreshUpgradePanel()
+    {
+        int gold = CurrencyHelper.GetGold();
+        _upgradeGoldLabel.text = $"골드: {gold}";
+        _upgradeScroll.Clear();
+
+        if (UpgradeManager.Instance == null)
+        {
+            var warn = new Label("UpgradeManager가 씬에 없습니다.");
+            warn.AddToClassList("player-entry");
+            _upgradeScroll.Add(warn);
+            return;
+        }
+
+        var defs = UpgradeManager.Instance.AllDefinitions;
+        if (defs == null || defs.Length == 0)
+        {
+            var empty = new Label("강화 항목이 없습니다.");
+            empty.AddToClassList("player-entry");
+            _upgradeScroll.Add(empty);
+            return;
+        }
+
+        foreach (var def in defs)
+        {
+            if (def == null) continue;
+            _upgradeScroll.Add(BuildUpgradeEntry(def));
+        }
+    }
+
+    private VisualElement BuildUpgradeEntry(UpgradeDefinition def)
+    {
+        int characterId = 0; // 현재 단일 캐릭터
+        int level = UpgradeManager.Instance.GetLevel(characterId, def.type);
+        bool isMaxed = level >= def.maxLevel;
+        int cost = def.GetCost(level);
+
+        var row = new VisualElement();
+        row.AddToClassList("upgrade-entry");
+
+        // 이름 + 설명
+        var info = new VisualElement();
+        info.AddToClassList("upgrade-entry__info");
+
+        var nameLabel = new Label(def.displayName);
+        nameLabel.AddToClassList("upgrade-entry__name");
+
+        float totalValue = def.GetTotalValue(level);
+        string desc = string.Format(def.descriptionFormat ?? "{0}", totalValue);
+        var descLabel = new Label(desc);
+        descLabel.AddToClassList("upgrade-entry__desc");
+
+        info.Add(nameLabel);
+        info.Add(descLabel);
+
+        // 레벨 표시
+        string levelText = isMaxed ? "MAX" : $"Lv.{level}/{def.maxLevel}";
+        var levelLabel = new Label(levelText);
+        levelLabel.AddToClassList("upgrade-entry__level");
+
+        // 강화 버튼
+        string btnText = isMaxed ? "최대" : $"강화 ({cost}G)";
+        var btn = new Button(() =>
+        {
+            if (UpgradeManager.Instance.TryUpgrade(characterId, def.type))
+                RefreshUpgradePanel();
+        });
+        btn.text = btnText;
+        btn.AddToClassList("upgrade-entry__button");
+        if (isMaxed)
+            btn.AddToClassList("upgrade-entry__button--maxed");
+        btn.SetEnabled(!isMaxed && UpgradeManager.Instance.CanUpgrade(characterId, def.type));
+
+        row.Add(info);
+        row.Add(levelLabel);
+        row.Add(btn);
+        return row;
     }
 
     // === Private 헬퍼 ===
