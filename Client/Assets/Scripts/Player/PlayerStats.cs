@@ -11,14 +11,19 @@ public class PlayerStats: MonoBehaviour, IDamageable
     private float _attackBonus;    // 추가 공격력 퍼센트 (PlayerCombat에서 참조)
     private float _dodgeReduction; // 닷지 쿨타임 감소 초 (PlayerController에서 참조)
 
+    // 변이 보너스 (런 종료 시 MutationManager.ResetForNewRun 으로 초기화)
+    private int   _mutationMaxHpBonus;
+    private float _mutationAttackBonus;
+    private float _mutationMoveSpeedBonus; // PlayerController에서 참조
+
     public int CurrentHealth    => _currentHealth;
-    public int MaxHealth        => _maxHealth + _bonusMaxHp;
+    public int MaxHealth        => _maxHealth + _bonusMaxHp + _mutationMaxHpBonus;
     public bool IsAlive         => _currentHealth > 0;
-    // 닷지 중 무적 여부 (PlayerController에서 설정)
     public bool IsInvincible { get; set; }
 
-    public float AttackBonus    => _attackBonus;
-    public float DodgeReduction => _dodgeReduction;
+    public float AttackBonus       => _attackBonus + _mutationAttackBonus;
+    public float DodgeReduction    => _dodgeReduction;
+    public float MoveSpeedBonus    => _mutationMoveSpeedBonus; // PlayerController에서 읽어서 이속에 가산
 
     private void Start()
     {
@@ -71,6 +76,36 @@ public class PlayerStats: MonoBehaviour, IDamageable
         Debug.Log($"[PlayerStats] 서버 피격 적용: -{damage} HP -> {_currentHealth}/{MaxHealth}");
 
         if (!IsAlive) Die();
+    }
+
+    // MutationManager에서 호출 - 런 중 변이 스탯 보너스 적용
+    public void ApplyStatBoost(StatType statType, float value)
+    {
+        switch (statType)
+        {
+            case StatType.MaxHp:
+                _mutationMaxHpBonus += (int)value;
+                // 최대 HP 증가분만큼 현재 HP도 회복
+                _currentHealth = Mathf.Min(_currentHealth + (int)value, MaxHealth);
+                PlayerEvents.HealthChanged(_currentHealth, MaxHealth);
+                break;
+
+            case StatType.AttackDamage:
+                _mutationAttackBonus += value;
+                break;
+
+            case StatType.MoveSpeed:
+                _mutationMoveSpeedBonus += value;
+                break;
+        }
+    }
+
+    // 런 종료 시 MutationManager가 호출 - 변이 보너스 초기화
+    public void ResetMutationBonuses()
+    {
+        _mutationMaxHpBonus       = 0;
+        _mutationAttackBonus      = 0;
+        _mutationMoveSpeedBonus   = 0;
     }
 
     public void Die()

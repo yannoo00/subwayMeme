@@ -24,6 +24,9 @@ public class HUDDocument : MonoBehaviour
     private Label _timerTitle;
     private Label _timerLabel;
 
+    private VisualElement _generatorBarFill;
+    private Label _generatorLabel;
+
 
     // === Unity 생명주기 ===
 
@@ -37,18 +40,20 @@ public class HUDDocument : MonoBehaviour
     {
         BindUI();
 
-        PlayerEvents.OnHealthChanged += OnHealthChanged;
-        StageEvents.OnSubwayStarted  += OnSubwayStarted;
-        StageEvents.OnStationArrived += OnStationArrived;
-        StageEvents.OnTimerTick      += OnTimerTick;
+        PlayerEvents.OnHealthChanged      += OnHealthChanged;
+        StageEvents.OnSubwayStarted       += OnSubwayStarted;
+        StageEvents.OnStationArrived      += OnStationArrived;
+        StageEvents.OnTimerTick           += OnTimerTick;
+        GameEvents.OnGeneratorDamaged     += OnGeneratorDamaged;
     }
 
     private void OnDisable()
     {
-        PlayerEvents.OnHealthChanged -= OnHealthChanged;
-        StageEvents.OnSubwayStarted  -= OnSubwayStarted;
-        StageEvents.OnStationArrived -= OnStationArrived;
-        StageEvents.OnTimerTick      -= OnTimerTick;
+        PlayerEvents.OnHealthChanged      -= OnHealthChanged;
+        StageEvents.OnSubwayStarted       -= OnSubwayStarted;
+        StageEvents.OnStationArrived      -= OnStationArrived;
+        StageEvents.OnTimerTick           -= OnTimerTick;
+        GameEvents.OnGeneratorDamaged     -= OnGeneratorDamaged;
     }
 
 
@@ -67,6 +72,9 @@ public class HUDDocument : MonoBehaviour
         _timerPanel = root.Q<VisualElement>("timer-panel");
         _timerTitle = root.Q<Label>("timer-title");
         _timerLabel = root.Q<Label>("timer-label");
+
+        _generatorBarFill = root.Q<VisualElement>("generator-bar-fill");
+        _generatorLabel   = root.Q<Label>("generator-label");
     }
 
 
@@ -98,5 +106,14 @@ public class HUDDocument : MonoBehaviour
         int minutes = Mathf.FloorToInt(remaining / 60f);
         int seconds = Mathf.FloorToInt(remaining % 60f);
         _timerLabel.text = $"{minutes:00}:{seconds:00}";
+    }
+
+    private void OnGeneratorDamaged(int current, int max)
+    {
+        if (_generatorBarFill == null || _generatorLabel == null) return;
+
+        float ratio = max > 0 ? (float)current / max : 0f;
+        _generatorBarFill.style.width = Length.Percent(ratio * 100f);
+        _generatorLabel.text = $"발전기 {current} / {max}";
     }
 }
