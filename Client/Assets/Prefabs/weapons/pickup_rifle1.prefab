@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9996ddbbe7c5343b398276e61785c6fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponPickup
-  _weaponPrefab: {fileID: 0}
+  _weaponPrefab: {fileID: 3280494568404297399, guid: 941ee8b3978037d4ab34146b16e82594, type: 3}
 --- !u!65 &5322946682629049861
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -62,7 +62,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3

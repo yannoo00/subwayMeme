@@ -182,7 +182,7 @@ public class HUDDocument : MonoBehaviour
     }
 
     // 활성 슬롯 변경(1/2 키 또는 새 무기 픽업) 시 호출
-    // 슬롯 강조 + 활성 무기 타입에 따라 탄약 패널 가시성 결정
+    // 슬롯 강조 + 활성화된 무기 타입에 따라 탄약 패널 가시성 결정
     private void OnActiveSlotChanged(int activeIndex, WeaponData activeData)
     {
         for (int i = 0; i < _weaponSlots.Length; i++)
@@ -191,12 +191,12 @@ public class HUDDocument : MonoBehaviour
             _weaponSlots[i].EnableInClassList("weapon-slot--active", i == activeIndex);
         }
 
-        // Hitscan 무기일 때만 탄약 패널 표시. 멜리/빈 슬롯이면 숨김
+        // Hitscan 무기일 때만 탄약 패널 표시. 근접/빈 슬롯이면 숨김
         bool isHitscan = activeData is HitscanWeaponData;
         SetHidden(_ammoPanel, !isHitscan);
 
         // 무기 전환으로 패널이 숨겨지면 진행 중이던 재장전 표시도 정리
-        // (실제 무기의 재장전은 백그라운드에서 계속됨 - Equip 시 다시 ReloadStarted 발생)
+        // (실제 무기의 재장전은 백그라운드에서 진행. Equip 시 다시 ReloadStarted 발생)
         if (!isHitscan && _isReloading)
         {
             _isReloading = false;

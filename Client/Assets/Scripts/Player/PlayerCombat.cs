@@ -138,7 +138,7 @@ public class PlayerCombat : MonoBehaviour
             if (_slots[i] == null) { targetSlot = i; break; }
         }
 
-        // 슬롯 가득 → 활성 슬롯 무기 드랍 후 그 자리 차지
+        // 슬롯이 가득 찼을 경우 현재 활성 슬롯 무기 드랍 후 그 자리 차지
         if (targetSlot == -1)
         {
             DropWeapon(_activeSlotIndex);
@@ -170,6 +170,7 @@ public class PlayerCombat : MonoBehaviour
 
     private void EquipToSlot(int slotIndex, GameObject prefab)
     {
+        //현재 장착하려는 슬롯이 활성 슬롯인지? 
         bool isActive = slotIndex == _activeSlotIndex;
 
         // 기존 슬롯 무기 제거
@@ -180,7 +181,7 @@ public class PlayerCombat : MonoBehaviour
         }
         else if (isActive)
         {
-            // 슬롯이 비어있었으면 Fist가 표시 중 → 숨기기
+            // 기존 슬롯에 무기가 없다면 이  활성 슬롯에 무기가 들어오는 것이므로 Fist 비활성화
             _fistInstance.Unequip();
         }
 
@@ -195,7 +196,7 @@ public class PlayerCombat : MonoBehaviour
 
         PlayerEvents.WeaponSlotChanged(slotIndex, weapon.weaponData);
 
-        // 활성 슬롯에 새 무기가 들어왔으면 활성 무기 타입도 변경됨 → 탄약 패널 가시성 갱신용
+        // 활성 슬롯에 새 무기가 들어왔으면 활성 무기 타입도 변경됨. 탄약 패널 갱신
         if (isActive)
             PlayerEvents.ActiveSlotChanged(slotIndex, weapon.weaponData);
     }

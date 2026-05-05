@@ -11,10 +11,18 @@ public class WeaponPickup : MonoBehaviour, IInteractable
     public void Interact()
     {
         var player = GameObject.FindGameObjectWithTag("Player");
-        if (player == null) return;
+        if (player == null) 
+        {
+            Debug.Log("There's no player object in the scene.");
+            return;
+        }
 
         var combat = player.GetComponent<PlayerCombat>();
-        if (combat == null) return;
+        if (combat == null) 
+        {
+            Debug.Log("Player doesn't have a PlayerCombat component.");
+            return;
+        }
 
         // 같은 무기 중복 등으로 픽업 거부 시 Destroy 안 함 (월드에 그대로 남음)
         if (combat.TryPickupWeapon(_weaponPrefab))
