@@ -19,6 +19,10 @@ public class StageManager : MonoBehaviour
     // 웨이브 진행 시간/간격은 WaveData에서 관리
     [SerializeField] private int _exitWaitDuration = 15;
 
+    [Header("Survival Mode")]
+    [SerializeField] private WaveData _survivalWaveData;
+    [SerializeField] private float _survivalDuration = 1200f; // 20분
+
     private StageMap _stageMap;
     private MapType _currentMapType;
     private bool _isSubwayActive = false;
@@ -122,9 +126,16 @@ public class StageManager : MonoBehaviour
 
     // 게임 1트 시작
     // GameManager에서만 사용하고, 직접 호출되는 일은 없어야 함
-    // 여기서는 플레이어 위치 동기화 안해줘도 됨 어차피 바로 map ui 열리고 선택 -> subway가서 동기화 해줄거
     public void _TryGame(int seed)
     {
+        if (GameManager.Instance.IsSurvivalMode)
+        {
+            _currentMapType = MapType.Station;
+            SceneLoader.Instance.LoadStation(StartSurvivalMode);
+            return;
+        }
+
+        // 기존 지하철 루프 흐름
         _stageMap = _mapGenerator.GenerateMap(seed);
 
         StageEvents.MapGenerated(_stageMap);
@@ -137,8 +148,37 @@ public class StageManager : MonoBehaviour
     }
 
 
+    // 서바이벌 모드: Station 씬에서 20분 웨이브 방어
+    private void StartSurvivalMode()
+    {
+        if (_survivalWaveData != null)
+            SpawnManager.Instance.StartWave(_survivalWaveData);
+        else
+            Debug.LogWarning("[StageManager] SurvivalMode: _survivalWaveData가 설정되지 않았습니다.");
+
+        _stayingCoroutine = StartCoroutine(SurvivalTimer(_survivalDuration));
+    }
+
+
+    private IEnumerator SurvivalTimer(float duration)
+    {
+        float remaining = duration;
+        StageEvents.TimerTick(remaining, duration);
+
+        while (remaining > 0f)
+        {
+            yield return new WaitForSeconds(1f);
+            remaining -= 1f;
+            StageEvents.TimerTick(remaining, duration);
+        }
+
+        GameManager.Instance.ClearGame();
+    }
+
+
     // 역 하차: SubwayExit 또는 서버(S_AllExited)에서 호출
     // _canExit 검사는 SubwayExit.Interact()에서 처리하므로 여기서는 하지 않음
+    // 서바이벌 모드에서는 호출되지 않음
     public void StartStation()
     {
         _canExit = false;
@@ -215,8 +255,11 @@ public class StageManager : MonoBehaviour
 
 
     // 맵 이동: 노드 선택 후 StartSubway 호출 (subway 씬 로드)
+    // 서바이벌 모드에서는 호출되지 않음
     public void MoveToNode(StageNode nextNode)
     {
+        if (GameManager.Instance.IsSurvivalMode) return;
+
         _stageMap.currentNode = nextNode;
         nextNode.visited = true;
 

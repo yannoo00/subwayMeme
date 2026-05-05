@@ -16,6 +16,12 @@ public class PlayerStats: MonoBehaviour, IDamageable
     private float _mutationAttackBonus;
     private float _mutationMoveSpeedBonus; // PlayerController에서 참조
 
+    // 재화
+    // GenePoint: 세션 내 유효, 런 종료 시 초기화
+    // EvolutionPoint: 영구 재화, 추후 SaveManager와 연동 예정
+    private int _genePoints;
+    private int _evolutionPoints;
+
     public int CurrentHealth    => _currentHealth;
     public int MaxHealth        => _maxHealth + _bonusMaxHp + _mutationMaxHpBonus;
     public bool IsAlive         => _currentHealth > 0;
@@ -24,6 +30,9 @@ public class PlayerStats: MonoBehaviour, IDamageable
     public float AttackBonus       => _attackBonus + _mutationAttackBonus;
     public float DodgeReduction    => _dodgeReduction;
     public float MoveSpeedBonus    => _mutationMoveSpeedBonus; // PlayerController에서 읽어서 이속에 가산
+
+    public int GenePoints       => _genePoints;
+    public int EvolutionPoints  => _evolutionPoints;
 
     private void Start()
     {
@@ -106,6 +115,26 @@ public class PlayerStats: MonoBehaviour, IDamageable
         _mutationMaxHpBonus       = 0;
         _mutationAttackBonus      = 0;
         _mutationMoveSpeedBonus   = 0;
+    }
+
+    public void AddGenePoints(int amount)
+    {
+        _genePoints += amount;
+        PlayerEvents.GenePointsChanged(_genePoints);
+    }
+
+    // EvolutionPoint는 획득 즉시 SaveManager에도 반영해야 하지만 현재는 미연동
+    public void AddEvolutionPoints(int amount)
+    {
+        _evolutionPoints += amount;
+        PlayerEvents.EvolutionPointsChanged(_evolutionPoints);
+    }
+
+    // 런 종료 시 세션 재화 초기화
+    public void ResetSessionCurrency()
+    {
+        _genePoints = 0;
+        PlayerEvents.GenePointsChanged(_genePoints);
     }
 
     public void Die()

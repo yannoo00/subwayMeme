@@ -25,6 +25,11 @@ public class GameManager : MonoBehaviour
 
     public GameState CurrentState { get; private set; }
 
+    // 1차 개발 목표: Station 단일 맵에서 20분 웨이브 서바이벌
+    // false로 바꾸면 기존 지하철 이동 루프로 복귀
+    [SerializeField] private bool _survivalMode = true;
+    public bool IsSurvivalMode => _survivalMode;
+
 
     // === 생명주기 ===
 

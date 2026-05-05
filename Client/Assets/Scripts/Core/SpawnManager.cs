@@ -91,17 +91,28 @@ public class SpawnManager : MonoBehaviour
     }
 
 
-    // delay 후 해당 그룹의 적을 스폰
+    // delay 후 첫 스폰. interval > 0이면 주기적으로 반복
     private IEnumerator SpawnGroupAfterDelay(SpawnGroup group)
     {
         yield return new WaitForSeconds(group.delay);
 
-        foreach (var info in group.enemies)
+        bool isRepeating = group.interval > 0f;
+        int spawnedCount = 0;
+
+        while (true)
         {
-            for (int i = 0; i < info.count; i++)
+            foreach (var info in group.enemies)
             {
-                SpawnEnemy(info.prefab);
+                for (int i = 0; i < info.count; i++)
+                    SpawnEnemy(info.prefab);
             }
+
+            spawnedCount++;
+
+            if (!isRepeating) break;
+            if (group.repeatCount >= 0 && spawnedCount >= group.repeatCount) break;
+
+            yield return new WaitForSeconds(group.interval);
         }
     }
 

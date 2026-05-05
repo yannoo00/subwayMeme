@@ -24,7 +24,12 @@ public static class PlayerEvents
     public static event Action<float> OnReloadStarted;              // duration(초)
     public static event Action OnReloadFinished;
 
+    public static event Action<int> OnGenePointsChanged;
+    public static event Action<int> OnEvolutionPointsChanged;
+
     public static void HealthChanged(int current, int max) => OnHealthChanged?.Invoke(current, max);
+    public static void GenePointsChanged(int amount) => OnGenePointsChanged?.Invoke(amount);
+    public static void EvolutionPointsChanged(int amount) => OnEvolutionPointsChanged?.Invoke(amount);
     public static void PlayerDied() => OnPlayerDied?.Invoke();
     public static void PlayerDamaged(int damage) => OnPlayerDamaged?.Invoke(damage);
     public static void WeaponSlotChanged(int slotIndex, WeaponData data) => OnWeaponSlotChanged?.Invoke(slotIndex, data);
