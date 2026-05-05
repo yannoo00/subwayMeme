@@ -9,14 +9,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c8389f5e14ec9445d949c4766dd7ca51, type: 3}
+  m_Script: {fileID: 11500000, guid: 785bb499a0bcc3a4d9deb76b29d8559a, type: 3}
   m_Name: Fist
-  m_EditorClassIdentifier: Assembly-CSharp::WeaponData
+  m_EditorClassIdentifier: Assembly-CSharp::MeleeWeaponData
   weaponName: Fist
-  weaponType: 0
   damage: 99
   attackCooldown: 1
   range: 2
+  pickupPrefab: {fileID: 0}
   attackAngle: 90
-  projectilePrefab: {fileID: 0}
-  projectileSpeed: 20
+  isSplash: 0

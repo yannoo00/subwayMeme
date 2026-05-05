@@ -12,5 +12,27 @@
             <ui:Label name="timer-title" text="다음 역까지" class="hud-label--title"/>
             <ui:Label name="timer-label" text="00:30" class="hud-label--timer"/>
         </ui:VisualElement>
+        <ui:VisualElement name="bottom-right" picking-mode="Ignore" class="bottom-right">
+            <ui:VisualElement name="ammo-panel" class="ammo-panel hud-panel--hidden">
+                <ui:Label name="ammo-status" text="12 / 12" class="ammo-status"/>
+                <ui:VisualElement name="reload-bar-bg" class="reload-bar-bg hud-panel--hidden">
+                    <ui:VisualElement name="reload-bar-fill" class="reload-bar-fill"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="weapon-panel" picking-mode="Ignore" class="weapon-panel">
+                <ui:VisualElement name="weapon-slot-0" class="weapon-slot weapon-slot--empty">
+                    <ui:Label text="1" class="weapon-slot__key"/>
+                    <ui:Label name="weapon-slot-0-name" text="Empty" class="weapon-slot__name"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="weapon-slot-1" class="weapon-slot weapon-slot--empty">
+                    <ui:Label text="2" class="weapon-slot__key"/>
+                    <ui:Label name="weapon-slot-1-name" text="Empty" class="weapon-slot__name"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="crosshair" picking-mode="Ignore" class="crosshair">
+            <ui:VisualElement class="crosshair__h"/>
+            <ui:VisualElement class="crosshair__v"/>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

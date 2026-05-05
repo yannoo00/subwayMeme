@@ -1,7 +1,6 @@
 using UnityEngine;
 
 
-
 public enum WeaponType
 {
     Melee,
@@ -9,28 +8,22 @@ public enum WeaponType
 }
 
 
-
-
-[CreateAssetMenu(fileName = "WeaponData", menuName = "Scriptable Objects/WeaponData")]
-public class WeaponData : ScriptableObject
+// 무기 데이터의 추상 베이스
+// 공용 필드만 보유. 무기 종류별 필드는 파생 ScriptableObject(MeleeWeaponData, HitscanWeaponData)에서 정의
+public abstract class WeaponData : ScriptableObject
 {
     [Header("기본 정보")]
     public string weaponName;
-    public WeaponType weaponType;
-
 
     [Header("전투 스탯")]
     public int damage;
     public float attackCooldown = 0.5f;
     public float range = 2f;
 
-    [Header("근접 전용")]
-    public float attackAngle = 90f;
+    [Header("픽업")]
+    // 슬롯 가득 시 드랍할 때 사용. 월드에 떨어진 무기 표현 (WeaponPickup 컴포넌트 포함)
+    public GameObject pickupPrefab;
 
-    [Header("원거리 전용")]
-    public GameObject projectilePrefab;
-    public float projectileSpeed = 20f;
-
-    [Header("스플래시 데미지")]
-    public bool isSplash = false;
+    // 런타임에서 캐스팅 없이 무기 종류 판별하기 위한 마커
+    public abstract WeaponType weaponType { get; }
 }

@@ -7,15 +7,30 @@ public static class PlayerEvents
     public static event Action OnPlayerDied;
     public static event Action<int> OnPlayerDamaged;                // 데미지량
 
-    // slotIndex: 0 or 1 / data: null이면 Fist(빈 슬롯)
+    // 슬롯 내용 변경 (픽업/드랍/스왑). slotIndex: 0 or 1 / data: null이면 빈 슬롯
     public static event Action<int, WeaponData> OnWeaponSlotChanged;
+
+    // 활성 슬롯 변경 (1/2 키 전환). data는 활성 슬롯의 WeaponData (빈 슬롯이면 null)
+    // HUD가 활성 무기 타입을 알아야 탄약 패널 가시성을 결정 가능
+    public static event Action<int, WeaponData> OnActiveSlotChanged;
 
     // skillSlotIndex: 0 or 1 (3번키/4번키) / data: null이면 빈 슬롯
     public static event Action<int, SkillData> OnSkillSlotChanged;
+
+    // 탄약 변경 (발사 / 재장전 완료 시)
+    public static event Action<int, int> OnAmmoChanged;             // 현재, 최대
+
+    // 재장전 시작 - HUD가 자체 시간 누적으로 진행률을 그리도록 duration만 전달
+    public static event Action<float> OnReloadStarted;              // duration(초)
+    public static event Action OnReloadFinished;
 
     public static void HealthChanged(int current, int max) => OnHealthChanged?.Invoke(current, max);
     public static void PlayerDied() => OnPlayerDied?.Invoke();
     public static void PlayerDamaged(int damage) => OnPlayerDamaged?.Invoke(damage);
     public static void WeaponSlotChanged(int slotIndex, WeaponData data) => OnWeaponSlotChanged?.Invoke(slotIndex, data);
+    public static void ActiveSlotChanged(int slotIndex, WeaponData data) => OnActiveSlotChanged?.Invoke(slotIndex, data);
     public static void SkillSlotChanged(int skillSlotIndex, SkillData data) => OnSkillSlotChanged?.Invoke(skillSlotIndex, data);
+    public static void AmmoChanged(int current, int max) => OnAmmoChanged?.Invoke(current, max);
+    public static void ReloadStarted(float duration) => OnReloadStarted?.Invoke(duration);
+    public static void ReloadFinished() => OnReloadFinished?.Invoke();
 }

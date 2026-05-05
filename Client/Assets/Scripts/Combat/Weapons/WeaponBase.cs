@@ -1,4 +1,3 @@
-using Unity.VisualScripting;
 using UnityEngine;
 
 public abstract class WeaponBase : MonoBehaviour
@@ -33,5 +32,9 @@ public abstract class WeaponBase : MonoBehaviour
         gameObject.SetActive(false);
     }
 
+    // 원거리 무기에서 오버라이드. 근접 등은 무시
+    public virtual void TryReload() { }
+
     protected abstract void PerformAttack();
 }
+ 
