@@ -22,6 +22,7 @@ public class PlayerController : MonoBehaviour
     private Animator _animator;
     private PlayerStats _stats;
     private bool _isDodging = false;
+    private bool _isAiming = false;
     private float _lastDodgeTime = -Mathf.Infinity;
 
     // 이동 동기화: 20Hz 고정 주기 + Dead Zone 필터
@@ -40,6 +41,21 @@ public class PlayerController : MonoBehaviour
         DontDestroyOnLoad(gameObject);
         _animator = GetComponentInChildren<Animator>();
         _stats = GetComponent<PlayerStats>();
+    }
+
+    private void OnEnable()
+    {
+        PlayerEvents.OnAimStateChanged += OnAimStateChanged;
+    }
+
+    private void OnDisable()
+    {
+        PlayerEvents.OnAimStateChanged -= OnAimStateChanged;
+    }
+
+    private void OnAimStateChanged(bool isAiming)
+    {
+        _isAiming = isAiming;
     }
 
 
@@ -63,14 +79,6 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        if (input == Vector2.zero)
-        {
-            TrySendMove(isMoving: false, isDodging: false);
-            return;
-        }
-
-        // 카메라의 수평 forward/right를 기준으로 월드 이동 방향 계산
-        // Y축 성분 제거 후 정규화: 경사면에서도 수평 이동 보장
         Vector3 camForward = _cameraTransform != null ? _cameraTransform.forward : transform.forward;
         camForward.y = 0f;
         camForward.Normalize();
@@ -78,17 +86,41 @@ public class PlayerController : MonoBehaviour
         camRight.y = 0f;
         camRight.Normalize();
 
+        Transform rotateTarget = _playerModel != null ? _playerModel : transform;
+
+        if (input == Vector2.zero)
+        {
+            // 조준 중에는 정지 상태에서도 카메라 방향으로 몸체를 회전
+            if (_isAiming)
+            {
+                Quaternion aimRot = Quaternion.LookRotation(camForward);
+                rotateTarget.rotation = Quaternion.Slerp(rotateTarget.rotation, aimRot, _rotationSpeed * Time.deltaTime);
+            }
+
+            TrySendMove(isMoving: false, isDodging: false);
+            return;
+        }
+
         Vector3 moveDir = (camForward * input.y + camRight * input.x).normalized;
 
-        // PlayerModel만 이동 방향으로 회전 (PlayerRoot는 회전 안 함)
-        // CameraHolder가 PlayerRoot 자식이므로 PlayerRoot가 돌면 카메라도 같이 돌아버림
-        // Slerp: 구면 선형 보간으로 자연스러운 회전감 제공
-        Transform rotateTarget = _playerModel != null ? _playerModel : transform;
-        Quaternion targetRotation = Quaternion.LookRotation(moveDir);
+        Quaternion targetRotation;
+        if (_isAiming)
+        {
+            // 조준 중: 이동 방향과 무관하게 카메라 수평 방향으로 회전
+            targetRotation = Quaternion.LookRotation(camForward);
+        }
+        else
+        {
+            // 비조준: 이동 방향으로 회전
+            targetRotation = Quaternion.LookRotation(moveDir);
+        }
+
         rotateTarget.rotation = Quaternion.Slerp(rotateTarget.rotation, targetRotation, _rotationSpeed * Time.deltaTime);
 
-        // 이동은 PlayerRoot 위치 기준, 방향은 PlayerModel forward 참조
-        transform.position += rotateTarget.forward * _moveSpeed * Time.deltaTime;
+        // 조준 중: 카메라 기준 입력 방향으로 직접 이동 (스트레이프)
+        // 비조준: PlayerModel이 바라보는 방향으로 이동
+        Vector3 moveVelocity = _isAiming ? moveDir : rotateTarget.forward;
+        transform.position += moveVelocity * _moveSpeed * Time.deltaTime;
 
         TrySendMove(isMoving: true, isDodging: false);
     }

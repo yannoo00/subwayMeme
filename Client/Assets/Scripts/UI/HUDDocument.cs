@@ -39,6 +39,9 @@ public class HUDDocument : MonoBehaviour
     private VisualElement _reloadBarBg;
     private VisualElement _reloadBarFill;
 
+    // 크로스헤어
+    private VisualElement _crosshair;
+
     // 재장전 진행률 추적용
     private bool  _isReloading;
     private float _reloadStartTime;
@@ -63,6 +66,7 @@ public class HUDDocument : MonoBehaviour
         PlayerEvents.OnAmmoChanged        += OnAmmoChanged;
         PlayerEvents.OnReloadStarted      += OnReloadStarted;
         PlayerEvents.OnReloadFinished     += OnReloadFinished;
+        PlayerEvents.OnAimStateChanged    += OnAimStateChanged;
         StageEvents.OnSubwayStarted       += OnSubwayStarted;
         StageEvents.OnStationArrived      += OnStationArrived;
         StageEvents.OnTimerTick           += OnTimerTick;
@@ -77,6 +81,7 @@ public class HUDDocument : MonoBehaviour
         PlayerEvents.OnAmmoChanged        -= OnAmmoChanged;
         PlayerEvents.OnReloadStarted      -= OnReloadStarted;
         PlayerEvents.OnReloadFinished     -= OnReloadFinished;
+        PlayerEvents.OnAimStateChanged    -= OnAimStateChanged;
         StageEvents.OnSubwayStarted       -= OnSubwayStarted;
         StageEvents.OnStationArrived      -= OnStationArrived;
         StageEvents.OnTimerTick           -= OnTimerTick;
@@ -123,6 +128,9 @@ public class HUDDocument : MonoBehaviour
         _ammoStatus    = root.Q<Label>("ammo-status");
         _reloadBarBg   = root.Q<VisualElement>("reload-bar-bg");
         _reloadBarFill = root.Q<VisualElement>("reload-bar-fill");
+
+        _crosshair = root.Q<VisualElement>("crosshair");
+        SetHidden(_crosshair, true);
     }
 
 
@@ -232,6 +240,12 @@ public class HUDDocument : MonoBehaviour
         _isReloading = false;
         SetHidden(_reloadBarBg, true);
         // 라벨 갱신은 뒤따라오는 OnAmmoChanged가 처리
+    }
+
+
+    private void OnAimStateChanged(bool isAiming)
+    {
+        SetHidden(_crosshair, !isAiming);
     }
 
 

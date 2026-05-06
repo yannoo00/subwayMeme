@@ -24,6 +24,8 @@ public static class PlayerEvents
     public static event Action<float> OnReloadStarted;              // duration(초)
     public static event Action OnReloadFinished;
 
+    public static event Action<bool> OnAimStateChanged;
+
     public static event Action<int> OnGenePointsChanged;
     public static event Action<int> OnEvolutionPointsChanged;
 
@@ -38,4 +40,5 @@ public static class PlayerEvents
     public static void AmmoChanged(int current, int max) => OnAmmoChanged?.Invoke(current, max);
     public static void ReloadStarted(float duration) => OnReloadStarted?.Invoke(duration);
     public static void ReloadFinished() => OnReloadFinished?.Invoke();
+    public static void AimStateChanged(bool isAiming) => OnAimStateChanged?.Invoke(isAiming);
 }

@@ -18,6 +18,7 @@ public class PlayerCombat : MonoBehaviour
     // 스킬 슬롯: 0 = 3번키, 1 = 4번키
     private SkillBase[] _skillSlots = new SkillBase[2];
 
+    private bool _isAiming;
     private Animator _animator;
 
     // 활성 슬롯에 무기가 없으면 Fist 반환
@@ -49,6 +50,9 @@ public class PlayerCombat : MonoBehaviour
 
         // isPressed: 누르고 있는 동안 매 프레임 true. attackCooldown이 발사 간격을 제한
         // 클릭만 했다 떼면 한 프레임만 true → 1발, 누르고 있으면 쿨다운마다 연속 발사
+        if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)
+            HandleAimToggle();
+
         if (Mouse.current != null && Mouse.current.leftButton.isPressed)
             Attack();
 
@@ -78,9 +82,30 @@ public class PlayerCombat : MonoBehaviour
         _activeSlotIndex = slotIndex;
         ActiveWeapon.Equip();
 
+        // Ranged가 아닌 무기로 전환 시 조준 해제
+        if (_isAiming && _slots[_activeSlotIndex]?.weaponData?.weaponType != WeaponType.Ranged)
+            SetAiming(false);
+
         // 슬롯 내용은 그대로, 활성만 바뀜 → ActiveSlotChanged 사용
         // 빈 슬롯이면 _slots[i]가 null이라 weaponData도 null로 전달됨 (Fist는 폴백이라 슬롯 데이터로 안 씀)
         PlayerEvents.ActiveSlotChanged(_activeSlotIndex, _slots[_activeSlotIndex]?.weaponData);
+    }
+
+
+    // === 조준 ===
+
+    private void HandleAimToggle()
+    {
+        // Ranged 무기를 들고 있을 때만 조준 토글
+        if (ActiveWeapon.weaponData?.weaponType != WeaponType.Ranged) return;
+        SetAiming(!_isAiming);
+    }
+
+    private void SetAiming(bool isAiming)
+    {
+        if (_isAiming == isAiming) return;
+        _isAiming = isAiming;
+        PlayerEvents.AimStateChanged(_isAiming);
     }
 
 

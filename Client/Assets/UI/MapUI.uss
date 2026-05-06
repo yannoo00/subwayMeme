@@ -1,13 +1,25 @@
-/* === MapUI Panel === */
+/* === 컬러 토큰 (참고) ===
+   bg-darkest:  rgb(14, 16, 20)
+   bg-node:     rgb(26, 30, 36)
+   bg-node-act: rgb(32, 38, 46)
+   border:      rgba(255, 255, 255, 0.06)
+   accent:      rgb(180, 195, 215)
+   gold:        rgb(218, 180, 110)
+   text:        rgb(228, 230, 234)
+   text-dim:    rgba(170, 180, 195, 0.7)
+   text-muted:  rgba(120, 130, 145, 0.5)
+*/
+
+
+/* === Map Panel === */
 
 .map-panel {
     position: absolute;
     width: 100%;
     height: 100%;
-    background-color: rgb(0, 0, 0);
+    background-color: rgb(14, 16, 20);
 }
 
-/* ScrollView가 패널을 꽉 채우도록 */
 .map-scroll {
     width: 100%;
     height: 100%;
@@ -21,14 +33,12 @@
 
 /* === Containers === */
 
-/* path-container: 노드 위에 겹쳐서 뒤(아래)에 렌더링 */
 .path-container {
     position: absolute;
     width: 100%;
     height: 100%;
 }
 
-/* node-container: Flexbox로 노드를 격자 배치, 높이는 내용물이 결정 */
 .node-container {
     flex-direction: column;
     padding: 40px 20px;
@@ -49,46 +59,53 @@
 /* === Node === */
 
 .node {
-    width: 50px;
-    height: 50px;
-    border-radius: 25px;
-    border-width: 2px;
+    width: 48px;
+    height: 48px;
+    border-radius: 24px;
+    border-width: 1px;
     margin: 0;
     padding: 0;
     -unity-text-align: middle-center;
     font-size: 10px;
-    color: white;
-    background-color: rgb(60, 60, 60);
-    border-color: rgb(80, 80, 80);
-    /* 기본: 숨김 (자리는 유지) */
+    color: rgba(170, 180, 195, 0.7);
+    background-color: rgb(26, 30, 36);
+    border-color: rgba(255, 255, 255, 0.06);
     visibility: hidden;
+    transition-duration: 100ms;
+    transition-property: background-color, border-color, scale;
 }
 
 .node.active {
     visibility: visible;
-    background-color: rgb(100, 100, 100);
-    border-color: rgb(150, 150, 150);
+    background-color: rgb(32, 38, 46);
+    border-color: rgba(255, 255, 255, 0.12);
 }
 
+/* 선택 가능한 다음 역: 차분한 슬레이트 강조 */
 .node.active.node--available {
-    background-color: rgb(50, 180, 50);
-    border-color: rgb(100, 255, 100);
+    background-color: rgb(38, 48, 60);
+    border-color: rgba(180, 195, 215, 0.55);
+    color: rgb(228, 230, 234);
 }
 
 .node.active.node--available:hover {
-    background-color: rgb(70, 210, 70);
-    scale: 1.1 1.1;
+    background-color: rgb(50, 64, 78);
+    border-color: rgb(180, 195, 215);
+    scale: 1.08 1.08;
 }
 
+/* 현재 위치: 골드 액센트 (한정 사용) */
 .node.active.node--current {
-    background-color: rgb(50, 120, 220);
-    border-color: rgb(100, 180, 255);
+    background-color: rgb(36, 40, 48);
+    border-color: rgb(218, 180, 110);
+    color: rgb(218, 180, 110);
 }
 
+/* 방문한 노드: 어둡게 dim */
 .node.active.node--visited {
-    background-color: rgb(80, 80, 80);
-    border-color: rgb(60, 60, 60);
-    /* opacity: 0.6; */
+    background-color: rgb(20, 24, 30);
+    border-color: rgba(255, 255, 255, 0.04);
+    color: rgba(120, 130, 145, 0.45);
 }
 
 
@@ -96,15 +113,14 @@
 
 .path {
     position: absolute;
-    height: 2px;
+    height: 1px;
     background-color: transparent;
 }
 
 .path.active {
-    background-color: rgb(150, 150, 150);
+    background-color: rgba(255, 255, 255, 0.18);
 }
 
 .path.active.path--visited {
-    background-color: rgb(80, 80, 80);
-    opacity: 0.5;
+    background-color: rgba(255, 255, 255, 0.06);
 }

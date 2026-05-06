@@ -3,7 +3,13 @@
     "allow": [
       "Bash(powershell:*)",
       "Bash(xargs grep *)",
-      "Bash(xargs cat *)"
+      "Bash(xargs cat *)",
+      "Bash(cp 'D:/Unity/multiplayerThirdPersonGamePlay/My project/Assets/Core/Art/Animator/CoreAnimator.controller' D:/Unity/subwayMeme/Client/Assets/Animations/Core/CoreAnimator.controller)",
+      "Bash(cp 'D:/Unity/multiplayerThirdPersonGamePlay/My project/Assets/Core/Art/Animator/CoreAnimator.controller.meta' D:/Unity/subwayMeme/Client/Assets/Animations/Core/CoreAnimator.controller.meta)",
+      "Bash(cp 'D:/Unity/multiplayerThirdPersonGamePlay/My project/Assets/Shooter/Art/Animator/ShooterAnimator.controller' D:/Unity/subwayMeme/Client/Assets/Animations/Shooter/ShooterAnimator.controller)",
+      "Bash(cp 'D:/Unity/multiplayerThirdPersonGamePlay/My project/Assets/Shooter/Art/Animator/ShooterAnimator.controller.meta' D:/Unity/subwayMeme/Client/Assets/Animations/Shooter/ShooterAnimator.controller.meta)",
+      "Bash(cp 'D:/Unity/multiplayerThirdPersonGamePlay/My project/Assets/Shooter/Art/Animator/UpperBody.mask' D:/Unity/subwayMeme/Client/Assets/Animations/Shooter/UpperBody.mask)",
+      "Bash(grep -v \"^$\")"
     ]
   }
 }
