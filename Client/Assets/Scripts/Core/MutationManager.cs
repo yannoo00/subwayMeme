@@ -1,18 +1,22 @@
 using System.Collections.Generic;
+using GameProto;
 using UnityEngine;
 
 // 런 내 변이 관리 싱글톤
-// 변이 획득 시 타입에 따라 PlayerStats / PlayerCombat / PassiveBase 에 적용
+// 픽업 상호작용 시 C_Mutation 송신만 하고, 서버 응답(S_MutationResult) 시점에 실제 효과 적용
+// 본인: PlayerStats / PlayerCombat / PassiveBase 에 적용
+// 남: PassiveBehavior 변이의 effectPrefab 만 NetworkPlayer 자식으로 부착 (외관 표현)
 public class MutationManager : MonoBehaviour
 {
     public static MutationManager Instance { get; private set; }
 
-    private readonly List<MutationDefinition> _activeMutations = new();
+    // 플레이어별 획득 변이 목록 (UI 표시 / 디버깅용)
+    private readonly Dictionary<int, List<MutationDefinition>> _activeMutations = new();
 
-    // ActiveSkill 배정 시 다음 빈 슬롯 추적 (0 or 1)
-    private int _nextSkillSlot = 0;
+    // 본인 한정 ActiveSkill 슬롯 카운터 (0 or 1)
+    private int _myNextSkillSlot = 0;
 
-    public IReadOnlyList<MutationDefinition> ActiveMutations => _activeMutations;
+    public IReadOnlyDictionary<int, List<MutationDefinition>> ActiveMutations => _activeMutations;
 
 
     // === Unity 생명주기 ===
@@ -25,39 +29,74 @@ public class MutationManager : MonoBehaviour
     }
 
 
-    // === 변이 적용 ===
+    // === 외부 진입점 ===
 
-    // 변이 선택 UI 또는 드롭 상호작용에서 호출
+    // DropItemPickup 에서 호출. 효과는 서버 응답 시점에 적용되므로 여기서는 송신만 한다
     public void ApplyMutation(MutationDefinition mutation)
     {
         if (mutation == null) return;
 
-        _activeMutations.Add(mutation);
-
-        var player = GameObject.FindGameObjectWithTag("Player");
-        if (player == null)
+        NetworkManager.Instance.SendGame(GamePacketId.CMutation, new C_Mutation
         {
-            Debug.LogWarning("[MutationManager] Player 태그 오브젝트를 찾지 못했습니다.");
+            MutationId = mutation.mutationId,
+        });
+    }
+
+    // ClientGamePacketHandler.Handle_S_MutationResult 에서 호출
+    // 서버가 확정한 변이를 본인/남에게 분기 적용
+    public void ApplyMutationFromServer(int playerId, MutationId mutationId)
+    {
+        var mutation = MutationDatabase.Instance?.Get(mutationId);
+        if (mutation == null)
+        {
+            Debug.LogWarning($"[MutationManager] 알 수 없는 변이 ID: {mutationId}");
             return;
         }
 
-        switch (mutation.mutationType)
+        if (!_activeMutations.TryGetValue(playerId, out var list))
         {
-            case MutationType.StatBoost:
-                ApplyStatBoost(player, mutation);
-                break;
+            list = new List<MutationDefinition>();
+            _activeMutations[playerId] = list;
+        }
+        list.Add(mutation);
 
-            case MutationType.ActiveSkill:
-                ApplyActiveSkill(player, mutation);
-                break;
-
-            case MutationType.PassiveBehavior:
-                ApplyPassiveBehavior(player, mutation);
-                break;
+        bool isMe = playerId == NetworkManager.Instance.MyPlayerId;
+        Transform target = ResolvePlayerTransform(playerId, isMe);
+        if (target == null)
+        {
+            Debug.LogWarning($"[MutationManager] playerId={playerId} 의 오브젝트를 찾지 못했습니다.");
+            return;
         }
 
-        Debug.Log($"[MutationManager] 변이 적용: {mutation.mutationName} ({mutation.mutationType})");
+        if (isMe)
+        {
+            switch (mutation.mutationType)
+            {
+                case MutationType.StatBoost:
+                    ApplyStatBoost(target.gameObject, mutation);
+                    break;
+                case MutationType.ActiveSkill:
+                    ApplyActiveSkill(target.gameObject, mutation);
+                    break;
+                case MutationType.PassiveBehavior:
+                    ApplyPassiveBehavior(target, mutation);
+                    break;
+            }
+        }
+        else
+        {
+            // 남의 변이는 외관 표현만. StatBoost / ActiveSkill 은 시각 변화 없음
+            // PassiveBehavior 의 effectPrefab 은 본인 클라가 자기 PlayerStats 등을 참조하지 않는 한
+            // 다른 플레이어 오브젝트 자식으로 부착돼도 시각만 보여진다
+            if (mutation.mutationType == MutationType.PassiveBehavior)
+                ApplyPassiveBehavior(target, mutation);
+        }
+
+        Debug.Log($"[MutationManager] 변이 적용: playerId={playerId}, name={mutation.mutationName} ({mutation.mutationType})");
     }
+
+
+    // === 변이별 적용 ===
 
     private void ApplyStatBoost(GameObject player, MutationDefinition mutation)
     {
@@ -69,7 +108,7 @@ public class MutationManager : MonoBehaviour
 
     private void ApplyActiveSkill(GameObject player, MutationDefinition mutation)
     {
-        if (_nextSkillSlot >= 2)
+        if (_myNextSkillSlot >= 2)
         {
             Debug.LogWarning("[MutationManager] 스킬 슬롯이 가득 찼습니다. (최대 2개)");
             return;
@@ -84,11 +123,11 @@ public class MutationManager : MonoBehaviour
         var combat = player.GetComponent<PlayerCombat>();
         if (combat == null) return;
 
-        combat.AssignSkill(_nextSkillSlot, mutation.effectPrefab);
-        _nextSkillSlot++;
+        combat.AssignSkill(_myNextSkillSlot, mutation.effectPrefab);
+        _myNextSkillSlot++;
     }
 
-    private void ApplyPassiveBehavior(GameObject player, MutationDefinition mutation)
+    private void ApplyPassiveBehavior(Transform parent, MutationDefinition mutation)
     {
         if (mutation.effectPrefab == null)
         {
@@ -96,7 +135,7 @@ public class MutationManager : MonoBehaviour
             return;
         }
 
-        Instantiate(mutation.effectPrefab, player.transform);
+        Instantiate(mutation.effectPrefab, parent);
     }
 
 
@@ -106,7 +145,7 @@ public class MutationManager : MonoBehaviour
     public void ResetForNewRun()
     {
         _activeMutations.Clear();
-        _nextSkillSlot = 0;
+        _myNextSkillSlot = 0;
 
         var player = GameObject.FindGameObjectWithTag("Player");
         if (player == null) return;
@@ -116,5 +155,19 @@ public class MutationManager : MonoBehaviour
         // 플레이어에 붙어있는 PassiveBase 컴포넌트 제거
         foreach (var passive in player.GetComponentsInChildren<PassiveBase>())
             Destroy(passive.gameObject);
+    }
+
+
+    // === 헬퍼 ===
+
+    private Transform ResolvePlayerTransform(int playerId, bool isMe)
+    {
+        if (isMe)
+        {
+            var go = GameObject.FindGameObjectWithTag("Player");
+            return go != null ? go.transform : null;
+        }
+        var np = PlayerRegistry.Instance != null ? PlayerRegistry.Instance.Get(playerId) : null;
+        return np != null ? np.transform : null;
     }
 }

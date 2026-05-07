@@ -60,6 +60,8 @@ enum GamePacketId {
   // --- 상호작용 ---
   C_INTERACT         = 70;
   S_INTERACT_RESULT  = 71;
+  C_MUTATION         = 72;
+  S_MUTATION_RESULT  = 73;
 }
 
 // ===================================================
@@ -319,4 +321,26 @@ message S_InteractResult {
   int32 player_id  = 2;
   int32 current_hp = 3;
   int32 gold       = 4;
+}
+
+// ===================================================
+//  8. 변이 (Elite 드랍 획득 동기화)
+// ===================================================
+
+// 변이 종류. 서버는 효과를 모르고 ID 만 릴레이한다.
+// 새 변이 추가 시 이 enum 에 값 추가 후 MutationDatabase 에 정의 등록.
+enum MutationId {
+  MUTATION_NONE    = 0;
+  MUTATION_SPITTER = 1;
+}
+
+// 클라 -> 서버: 변이 픽업 획득 보고
+message C_Mutation {
+  MutationId mutation_id = 1;
+}
+
+// 서버 -> 클라: 누가 어떤 변이를 획득했는지 브로드캐스트
+message S_MutationResult {
+  int32      player_id   = 1;
+  MutationId mutation_id = 2;
 }

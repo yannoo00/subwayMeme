@@ -335,4 +335,16 @@ public static class ClientGamePacketHandler
         // TODO: pkt.CurrentHp로 HP바 갱신
         // TODO: pkt.Gold로 골드 UI 갱신
     }
+
+    // 변이 획득 확정: 본인이면 효과 적용, 남이면 외관 표현만
+    public static void Handle_S_MutationResult(byte[] body)
+    {
+        if (GameManager.Instance.CurrentState != GameState.Playing) return;
+
+        var pkt = S_MutationResult.Parser.ParseFrom(body);
+
+        Debug.Log($"[Game] S_MutationResult: playerId={pkt.PlayerId}, mutationId={pkt.MutationId}");
+
+        MutationManager.Instance.ApplyMutationFromServer(pkt.PlayerId, pkt.MutationId);
+    }
 }

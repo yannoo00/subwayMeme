@@ -11,7 +11,7 @@ namespace GameServer
 
         static GamePacketHandler()
         {
-            int maxId = (int)GamePacketId.SInteractResult + 1;
+            int maxId = (int)GamePacketId.SMutationResult + 1;
             Handlers = new Action<PacketSession, ArraySegment<byte>>[maxId];
 
             Handlers[(int)GamePacketId.CEnterGame]  = Handle_C_EnterGame;
@@ -25,6 +25,7 @@ namespace GameServer
             Handlers[(int)GamePacketId.CBoardSubway] = Handle_C_BoardSubway;
             Handlers[(int)GamePacketId.CSelectRoute] = Handle_C_SelectRoute;
             Handlers[(int)GamePacketId.CInteract]    = Handle_C_Interact;
+            Handlers[(int)GamePacketId.CMutation]    = Handle_C_Mutation;
         }
 
         // === 접속/초기화 ===
@@ -280,6 +281,27 @@ namespace GameServer
                 CurrentHp = player.Hp,
                 Gold      = 0,
             }));
+        }
+
+        // === 변이 ===
+
+        // 클라가 픽업 먹은 시점에 송신. 서버는 효과를 모르고 전원 브로드캐스트만 한다.
+        // 송신자 본인에게도 보내서 "서버 응답 시점에 효과 적용" 흐름을 단일화
+        static void Handle_C_Mutation(PacketSession session, ArraySegment<byte> body)
+        {
+            var pkt    = C_Mutation.Parser.ParseFrom(body.Array, body.Offset, body.Count);
+            var player = GameRoom.Instance.Get(session.SessionId);
+            if (player == null) return;
+
+            Console.WriteLine($"[Game] C_Mutation: playerId={player.PlayerId}, mutationId={pkt.MutationId}");
+
+            var resultBytes = MakePacket(GamePacketId.SMutationResult, new S_MutationResult
+            {
+                PlayerId   = player.PlayerId,
+                MutationId = pkt.MutationId,
+            });
+            foreach (var s in GameRoom.Instance.GetAllSessions())
+                s.Send(resultBytes);
         }
 
         // === 공통 유틸 ===

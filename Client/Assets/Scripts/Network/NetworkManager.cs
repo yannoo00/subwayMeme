@@ -141,6 +141,7 @@ public class NetworkManager : MonoBehaviour
         game.Register((ushort)GamePacketId.SGameClear,     ClientGamePacketHandler.Handle_S_GameClear);
         game.Register((ushort)GamePacketId.SGameOver,      ClientGamePacketHandler.Handle_S_GameOver);
         game.Register((ushort)GamePacketId.SInteractResult,ClientGamePacketHandler.Handle_S_InteractResult);
+        game.Register((ushort)GamePacketId.SMutationResult,ClientGamePacketHandler.Handle_S_MutationResult);
     }
 
     // 서버의 MakePacket과 동일한 헤더 구조: [size 2byte][packetId 2byte][body]
