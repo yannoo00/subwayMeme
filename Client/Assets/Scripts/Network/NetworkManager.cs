@@ -117,6 +117,7 @@ public class NetworkManager : MonoBehaviour
         lobby.Register((ushort)PacketId.SCreatorChanged, LobbyPacketHandler.Handle_S_CreatorChanged);
         lobby.Register((ushort)PacketId.SGameReady,      LobbyPacketHandler.Handle_S_GameReady);
         lobby.Register((ushort)PacketId.SError,          LobbyPacketHandler.Handle_S_Error);
+        lobby.Register((ushort)PacketId.SPlayerCharacterSelected, LobbyPacketHandler.Handle_S_PlayerCharacterSelected);
 
         var game = PacketDispatcher.Game;
         game.Register((ushort)GamePacketId.SEnterGame,     ClientGamePacketHandler.Handle_S_EnterGame);

@@ -1,12 +1,12 @@
 using UnityEngine;
 
-// 적 사망 시 클라이언트 측 드랍 아이템 생성
+// 적 사망 시 클라이언트 측 드롭 아이템 생성
 // 네트워크 동기화 없음 - 클라이언트마다 독립적으로 실행
 public class DropSpawner : MonoBehaviour
 {
     public static DropSpawner Instance { get; private set; }
 
-    [Header("드랍 프리팹")]
+    [Header("드롭 프리팹")]
     [SerializeField] private GameObject _mutationPickupPrefab;   // DropItemPickup 컴포넌트
     [SerializeField] private GameObject _evolutionPointPrefab;   // CurrencyPickup 컴포넌트
     [SerializeField] private GameObject _genePointPrefab;        // CurrencyPickup 컴포넌트
@@ -32,7 +32,7 @@ public class DropSpawner : MonoBehaviour
     }
 
 
-    // === 드랍 처리 ===
+    // === 드롭 처리 ===
 
     private void HandleEnemyDied(GameObject enemyObj)
     {
@@ -42,17 +42,32 @@ public class DropSpawner : MonoBehaviour
         Vector3 pos = enemyObj.transform.position;
         EnemyData data = enemy.Data;
 
-        if (data.grade == EnemyGrade.Elite)
-            SpawnEliteDrop(data.eliteDrop, pos);
-        else
-            TrySpawnNormalDrop(data, pos);
+        TrySpawnCurrency(data, pos);
+
+        if (data.grade != EnemyGrade.Normal)
+            SpawnMutationDrop(data.eliteDrop, pos);
     }
 
-    private void SpawnEliteDrop(DropEntry drop, Vector3 pos)
+    private void TrySpawnCurrency(EnemyData data, Vector3 pos)
     {
-        if (drop == null || drop.mutation == null)
+        if (data.evolutionPointChance > 0f && Random.value <= data.evolutionPointChance)
         {
-            Debug.LogWarning("[DropSpawner] Elite 드랍 설정이 없습니다.");
+            var go = Instantiate(_evolutionPointPrefab, pos, Quaternion.identity);
+            go.GetComponent<CurrencyPickup>()?.Init(CurrencyType.EvolutionPoint, data.evolutionPointAmount);
+        }
+
+        if (data.genePointChance > 0f && Random.value <= data.genePointChance)
+        {
+            var go = Instantiate(_genePointPrefab, pos, Quaternion.identity);
+            go.GetComponent<CurrencyPickup>()?.Init(CurrencyType.GenePoint, data.genePointAmount);
+        }
+    }
+
+    private void SpawnMutationDrop(MutationDefinition mutation, Vector3 pos)
+    {
+        if (mutation == null)
+        {
+            Debug.LogWarning("[DropSpawner] Elite 변이 드롭이 설정되지 않았습니다.");
             return;
         }
 
@@ -63,62 +78,6 @@ public class DropSpawner : MonoBehaviour
         }
 
         var go = Instantiate(_mutationPickupPrefab, pos, Quaternion.identity);
-        go.GetComponent<DropItemPickup>()?.Init(drop.mutation);
-    }
-
-    private void TrySpawnNormalDrop(EnemyData data, Vector3 pos)
-    {
-        if (data.dropTable == null || data.dropTable.Length == 0) return;
-        if (Random.value > data.dropChance) return;
-
-        DropEntry selected = RollDropTable(data.dropTable);
-        if (selected != null) SpawnDrop(selected, pos);
-    }
-
-    // 가중치 룰렛
-    private DropEntry RollDropTable(DropEntry[] table)
-    {
-        float total = 0f;
-        foreach (var e in table) total += e.weight;
-
-        float roll = Random.Range(0f, total);
-        float cumulative = 0f;
-
-        foreach (var e in table)
-        {
-            cumulative += e.weight;
-            if (roll <= cumulative) return e;
-        }
-
-        return null;
-    }
-
-    private void SpawnDrop(DropEntry drop, Vector3 pos)
-    {
-        switch (drop.type)
-        {
-            case DropType.Mutation:
-                if (_mutationPickupPrefab == null || drop.mutation == null) break;
-                var mutGo = Instantiate(_mutationPickupPrefab, pos, Quaternion.identity);
-                mutGo.GetComponent<DropItemPickup>()?.Init(drop.mutation);
-                break;
-
-            case DropType.EvolutionPoint:
-                if (_evolutionPointPrefab == null) break;
-                var evoGo = Instantiate(_evolutionPointPrefab, pos, Quaternion.identity);
-                evoGo.GetComponent<CurrencyPickup>()?.Init(DropType.EvolutionPoint, drop.pointAmount);
-                break;
-
-            case DropType.GenePoint:
-                if (_genePointPrefab == null) break;
-                var geneGo = Instantiate(_genePointPrefab, pos, Quaternion.identity);
-                geneGo.GetComponent<CurrencyPickup>()?.Init(DropType.GenePoint, drop.pointAmount);
-                break;
-
-            case DropType.Weapon:
-                if (drop.weaponPickupPrefab == null) break;
-                Instantiate(drop.weaponPickupPrefab, pos, Quaternion.identity);
-                break;
-        }
+        go.GetComponent<DropItemPickup>()?.Init(mutation);
     }
 }

@@ -36,7 +36,7 @@ public class SaveManager : MonoBehaviour
         {
             Current = new SaveData();
         }
-        Debug.Log($"[SaveManager] 로드 완료 - 경로: {path}, gold: {Current.gold}");
+        Debug.Log($"[SaveManager] 로드 완료 - 경로: {path}, evolutionPoints: {Current.evolutionPoints}");
     }
 
     public void Save()
@@ -44,7 +44,7 @@ public class SaveManager : MonoBehaviour
         string path = Application.persistentDataPath + SAVE_FILE_NAME;
         string json = JsonUtility.ToJson(Current, true);
         File.WriteAllText(path, json);
-        Debug.Log($"[SaveManager] 저장 완료 - gold: {Current.gold}");
+        Debug.Log($"[SaveManager] 저장 완료 - evolutionPoints: {Current.evolutionPoints}");
     }
 
     // 개발/테스트용 저장 데이터 초기화

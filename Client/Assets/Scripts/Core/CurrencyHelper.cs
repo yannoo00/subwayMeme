@@ -1,38 +1,28 @@
-using UnityEngine;
-
-// 골드(재화) 조작을 위한 정적 헬퍼
-// 실제 획득/소모 타이밍은 게임 기획 확정 후 각 시스템에서 직접 호출
-// 예: 적 처치 -> CurrencyHelper.AddGold(10)
-//     업그레이드 구매 -> CurrencyHelper.TrySpendGold(cost)
+// 진화 포인트(영구 재화) 조작을 위한 정적 헬퍼
+// 획득/소모 시 SaveManager에 즉시 반영하고 UI 이벤트 발행
 public static class CurrencyHelper
 {
-    public static int GetGold()
+    public static int GetEvolutionPoints()
     {
         if (SaveManager.Instance == null) return 0;
-        return SaveManager.Instance.Current.gold;
+        return SaveManager.Instance.Current.evolutionPoints;
     }
 
-    // amount 만큼 골드 추가 후 즉시 저장
-    public static void AddGold(int amount)
+    public static void AddEvolutionPoints(int amount)
     {
         if (amount <= 0 || SaveManager.Instance == null) return;
-        SaveManager.Instance.Current.gold += amount;
+        SaveManager.Instance.Current.evolutionPoints += amount;
         SaveManager.Instance.Save();
-        Debug.Log($"[CurrencyHelper] +{amount} 골드 획득. 잔액: {GetGold()}");
+        PlayerEvents.EvolutionPointsChanged(GetEvolutionPoints());
     }
 
-    // 골드가 충분하면 소모 후 true 반환, 부족하면 false 반환
-    public static bool TrySpendGold(int amount)
+    public static bool TrySpendEvolutionPoints(int amount)
     {
         if (amount <= 0 || SaveManager.Instance == null) return false;
-        if (GetGold() < amount)
-        {
-            Debug.Log($"[CurrencyHelper] 골드 부족: 필요 {amount}, 보유 {GetGold()}");
-            return false;
-        }
-        SaveManager.Instance.Current.gold -= amount;
+        if (GetEvolutionPoints() < amount) return false;
+        SaveManager.Instance.Current.evolutionPoints -= amount;
         SaveManager.Instance.Save();
-        Debug.Log($"[CurrencyHelper] -{amount} 골드 사용. 잔액: {GetGold()}");
+        PlayerEvents.EvolutionPointsChanged(GetEvolutionPoints());
         return true;
     }
 }

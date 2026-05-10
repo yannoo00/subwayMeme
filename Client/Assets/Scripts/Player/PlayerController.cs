@@ -6,6 +6,7 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
+    // CharacterDefinition.baseMoveSpeed가 없을 때 fallback
     [SerializeField] private float _moveSpeed = 5f;
     // 카메라 forward를 기준으로 이동 방향 계산
     [SerializeField] private Transform _cameraTransform;
@@ -17,6 +18,7 @@ public class PlayerController : MonoBehaviour
     [Header("Dodge")]
     [SerializeField] private float _dodgeDistance = 4f;
     [SerializeField] private float _dodgeDuration = 0.25f;
+    // CharacterDefinition.baseDodgeCooldown이 없을 때 fallback
     [SerializeField] private float _dodgeCooldown = 1.5f;
 
     private Animator _animator;
@@ -41,6 +43,14 @@ public class PlayerController : MonoBehaviour
         DontDestroyOnLoad(gameObject);
         _animator = GetComponentInChildren<Animator>();
         _stats = GetComponent<PlayerStats>();
+
+        // 캐릭터 베이스 스탯 적용 - SelectedCharacter가 없으면 Inspector fallback 유지
+        var charDef = GameManager.Instance?.SelectedCharacter;
+        if (charDef != null)
+        {
+            _moveSpeed     = charDef.baseMoveSpeed;
+            _dodgeCooldown = charDef.baseDodgeCooldown;
+        }
     }
 
     private void OnEnable()

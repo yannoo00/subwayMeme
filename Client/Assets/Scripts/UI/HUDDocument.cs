@@ -69,6 +69,7 @@ public class HUDDocument : MonoBehaviour
         PlayerEvents.OnAimStateChanged    += OnAimStateChanged;
         StageEvents.OnSubwayStarted       += OnSubwayStarted;
         StageEvents.OnStationArrived      += OnStationArrived;
+        StageEvents.OnSurvivalStarted     += OnSurvivalStarted;
         StageEvents.OnTimerTick           += OnTimerTick;
         GameEvents.OnGeneratorDamaged     += OnGeneratorDamaged;
     }
@@ -84,6 +85,7 @@ public class HUDDocument : MonoBehaviour
         PlayerEvents.OnAimStateChanged    -= OnAimStateChanged;
         StageEvents.OnSubwayStarted       -= OnSubwayStarted;
         StageEvents.OnStationArrived      -= OnStationArrived;
+        StageEvents.OnSurvivalStarted     -= OnSurvivalStarted;
         StageEvents.OnTimerTick           -= OnTimerTick;
         GameEvents.OnGeneratorDamaged     -= OnGeneratorDamaged;
     }
@@ -154,6 +156,12 @@ public class HUDDocument : MonoBehaviour
     private void OnStationArrived(StageNode node)
     {
         _timerTitle.text = "출발까지";
+        _timerPanel.RemoveFromClassList(HiddenClass);
+    }
+
+    private void OnSurvivalStarted()
+    {
+        _timerTitle.text = "남은 시간";
         _timerPanel.RemoveFromClassList(HiddenClass);
     }
 

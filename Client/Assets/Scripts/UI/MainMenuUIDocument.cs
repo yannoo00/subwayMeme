@@ -28,6 +28,7 @@ public class MainMenuUIDocument : MonoBehaviour
     private VisualElement _createRoomPanel;
     private VisualElement _waitingRoomPanel;
     private VisualElement _upgradePanel;
+    private VisualElement _characterSelectModal;
 
     // 메인 메뉴
     private Button _playButton;
@@ -55,12 +56,32 @@ public class MainMenuUIDocument : MonoBehaviour
     private Button     _startGameButton;
 
     // 대기방 상태
-    private readonly Dictionary<int, Label> _playerLabels = new();
+    // PlayerEntry: 행 컨테이너(클릭 캡쳐 대상) + 이름/캐릭터 라벨 + 현재 selected characterId
+    private class PlayerEntry
+    {
+        public VisualElement Row;
+        public Label CharacterLabel;
+        public int CharacterId; // -1: 미선택
+    }
+    private readonly Dictionary<int, PlayerEntry> _playerEntries = new();
     private int  _maxPlayers;
     private bool _isRoomCreator;
 
+    // 캐릭터 선택 모달 상태
+    private ScrollView   _charSelectGrid;
+    private Label        _charDetailName;
+    private Label        _charDetailStats;
+    private Label        _charDetailDesc;
+    private Button       _charSelectCancelButton;
+    private Button       _charSelectConfirmButton;
+    private int          _focusedCharacterId = -1; // 모달에서 카드 클릭으로 선택 중인 ID (확정 전)
+    private VisualElement _focusedCharacterCard;
+    // characterId -> 카드 VisualElement 매핑 (포커스 스타일 토글용)
+    private readonly Dictionary<int, VisualElement> _characterCards = new();
+
     // 강화 화면
     private Label      _upgradeGoldLabel;
+    private ScrollView _characterRow;
     private ScrollView _upgradeScroll;
     private Button     _upgradeBackButton;
 
@@ -75,11 +96,15 @@ public class MainMenuUIDocument : MonoBehaviour
     private void OnEnable()
     {
         BindUI();
+        // 진화 포인트 변동 시 강화 화면이 열려 있으면 자동 갱신
+        // CurrencyPickup 등 외부에서 포인트가 변해도 UI가 stale 상태로 남지 않게 함
+        PlayerEvents.OnEvolutionPointsChanged += OnEvolutionPointsChanged;
     }
 
     private void OnDisable()
     {
         UnbindUI();
+        PlayerEvents.OnEvolutionPointsChanged -= OnEvolutionPointsChanged;
     }
 
     // === UI 바인딩 ===
@@ -90,12 +115,20 @@ public class MainMenuUIDocument : MonoBehaviour
         if (_styleSheet != null)
             root.styleSheets.Add(_styleSheet);
 
-        _mainMenuPanel    = root.Q("main-menu-panel");
-        _nameInputPanel   = root.Q("name-input-panel");
-        _roomListPanel    = root.Q("room-list-panel");
-        _createRoomPanel  = root.Q("create-room-panel");
-        _waitingRoomPanel = root.Q("waiting-room-panel");
-        _upgradePanel     = root.Q("upgrade-panel");
+        _mainMenuPanel        = root.Q("main-menu-panel");
+        _nameInputPanel       = root.Q("name-input-panel");
+        _roomListPanel        = root.Q("room-list-panel");
+        _createRoomPanel      = root.Q("create-room-panel");
+        _waitingRoomPanel     = root.Q("waiting-room-panel");
+        _upgradePanel         = root.Q("upgrade-panel");
+        _characterSelectModal = root.Q("character-select-modal");
+
+        _charSelectGrid          = root.Q<ScrollView>("char-select-grid");
+        _charDetailName          = root.Q<Label>("char-detail-name");
+        _charDetailStats         = root.Q<Label>("char-detail-stats");
+        _charDetailDesc          = root.Q<Label>("char-detail-desc");
+        _charSelectCancelButton  = root.Q<Button>("char-select-cancel");
+        _charSelectConfirmButton = root.Q<Button>("char-select-confirm");
 
         _playButton    = root.Q<Button>("play-button");
         _upgradeButton = root.Q<Button>("upgrade-button");
@@ -118,6 +151,7 @@ public class MainMenuUIDocument : MonoBehaviour
         _startGameButton = root.Q<Button>("start-game-button");
 
         _upgradeGoldLabel  = root.Q<Label>("upgrade-gold-label");
+        _characterRow      = root.Q<ScrollView>("character-row");
         _upgradeScroll     = root.Q<ScrollView>("upgrade-scroll");
         _upgradeBackButton = root.Q<Button>("upgrade-back-button");
 
@@ -130,6 +164,8 @@ public class MainMenuUIDocument : MonoBehaviour
         _confirmCreateButton.clicked+= OnConfirmCreateClicked;
         _leaveRoomButton.clicked    += OnLeaveRoomClicked;
         _startGameButton.clicked    += OnStartGameClicked;
+        _charSelectCancelButton.clicked  += OnCharacterSelectCancel;
+        _charSelectConfirmButton.clicked += OnCharacterSelectConfirm;
     }
 
     private void UnbindUI()
@@ -144,6 +180,8 @@ public class MainMenuUIDocument : MonoBehaviour
         if (_confirmCreateButton!= null) _confirmCreateButton.clicked-= OnConfirmCreateClicked;
         if (_leaveRoomButton    != null) _leaveRoomButton.clicked    -= OnLeaveRoomClicked;
         if (_startGameButton    != null) _startGameButton.clicked    -= OnStartGameClicked;
+        if (_charSelectCancelButton  != null) _charSelectCancelButton.clicked  -= OnCharacterSelectCancel;
+        if (_charSelectConfirmButton != null) _charSelectConfirmButton.clicked -= OnCharacterSelectConfirm;
     }
 
     // === 버튼 핸들러 ===
@@ -236,6 +274,11 @@ public class MainMenuUIDocument : MonoBehaviour
         _createRoomPanel.style.display  = DisplayStyle.None;
         _waitingRoomPanel.style.display = DisplayStyle.None;
         _upgradePanel.style.display     = DisplayStyle.None;
+
+        // 모달은 패널 전환 시 항상 닫음
+        if (_characterSelectModal != null)
+            _characterSelectModal.style.display = DisplayStyle.None;
+
         target.style.display = DisplayStyle.Flex;
     }
 
@@ -281,13 +324,14 @@ public class MainMenuUIDocument : MonoBehaviour
     {
         _maxPlayers = room.MaxPlayers;
         _roomNameLabel.text = room.RoomName;
-        _playerLabels.Clear();
+        _playerEntries.Clear();
         _playerScroll.Clear();
 
-        AddPlayerEntry(NetworkManager.Instance.MyPlayerId, NetworkManager.Instance.MyPlayerName);
+        // 신규 입장: 본인 캐릭터 미선택 상태로 시작 (서버 기본값 -1과 일치)
+        AddPlayerEntry(NetworkManager.Instance.MyPlayerId, NetworkManager.Instance.MyPlayerName, -1);
         UpdatePlayerCount();
+        RefreshStartGameButton();
 
-        _startGameButton.SetEnabled(_isRoomCreator);
         ShowPanel(_waitingRoomPanel);
     }
 
@@ -296,38 +340,50 @@ public class MainMenuUIDocument : MonoBehaviour
     {
         _maxPlayers = room.MaxPlayers;
         _roomNameLabel.text = room.RoomName;
-        _playerLabels.Clear();
+        _playerEntries.Clear();
         _playerScroll.Clear();
 
+        // PlayerInfo.CharacterId를 그대로 사용 (서버가 -1 또는 선택한 ID로 채워서 보냄)
         foreach (var p in players)
-            AddPlayerEntry(p.PlayerId, p.PlayerName);
+            AddPlayerEntry(p.PlayerId, p.PlayerName, p.CharacterId);
         UpdatePlayerCount();
+        RefreshStartGameButton();
 
-        _startGameButton.SetEnabled(_isRoomCreator);
         ShowPanel(_waitingRoomPanel);
     }
 
     // S_PlayerJoined 수신 후: 새 플레이어 추가
     public void AddPlayerToWaitingRoom(PlayerInfo player)
     {
-        AddPlayerEntry(player.PlayerId, player.PlayerName);
+        AddPlayerEntry(player.PlayerId, player.PlayerName, player.CharacterId);
         UpdatePlayerCount();
+        RefreshStartGameButton();
     }
 
     // S_PlayerLeft 수신 후: 플레이어 제거
     public void RemovePlayerFromWaitingRoom(int playerId)
     {
-        if (!_playerLabels.TryGetValue(playerId, out var label)) return;
-        _playerScroll.Remove(label);
-        _playerLabels.Remove(playerId);
+        if (!_playerEntries.TryGetValue(playerId, out var entry)) return;
+        _playerScroll.Remove(entry.Row);
+        _playerEntries.Remove(playerId);
         UpdatePlayerCount();
+        RefreshStartGameButton();
     }
 
     // S_CreatorChanged 수신 후: 방장 변경 (방장 나갔을 때)
     public void UpdateCreatorStatus(int newCreatorId)
     {
         _isRoomCreator = (newCreatorId == NetworkManager.Instance.MyPlayerId);
-        _startGameButton.SetEnabled(_isRoomCreator);
+        RefreshStartGameButton();
+    }
+
+    // S_PlayerCharacterSelected 수신 후: 해당 플레이어 라인의 캐릭터 표시 갱신
+    public void UpdatePlayerCharacter(int playerId, int characterId)
+    {
+        if (!_playerEntries.TryGetValue(playerId, out var entry)) return;
+        entry.CharacterId = characterId;
+        UpdateCharacterLabel(entry, playerId == NetworkManager.Instance.MyPlayerId);
+        RefreshStartGameButton();
     }
 
     // S_GameReady 수신 후: 씬 전환 (게임 서버 접속)
@@ -340,8 +396,69 @@ public class MainMenuUIDocument : MonoBehaviour
 
     private void RefreshUpgradePanel()
     {
-        int gold = CurrencyHelper.GetGold();
-        _upgradeGoldLabel.text = $"골드: {gold}";
+        RefreshCharacterRow();
+        RefreshEvolutionPointsLabel();
+        RefreshUpgradeList();
+    }
+
+    private void OnEvolutionPointsChanged(int amount)
+    {
+        // 강화 패널이 열려 있을 때만 갱신 - 다른 패널일 때는 캐싱된 채로 두고 다음 진입 시 새로 그림
+        if (_upgradePanel == null || _upgradePanel.style.display.value != DisplayStyle.Flex) return;
+        RefreshEvolutionPointsLabel();
+        RefreshUpgradeList();
+    }
+
+    private void RefreshEvolutionPointsLabel()
+    {
+        if (_upgradeGoldLabel == null) return;
+        _upgradeGoldLabel.text = $"진화 포인트: {CurrencyHelper.GetEvolutionPoints()}";
+    }
+
+    // 캐릭터 카드 행 - GameManager에 등록된 캐릭터 목록 기준
+    // 클릭 시 GameManager.SelectCharacter -> SaveData 슬롯 자동 생성 + 강화 목록 다시 그림
+    private void RefreshCharacterRow()
+    {
+        if (_characterRow == null) return;
+        _characterRow.Clear();
+
+        if (GameManager.Instance == null) return;
+
+        var characters = GameManager.Instance.AllCharacters;
+        if (characters == null || characters.Length == 0)
+        {
+            // 캐릭터 정의가 비어있어도 강화 시스템이 동작하도록 - characterId 0 으로 fallback
+            return;
+        }
+
+        int selectedId = GameManager.Instance.SelectedCharacterId;
+        foreach (var c in characters)
+        {
+            if (c == null) continue;
+            _characterRow.Add(BuildCharacterCard(c, c.characterId == selectedId));
+        }
+    }
+
+    private VisualElement BuildCharacterCard(CharacterDefinition def, bool isSelected)
+    {
+        int capturedId = def.characterId;
+        var btn = new Button(() =>
+        {
+            if (GameManager.Instance == null) return;
+            if (GameManager.Instance.SelectedCharacterId == capturedId) return;
+            GameManager.Instance.SelectCharacter(capturedId);
+            RefreshUpgradePanel();
+        });
+        btn.text = def.displayName;
+        btn.AddToClassList("character-card");
+        if (isSelected)
+            btn.AddToClassList("character-card--selected");
+        return btn;
+    }
+
+    private void RefreshUpgradeList()
+    {
+        if (_upgradeScroll == null) return;
         _upgradeScroll.Clear();
 
         if (UpgradeManager.Instance == null)
@@ -370,7 +487,7 @@ public class MainMenuUIDocument : MonoBehaviour
 
     private VisualElement BuildUpgradeEntry(UpgradeDefinition def)
     {
-        int characterId = 0; // 현재 단일 캐릭터
+        int characterId = GameManager.Instance != null ? GameManager.Instance.SelectedCharacterId : 0;
         int level = UpgradeManager.Instance.GetLevel(characterId, def.type);
         bool isMaxed = level >= def.maxLevel;
         int cost = def.GetCost(level);
@@ -378,28 +495,35 @@ public class MainMenuUIDocument : MonoBehaviour
         var row = new VisualElement();
         row.AddToClassList("upgrade-entry");
 
-        // 이름 + 설명
+        // 이름 + 설명 + 다음 레벨 미리보기
         var info = new VisualElement();
         info.AddToClassList("upgrade-entry__info");
 
         var nameLabel = new Label(def.displayName);
         nameLabel.AddToClassList("upgrade-entry__name");
 
-        float totalValue = def.GetTotalValue(level);
-        string desc = string.Format(def.descriptionFormat ?? "{0}", totalValue);
-        var descLabel = new Label(desc);
+        float currentTotal = def.GetTotalValue(level);
+        string format = string.IsNullOrEmpty(def.descriptionFormat) ? "{0}" : def.descriptionFormat;
+        var descLabel = new Label(string.Format(format, currentTotal));
         descLabel.AddToClassList("upgrade-entry__desc");
 
         info.Add(nameLabel);
         info.Add(descLabel);
 
-        // 레벨 표시
+        // 다음 레벨에서의 효과를 별도 라벨로 표시 - 강화 결정에 필요한 정보를 한눈에 제공
+        if (!isMaxed)
+        {
+            float nextTotal = def.GetTotalValue(level + 1);
+            var preview = new Label($"다음 → {string.Format(format, nextTotal)}");
+            preview.AddToClassList("upgrade-entry__preview");
+            info.Add(preview);
+        }
+
         string levelText = isMaxed ? "MAX" : $"Lv.{level}/{def.maxLevel}";
         var levelLabel = new Label(levelText);
         levelLabel.AddToClassList("upgrade-entry__level");
 
-        // 강화 버튼
-        string btnText = isMaxed ? "최대" : $"강화 ({cost}G)";
+        string btnText = isMaxed ? "최대" : $"강화 ({cost}EP)";
         var btn = new Button(() =>
         {
             if (UpgradeManager.Instance.TryUpgrade(characterId, def.type))
@@ -419,17 +543,194 @@ public class MainMenuUIDocument : MonoBehaviour
 
     // === Private 헬퍼 ===
 
-    private void AddPlayerEntry(int playerId, string playerName)
+    private void AddPlayerEntry(int playerId, string playerName, int characterId)
     {
-        if (_playerLabels.ContainsKey(playerId)) return;
-        var label = new Label(playerName);
-        label.AddToClassList("player-entry");
-        _playerScroll.Add(label);
-        _playerLabels[playerId] = label;
+        if (_playerEntries.ContainsKey(playerId)) return;
+
+        bool isSelf = playerId == NetworkManager.Instance.MyPlayerId;
+
+        var row = new VisualElement();
+        row.AddToClassList("player-entry");
+
+        var nameLabel = new Label(isSelf ? $"{playerName} (나)" : playerName);
+        nameLabel.AddToClassList("player-entry__name");
+        row.Add(nameLabel);
+
+        var charLabel = new Label();
+        charLabel.AddToClassList("player-entry__character");
+        row.Add(charLabel);
+
+        var entry = new PlayerEntry { Row = row, CharacterLabel = charLabel, CharacterId = characterId };
+        _playerEntries[playerId] = entry;
+
+        UpdateCharacterLabel(entry, isSelf);
+
+        // 본인 라인의 캐릭터 라벨을 클릭하면 모달 오픈
+        // GameManager가 이미 SelectedCharacterId를 가지고 있으면 그 ID로 미리 포커스
+        if (isSelf)
+        {
+            charLabel.RegisterCallback<ClickEvent>(_ => OpenCharacterSelectModal());
+        }
+
+        _playerScroll.Add(row);
+    }
+
+    private void UpdateCharacterLabel(PlayerEntry entry, bool isSelf)
+    {
+        bool ready = entry.CharacterId >= 0;
+        string display;
+        if (ready)
+        {
+            var def = GameManager.Instance != null
+                ? GameManager.Instance.GetCharacterDefinition(entry.CharacterId)
+                : null;
+            display = def != null ? def.displayName : $"캐릭터 {entry.CharacterId}";
+        }
+        else
+        {
+            display = isSelf ? "캐릭터 선택" : "선택 중...";
+        }
+        entry.CharacterLabel.text = display;
+
+        entry.CharacterLabel.EnableInClassList("player-entry__character--ready", ready);
+        entry.CharacterLabel.EnableInClassList("player-entry__character--self", isSelf);
     }
 
     private void UpdatePlayerCount()
     {
-        _roomCountLabel.text = $"{_playerLabels.Count} / {_maxPlayers}";
+        _roomCountLabel.text = $"{_playerEntries.Count} / {_maxPlayers}";
+    }
+
+    // 방장 + 모든 플레이어 캐릭터 선택 완료일 때만 게임시작 버튼 활성화
+    // 서버도 동일 조건을 검증하지만 UX를 위해 클라에서도 게이팅
+    private void RefreshStartGameButton()
+    {
+        if (_startGameButton == null) return;
+
+        bool allReady = _playerEntries.Count > 0;
+        foreach (var kv in _playerEntries)
+        {
+            if (kv.Value.CharacterId < 0) { allReady = false; break; }
+        }
+
+        _startGameButton.SetEnabled(_isRoomCreator && allReady);
+    }
+
+
+    // === 캐릭터 선택 모달 ===
+
+    private void OpenCharacterSelectModal()
+    {
+        if (_characterSelectModal == null) return;
+
+        // 본인 라인의 현재 선택 ID를 모달 포커스 기본값으로
+        int myId = NetworkManager.Instance.MyPlayerId;
+        int currentId = _playerEntries.TryGetValue(myId, out var entry) ? entry.CharacterId : -1;
+        _focusedCharacterId = currentId;
+
+        BuildCharacterSelectGrid();
+        RefreshCharacterDetail();
+
+        _characterSelectModal.style.display = DisplayStyle.Flex;
+    }
+
+    private void CloseCharacterSelectModal()
+    {
+        if (_characterSelectModal == null) return;
+        _characterSelectModal.style.display = DisplayStyle.None;
+        _focusedCharacterCard = null;
+    }
+
+    private void BuildCharacterSelectGrid()
+    {
+        if (_charSelectGrid == null) return;
+        _charSelectGrid.Clear();
+        _characterCards.Clear();
+        _focusedCharacterCard = null;
+
+        var characters = GameManager.Instance?.AllCharacters;
+        if (characters == null || characters.Length == 0)
+        {
+            var empty = new Label("등록된 캐릭터가 없습니다.");
+            empty.AddToClassList("player-entry");
+            _charSelectGrid.Add(empty);
+            return;
+        }
+
+        foreach (var def in characters)
+        {
+            if (def == null) continue;
+            int capturedId = def.characterId;
+
+            var btn = new Button(() => OnCharacterCardClicked(capturedId));
+            btn.text = def.displayName;
+            btn.AddToClassList("char-select-card");
+            _charSelectGrid.Add(btn);
+            _characterCards[capturedId] = btn;
+
+            if (def.characterId == _focusedCharacterId)
+            {
+                btn.AddToClassList("char-select-card--focused");
+                _focusedCharacterCard = btn;
+            }
+        }
+    }
+
+    private void OnCharacterCardClicked(int characterId)
+    {
+        _focusedCharacterId = characterId;
+
+        if (_focusedCharacterCard != null)
+            _focusedCharacterCard.RemoveFromClassList("char-select-card--focused");
+
+        if (_characterCards.TryGetValue(characterId, out var card))
+        {
+            card.AddToClassList("char-select-card--focused");
+            _focusedCharacterCard = card;
+        }
+
+        RefreshCharacterDetail();
+    }
+
+    private void RefreshCharacterDetail()
+    {
+        if (_charDetailName == null) return;
+
+        var def = GameManager.Instance?.GetCharacterDefinition(_focusedCharacterId);
+        if (def == null)
+        {
+            _charDetailName.text  = "캐릭터를 선택하세요";
+            _charDetailStats.text = "";
+            _charDetailDesc.text  = "";
+            _charSelectConfirmButton?.SetEnabled(false);
+            return;
+        }
+
+        _charDetailName.text  = def.displayName;
+        _charDetailStats.text = $"체력 {def.baseMaxHealth}\n공격 +{def.baseAttackPower * 100f:0}%\n이속 {def.baseMoveSpeed}\n닷지 쿨타임 {def.baseDodgeCooldown:0.0}s";
+        _charDetailDesc.text  = def.description;
+        _charSelectConfirmButton?.SetEnabled(true);
+    }
+
+    private void OnCharacterSelectCancel()
+    {
+        CloseCharacterSelectModal();
+    }
+
+    private void OnCharacterSelectConfirm()
+    {
+        if (_focusedCharacterId < 0) return;
+
+        // 로컬 상태 즉시 반영 (S_PlayerCharacterSelected 응답 받기 전 UX 지연 방지)
+        // 서버 응답이 오면 같은 값으로 한 번 더 반영되지만 멱등이므로 안전
+        GameManager.Instance?.SelectCharacter(_focusedCharacterId);
+
+        // 서버에 선택 통보
+        NetworkManager.Instance.SendLobby(PacketId.CSelectCharacter, new C_SelectCharacter
+        {
+            CharacterId = _focusedCharacterId,
+        });
+
+        CloseCharacterSelectModal();
     }
 }

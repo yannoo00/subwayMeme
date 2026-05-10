@@ -40,7 +40,7 @@ public class UpgradeManager : MonoBehaviour
         return idx < data.upgradeLevels.Length ? data.upgradeLevels[idx] : 0;
     }
 
-    // 현재 골드와 최대 레벨을 고려해 강화 가능 여부 반환
+    // 현재 진화 포인트와 최대 레벨을 고려해 강화 가능 여부 반환
     public bool CanUpgrade(int characterId, UpgradeType type)
     {
         var def = GetDefinition(type);
@@ -48,7 +48,7 @@ public class UpgradeManager : MonoBehaviour
         int level = GetLevel(characterId, type);
         if (level >= def.maxLevel) return false;
         int cost = def.GetCost(level);
-        return cost >= 0 && CurrencyHelper.GetGold() >= cost;
+        return cost >= 0 && CurrencyHelper.GetEvolutionPoints() >= cost;
     }
 
     // 강화 실행: 성공 시 true, 골드 부족/최대 레벨이면 false
@@ -60,7 +60,7 @@ public class UpgradeManager : MonoBehaviour
         int level = GetLevel(characterId, type);
         int cost = def.GetCost(level);
 
-        if (!CurrencyHelper.TrySpendGold(cost)) return false;
+        if (!CurrencyHelper.TrySpendEvolutionPoints(cost)) return false;
 
         var data = SaveManager.Instance.Current.GetCharacter(characterId);
         data.upgradeLevels[(int)type]++;

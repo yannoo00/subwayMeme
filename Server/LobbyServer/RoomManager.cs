@@ -20,6 +20,7 @@ namespace LobbyServer
     // NewCreatorId: 방장이 나갔을 때 위임된 새 방장 ID (-1이면 위임 없음)
     public record LeaveRoomData(PlayerInfo Leaver, List<LobbySession> Remaining, int NewCreatorId = -1);
     public record StartGameData(int GamePort, int RoomId, List<LobbySession> AllSessions, int HostPlayerId);
+    public record SelectCharacterData(int PlayerId, int CharacterId, List<LobbySession> AllSessions);
 
 
 
@@ -125,12 +126,34 @@ namespace LobbyServer
                 if (room.CreatorSessionId != requester.SessionId)
                     return RoomResult<StartGameData>.Fail("방장만 게임을 시작할 수 있습니다.");
 
+                // 캐릭터 미선택 = 미준비. 전원 선택 완료여야 게임 시작 가능
+                if (!room.IsAllReady())
+                    return RoomResult<StartGameData>.Fail("아직 캐릭터를 선택하지 않은 플레이어가 있습니다.");
+
                 int? port = ProcessManager.Instance.Spawn(room.RoomId, room.PlayerCount, room.CreatorSessionId);
                 if (!port.HasValue)
                     return RoomResult<StartGameData>.Fail("게임 서버를 시작하지 못했습니다.");
 
                 var allSessions = room.GetAllSessions();
                 return RoomResult<StartGameData>.Success(new(port.Value, room.RoomId, allSessions, room.CreatorSessionId));
+            }
+        }
+
+        // 캐릭터 선택/변경 (대기방 안에서만 가능)
+        // 동일한 characterId로 다시 선택해도 OK (재전송 idempotent)
+        public RoomResult<SelectCharacterData> SelectCharacter(LobbySession requester, int characterId)
+        {
+            lock (_lock)
+            {
+                if (!_players.TryGetValue(requester.SessionId, out var p) || p.roomId == -1)
+                    return RoomResult<SelectCharacterData>.Fail("방에 있지 않습니다.");
+
+                var room = _rooms[p.roomId];
+                if (!room.SetCharacter(requester.SessionId, characterId))
+                    return RoomResult<SelectCharacterData>.Fail("플레이어가 방에 없습니다.");
+
+                return RoomResult<SelectCharacterData>.Success(
+                    new(requester.SessionId, characterId, room.GetAllSessions()));
             }
         }
 

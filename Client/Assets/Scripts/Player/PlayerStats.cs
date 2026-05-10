@@ -3,8 +3,13 @@ using UnityEngine;
 public class PlayerStats: MonoBehaviour, IDamageable
 {
     [Header("Player Stats")]
-    [SerializeField] private int _currentHealth = 100;
-    [SerializeField] private int _maxHealth = 100;
+    // CharacterDefinition.baseMaxHealth가 없을 때만 쓰이는 fallback 기본값
+    [SerializeField] private int _baseMaxHealth = 100;
+
+    private int _currentHealth;
+
+    // 캐릭터 베이스 보너스 (CharacterDefinition.baseAttackPower)
+    private float _baseAttackBonus;
 
     // 영구 강화 보너스 (UpgradeManager.ApplyBonusesToPlayer 로 설정)
     private int   _bonusMaxHp;
@@ -16,29 +21,44 @@ public class PlayerStats: MonoBehaviour, IDamageable
     private float _mutationAttackBonus;
     private float _mutationMoveSpeedBonus; // PlayerController에서 참조
 
-    // 재화
     // GenePoint: 세션 내 유효, 런 종료 시 초기화
-    // EvolutionPoint: 영구 재화, 추후 SaveManager와 연동 예정
     private int _genePoints;
-    private int _evolutionPoints;
 
     public int CurrentHealth    => _currentHealth;
-    public int MaxHealth        => _maxHealth + _bonusMaxHp + _mutationMaxHpBonus;
+    public int MaxHealth        => _baseMaxHealth + _bonusMaxHp + _mutationMaxHpBonus;
     public bool IsAlive         => _currentHealth > 0;
     public bool IsInvincible { get; set; }
 
-    public float AttackBonus       => _attackBonus + _mutationAttackBonus;
+    public float AttackBonus       => _baseAttackBonus + _attackBonus + _mutationAttackBonus;
     public float DodgeReduction    => _dodgeReduction;
     public float MoveSpeedBonus    => _mutationMoveSpeedBonus; // PlayerController에서 읽어서 이속에 가산
 
-    public int GenePoints       => _genePoints;
-    public int EvolutionPoints  => _evolutionPoints;
+    public int GenePoints => _genePoints;
 
     private void Start()
     {
-        // 영구 강화 보너스 자동 적용 (캐릭터 ID 0 고정, 추후 캐릭터 선택 시 변경)
+        // 캐릭터 베이스 스탯을 SelectedCharacter 에서 가져와 적용
+        // CharacterDefinition이 미할당이면 Inspector fallback 값 그대로 사용
+        var charDef = GameManager.Instance?.SelectedCharacter;
+        if (charDef != null)
+        {
+            _baseMaxHealth   = charDef.baseMaxHealth;
+            _baseAttackBonus = charDef.baseAttackPower;
+        }
+
+        _currentHealth = _baseMaxHealth;
+
+        // 강화/UpgradeManager가 없는 환경에서도 HUD가 정확한 값을 보도록 즉시 1회 발행
+        // ApplyPermanentBonuses 가 뒤따라 호출되면 거기서 다시 한 번 발행됨 (멱등)
+        PlayerEvents.HealthChanged(_currentHealth, MaxHealth);
+
+        // 영구 강화 보너스 자동 적용 - GameManager가 보관하는 SelectedCharacterId 기준
+        // GameManager는 Persistent 씬의 DontDestroyOnLoad라 게임 씬 진입 시 항상 존재
         if (UpgradeManager.Instance != null)
-            UpgradeManager.Instance.ApplyBonusesToPlayer(0, this);
+        {
+            int characterId = GameManager.Instance != null ? GameManager.Instance.SelectedCharacterId : 0;
+            UpgradeManager.Instance.ApplyBonusesToPlayer(characterId, this);
+        }
     }
 
     // UpgradeManager에서 호출 - 영구 강화 보너스 일괄 적용
@@ -121,13 +141,6 @@ public class PlayerStats: MonoBehaviour, IDamageable
     {
         _genePoints += amount;
         PlayerEvents.GenePointsChanged(_genePoints);
-    }
-
-    // EvolutionPoint는 획득 즉시 SaveManager에도 반영해야 하지만 현재는 미연동
-    public void AddEvolutionPoints(int amount)
-    {
-        _evolutionPoints += amount;
-        PlayerEvents.EvolutionPointsChanged(_evolutionPoints);
     }
 
     // 런 종료 시 세션 재화 초기화

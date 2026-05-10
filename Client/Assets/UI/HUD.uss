@@ -30,7 +30,12 @@
 .hud-panel--hidden { display: none; }
 
 #hp-panel    { top: 20px; left: 20px; }
-#timer-panel { top: 20px; right: 20px; align-items: flex-end; }
+#timer-panel {
+    top: 20px;
+    left: 50%;
+    translate: -50% 0;
+    align-items: center;
+}
 
 
 /* === 라벨 위계 === */
@@ -55,6 +60,7 @@
     font-size: 30px;
     -unity-font-style: bold;
     letter-spacing: 3px;
+    -unity-text-align: middle-center;
 }
 
 

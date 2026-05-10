@@ -30,6 +30,16 @@ public class GameManager : MonoBehaviour
     [SerializeField] private bool _survivalMode = true;
     public bool IsSurvivalMode => _survivalMode;
 
+    [Header("캐릭터")]
+    [SerializeField] private CharacterDefinition[] _characters;
+
+    // 강화 화면 / 인게임 스폰에서 사용할 현재 선택된 캐릭터 ID
+    // 1차 개발에서는 캐릭터가 1종이라 0 고정이지만, 추후 캐릭터 선택 UI에서 SelectCharacter를 호출해 변경
+    public int SelectedCharacterId { get; private set; } = 0;
+
+    public CharacterDefinition[] AllCharacters => _characters;
+    public CharacterDefinition SelectedCharacter => GetCharacterDefinition(SelectedCharacterId);
+
 
     // === 생명주기 ===
 
@@ -49,6 +59,16 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
+        // SaveData에서 마지막 선택 캐릭터 복원
+        // SaveManager.Awake가 먼저 실행되어 Current가 로드된 상태라고 가정 (둘 다 Persistent 씬)
+        // -1 또는 정의되지 않은 ID면 기본값 0 유지
+        var save = SaveManager.Instance?.Current;
+        if (save != null && save.lastSelectedCharacterId >= 0
+            && GetCharacterDefinition(save.lastSelectedCharacterId) != null)
+        {
+            SelectedCharacterId = save.lastSelectedCharacterId;
+        }
+
         ChangeState(GameState.Menu);
     }
 
@@ -128,5 +148,38 @@ public class GameManager : MonoBehaviour
     public void ClearGame()
     {
         ChangeState(GameState.GameClear);
+    }
+
+
+    // === 캐릭터 선택 ===
+
+    // 강화 화면이나 캐릭터 선택 UI에서 호출
+    // SaveData에 슬롯이 없으면 자동 생성 (신규 캐릭터 첫 선택 시)
+    public void SelectCharacter(int characterId)
+    {
+        if (GetCharacterDefinition(characterId) == null)
+        {
+            Debug.LogWarning($"[GameManager] 알 수 없는 characterId={characterId}");
+            return;
+        }
+
+        SelectedCharacterId = characterId;
+
+        // SaveData 슬롯 자동 생성 + 마지막 선택 ID 영속화
+        var save = SaveManager.Instance?.Current;
+        if (save != null)
+        {
+            save.GetOrCreateCharacter(characterId);
+            save.lastSelectedCharacterId = characterId;
+            SaveManager.Instance.Save();
+        }
+    }
+
+    public CharacterDefinition GetCharacterDefinition(int characterId)
+    {
+        if (_characters == null) return null;
+        foreach (var c in _characters)
+            if (c != null && c.characterId == characterId) return c;
+        return null;
     }
 }

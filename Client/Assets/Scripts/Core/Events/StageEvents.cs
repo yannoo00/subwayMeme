@@ -14,6 +14,7 @@ public static class StageEvents
     public static event Action<StageMap> OnMapGenerated;                                // 맵 생성 완료
     public static event Action<MapOpenReason, List<StageNode>> OnMapOpenRequested;      // 맵 UI 열기 요청
     public static event Action<float, float> OnTimerTick;                               // 타이머 틱 (remaining, total)
+    public static event Action OnSurvivalStarted;                                       // 서바이벌 모드 시작 (HUD에 생존 타이머 표시 트리거)
 
     public static void SubwayStarted(StageNode node)                                    => OnSubwayStarted?.Invoke(node);
     public static void StationArrived(StageNode node)                                   => OnStationArrived?.Invoke(node);
@@ -23,4 +24,5 @@ public static class StageEvents
     public static void MapGenerated(StageMap map)                                       => OnMapGenerated?.Invoke(map);
     public static void MapOpenRequested(MapOpenReason reason, List<StageNode> nodes)    => OnMapOpenRequested?.Invoke(reason, nodes);
     public static void TimerTick(float remaining, float total)                          => OnTimerTick?.Invoke(remaining, total);
+    public static void SurvivalStarted()                                                => OnSurvivalStarted?.Invoke();
 }

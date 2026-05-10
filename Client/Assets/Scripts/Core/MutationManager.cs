@@ -10,6 +10,9 @@ public class MutationManager : MonoBehaviour
 {
     public static MutationManager Instance { get; private set; }
 
+    [SerializeField] private MutationDefinition[] _mutations;
+    private Dictionary<MutationId, MutationDefinition> _lookup;
+
     // 플레이어별 획득 변이 목록 (UI 표시 / 디버깅용)
     private readonly Dictionary<int, List<MutationDefinition>> _activeMutations = new();
 
@@ -26,6 +29,7 @@ public class MutationManager : MonoBehaviour
         if (Instance != null) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+        BuildLookup();
     }
 
 
@@ -46,7 +50,8 @@ public class MutationManager : MonoBehaviour
     // 서버가 확정한 변이를 본인/남에게 분기 적용
     public void ApplyMutationFromServer(int playerId, MutationId mutationId)
     {
-        var mutation = MutationDatabase.Instance?.Get(mutationId);
+        if (_lookup == null) BuildLookup();
+        _lookup.TryGetValue(mutationId, out var mutation);
         if (mutation == null)
         {
             Debug.LogWarning($"[MutationManager] 알 수 없는 변이 ID: {mutationId}");
@@ -155,6 +160,26 @@ public class MutationManager : MonoBehaviour
         // 플레이어에 붙어있는 PassiveBase 컴포넌트 제거
         foreach (var passive in player.GetComponentsInChildren<PassiveBase>())
             Destroy(passive.gameObject);
+    }
+
+
+    // === 데이터 조회 ===
+
+    private void BuildLookup()
+    {
+        _lookup = new Dictionary<MutationId, MutationDefinition>();
+        if (_mutations == null) return;
+
+        foreach (var m in _mutations)
+        {
+            if (m == null) continue;
+            if (_lookup.ContainsKey(m.mutationId))
+            {
+                Debug.LogError($"[MutationManager] 중복 ID: {m.mutationId} ({m.mutationName})");
+                continue;
+            }
+            _lookup[m.mutationId] = m;
+        }
     }
 
 

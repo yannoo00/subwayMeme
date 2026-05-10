@@ -355,3 +355,171 @@
     background-color: rgb(34, 30, 22);
     border-color: rgba(218, 180, 110, 0.3);
 }
+
+.upgrade-entry__preview {
+    color: rgba(218, 180, 110, 0.85);
+    font-size: 11px;
+    margin-top: 2px;
+    -unity-font-style: italic;
+}
+
+.character-row {
+    height: 76px;
+    margin-bottom: 12px;
+    flex-shrink: 0;
+}
+
+.character-card {
+    min-width: 130px;
+    height: 60px;
+    background-color: rgb(32, 38, 46);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    padding: 8px 14px;
+    margin-right: 8px;
+    color: rgb(228, 230, 234);
+    font-size: 13px;
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+}
+
+.character-card:hover {
+    background-color: rgb(44, 52, 62);
+    border-color: rgba(180, 195, 215, 0.45);
+}
+
+.character-card--selected {
+    background-color: rgb(34, 30, 22);
+    color: rgb(218, 180, 110);
+    border-color: rgba(218, 180, 110, 0.55);
+}
+
+
+/* === 대기방 플레이어 항목 (확장) === */
+
+.player-entry {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.player-entry__name {
+    color: rgb(228, 230, 234);
+    font-size: 14px;
+    letter-spacing: 1px;
+}
+
+.player-entry__character {
+    color: rgba(170, 180, 195, 0.7);
+    font-size: 12px;
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+    padding: 4px 12px;
+    border-radius: 3px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.player-entry__character--ready {
+    color: rgb(218, 180, 110);
+    border-color: rgba(218, 180, 110, 0.4);
+    background-color: rgb(34, 30, 22);
+}
+
+.player-entry__character--self:hover {
+    border-color: rgba(180, 195, 215, 0.55);
+    color: rgb(228, 230, 234);
+}
+
+
+/* === 캐릭터 선택 모달 === */
+
+.modal-overlay {
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+.char-select-content {
+    flex-direction: row;
+    margin-bottom: 16px;
+}
+
+.char-select-grid {
+    width: 300px;
+    height: 320px;
+    background-color: rgb(14, 16, 20);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+    padding: 8px;
+}
+
+/* 그리드 안에 카드를 행으로 흘림 */
+.char-select-grid .unity-scroll-view__content-container {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.char-select-card {
+    width: 130px;
+    height: 80px;
+    background-color: rgb(32, 38, 46);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    margin: 4px;
+    padding: 10px 12px;
+    color: rgb(228, 230, 234);
+    font-size: 13px;
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+    -unity-text-align: middle-center;
+}
+
+.char-select-card:hover {
+    background-color: rgb(44, 52, 62);
+    border-color: rgba(180, 195, 215, 0.45);
+}
+
+.char-select-card--focused {
+    background-color: rgb(34, 30, 22);
+    color: rgb(218, 180, 110);
+    border-color: rgba(218, 180, 110, 0.55);
+}
+
+.char-select-detail {
+    flex-grow: 1;
+    margin-left: 14px;
+    padding: 18px;
+    background-color: rgb(18, 22, 28);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+    min-width: 220px;
+}
+
+.char-detail-name {
+    color: rgb(228, 230, 234);
+    font-size: 18px;
+    -unity-font-style: bold;
+    letter-spacing: 2px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.char-detail-stats {
+    color: rgba(180, 195, 215, 0.85);
+    font-size: 13px;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+    white-space: normal;
+}
+
+.char-detail-desc {
+    color: rgba(170, 180, 195, 0.7);
+    font-size: 12px;
+    white-space: normal;
+}

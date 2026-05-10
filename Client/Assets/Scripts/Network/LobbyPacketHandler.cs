@@ -89,6 +89,16 @@ public static class LobbyPacketHandler
         MainMenuUIDocument.Instance?.OnGameReadyReceived();
     }
 
+    // 누군가가 캐릭터를 선택/변경: 대기방 라인 갱신 + 게임시작 버튼 게이팅
+    public static void Handle_S_PlayerCharacterSelected(byte[] body)
+    {
+        var pkt = S_PlayerCharacterSelected.Parser.ParseFrom(body);
+
+        Debug.Log($"[Lobby] S_PlayerCharacterSelected: playerId={pkt.PlayerId}, characterId={pkt.CharacterId}");
+
+        MainMenuUIDocument.Instance?.UpdatePlayerCharacter(pkt.PlayerId, pkt.CharacterId);
+    }
+
     // 서버 에러 수신
     public static void Handle_S_Error(byte[] body)
     {

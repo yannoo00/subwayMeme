@@ -156,6 +156,7 @@ public class StageManager : MonoBehaviour
         else
             Debug.LogWarning("[StageManager] SurvivalMode: _survivalWaveData가 설정되지 않았습니다.");
 
+        StageEvents.SurvivalStarted();
         _stayingCoroutine = StartCoroutine(SurvivalTimer(_survivalDuration));
     }
 

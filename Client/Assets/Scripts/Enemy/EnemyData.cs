@@ -17,11 +17,12 @@ public class EnemyData : ScriptableObject
     [Header("등급")]
     public EnemyGrade grade;
 
-    [Header("드랍")]
-    // Elite 전용: 처치 시 무조건 드랍. type은 반드시 Mutation으로 설정
-    public DropEntry eliteDrop;
+    [Header("드롭 - 재화")]
+    [Range(0f, 1f)] public float evolutionPointChance;
+    public int evolutionPointAmount;
+    [Range(0f, 1f)] public float genePointChance;
+    public int genePointAmount;
 
-    // Normal 전용: dropChance 확률 판정 후 dropTable 가중치 룰렛
-    [Range(0f, 1f)] public float dropChance;
-    public DropEntry[] dropTable;
+    [Header("드롭 - 변이 (Elite 전용)")]
+    public MutationDefinition eliteDrop;
 }

@@ -13,15 +13,17 @@ namespace LobbyServer
 
         static LobbyPacketHandler()
         {
-            int maxId = (int)PacketId.SError + 1;
+            // 새 패킷 ID 추가 시 maxId 기준값도 갱신해야 함
+            int maxId = (int)PacketId.SPlayerCharacterSelected + 1;
             Handlers = new Action<PacketSession, ArraySegment<byte>>[maxId];
 
-            Handlers[(int)PacketId.CConnected]  = Handle_C_Connected;
-            Handlers[(int)PacketId.CCreateRoom] = Handle_C_CreateRoom;
-            Handlers[(int)PacketId.CJoinRoom]   = Handle_C_JoinRoom;
-            Handlers[(int)PacketId.CLeaveRoom]  = Handle_C_LeaveRoom;
-            Handlers[(int)PacketId.CGetRooms]   = Handle_C_GetRooms;
-            Handlers[(int)PacketId.CStartGame]  = Handle_C_StartGame;
+            Handlers[(int)PacketId.CConnected]       = Handle_C_Connected;
+            Handlers[(int)PacketId.CCreateRoom]      = Handle_C_CreateRoom;
+            Handlers[(int)PacketId.CJoinRoom]        = Handle_C_JoinRoom;
+            Handlers[(int)PacketId.CLeaveRoom]       = Handle_C_LeaveRoom;
+            Handlers[(int)PacketId.CGetRooms]        = Handle_C_GetRooms;
+            Handlers[(int)PacketId.CStartGame]       = Handle_C_StartGame;
+            Handlers[(int)PacketId.CSelectCharacter] = Handle_C_SelectCharacter;
         }
 
         // 핸들러 구현 ============================================================
@@ -124,6 +126,28 @@ namespace LobbyServer
 
             foreach (var s in result.Data.AllSessions)
                 s.Send(readyBytes);
+        }
+
+        static void Handle_C_SelectCharacter(PacketSession session, ArraySegment<byte> body)
+        {
+            var pkt = C_SelectCharacter.Parser.ParseFrom(body.Array, body.Offset, body.Count);
+            Console.WriteLine($"[Lobby] C_SelectCharacter: sessionId={session.SessionId}, characterId={pkt.CharacterId}");
+
+            var result = RoomManager.Instance.SelectCharacter((LobbySession)session, pkt.CharacterId);
+            if (!result.Ok)
+            {
+                session.Send(MakePacket(PacketId.SError, new S_Error { Code = 4, Message = result.Error }));
+                return;
+            }
+
+            // 방 전체에 변경 알림 (본인 포함 - 클라가 서버 확정값 받고 UI 갱신)
+            var notifyBytes = MakePacket(PacketId.SPlayerCharacterSelected, new S_PlayerCharacterSelected
+            {
+                PlayerId    = result.Data.PlayerId,
+                CharacterId = result.Data.CharacterId,
+            });
+            foreach (var s in result.Data.AllSessions)
+                s.Send(notifyBytes);
         }
 
         // 공통 유틸 =====================================================================

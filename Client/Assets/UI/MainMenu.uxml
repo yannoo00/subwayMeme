@@ -53,11 +53,31 @@
         </ui:VisualElement>
     </ui:VisualElement>
 
+    <!-- 캐릭터 선택 모달 (대기방 위에 오버레이로 띄움) -->
+    <ui:VisualElement name="character-select-modal" class="full-panel modal-overlay" style="display: none;">
+        <ui:VisualElement class="dialog-box dialog-box--wide">
+            <ui:Label text="캐릭터 선택" class="dialog-title" />
+            <ui:VisualElement class="char-select-content">
+                <ui:ScrollView name="char-select-grid" class="char-select-grid" />
+                <ui:VisualElement name="char-select-detail" class="char-select-detail">
+                    <ui:Label name="char-detail-name"  text="캐릭터를 선택하세요" class="char-detail-name" />
+                    <ui:Label name="char-detail-stats" text=""                  class="char-detail-stats" />
+                    <ui:Label name="char-detail-desc"  text=""                  class="char-detail-desc" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement class="button-row">
+                <ui:Button name="char-select-cancel"  text="취소" class="menu-button menu-button--danger" />
+                <ui:Button name="char-select-confirm" text="확정" class="menu-button" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+
     <!-- 강화 화면 -->
     <ui:VisualElement name="upgrade-panel" class="full-panel" style="display: none;">
         <ui:VisualElement class="dialog-box dialog-box--wide">
             <ui:Label text="캐릭터 강화" class="dialog-title" />
             <ui:Label name="upgrade-gold-label" text="골드: 0" class="upgrade-gold-label" />
+            <ui:ScrollView name="character-row" mode="Horizontal" class="character-row" />
             <ui:ScrollView name="upgrade-scroll" class="list-scroll upgrade-scroll" />
             <ui:VisualElement class="button-row">
                 <ui:Button name="upgrade-back-button" text="돌아가기" class="menu-button menu-button--danger" />
