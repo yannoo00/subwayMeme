@@ -9,7 +9,8 @@ public class PlayerController : MonoBehaviour
     // CharacterDefinition.baseMoveSpeed가 없을 때 fallback
     [SerializeField] private float _moveSpeed = 5f;
     // 카메라 forward를 기준으로 이동 방향 계산
-    [SerializeField] private Transform _cameraTransform;
+    // PlayerRegistry가 동적 스폰하므로 Inspector 참조는 보통 끊김 -> Camera.main으로 자동 탐색
+    private Transform _cameraTransform;
     // 회전 대상: PlayerRoot 대신 PlayerModel만 회전시켜 카메라가 같이 돌지 않도록
     [SerializeField] private Transform _playerModel;
     // 캐릭터가 이동 방향으로 회전하는 속도
@@ -44,6 +45,8 @@ public class PlayerController : MonoBehaviour
         _animator = GetComponentInChildren<Animator>();
         _stats = GetComponent<PlayerStats>();
 
+        TryAcquireCameraTransform();
+
         // 캐릭터 베이스 스탯 적용 - SelectedCharacter가 없으면 Inspector fallback 유지
         var charDef = GameManager.Instance?.SelectedCharacter;
         if (charDef != null)
@@ -51,6 +54,19 @@ public class PlayerController : MonoBehaviour
             _moveSpeed     = charDef.baseMoveSpeed;
             _dodgeCooldown = charDef.baseDodgeCooldown;
         }
+    }
+
+    // Camera.main 은 "MainCamera" 태그가 붙은 첫 번째 활성 카메라를 반환
+    // Unity 2020.2+ 부터 내부 캐싱이라 매 프레임 호출해도 부담 적음
+    private void TryAcquireCameraTransform()
+    {
+        if (_cameraTransform != null) return;
+        
+        var cam = Camera.main;
+
+        Debug.Log("[PlayerController] Camera.main 탐색: " + (cam != null ? cam.name : "null"));
+
+        if (cam != null) _cameraTransform = cam.transform;
     }
 
     private void OnEnable()
@@ -75,6 +91,9 @@ public class PlayerController : MonoBehaviour
         if (Keyboard.current == null) return;
         if (_isDodging) return;
         if (!_stats.IsAlive) return;
+
+        // Awake 시점에 카메라가 없을 수도 있어 매 프레임 폴백 (이미 잡혔으면 즉시 return)
+        TryAcquireCameraTransform();
 
         Vector2 input = new Vector2(
             (Keyboard.current.dKey.isPressed ? 1 : 0) - (Keyboard.current.aKey.isPressed ? 1 : 0),

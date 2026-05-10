@@ -11,9 +11,12 @@ public class PlayerRegistry : MonoBehaviour
     public static PlayerRegistry Instance { get; private set; }
 
     [Header("Prefab")]
+    [SerializeField] private GameObject _localPlayerPrefab;
     [SerializeField] private GameObject _remotePlayerPrefab;
 
     private readonly Dictionary<int, NetworkPlayer> _remotePlayers = new();
+    // 로컬 플레이어 GameObject. S_EnterGame 시점에 스폰되고 게임 종료까지 유지
+    private GameObject _localPlayer;
 
     // === Unity 생명주기 ===
 
@@ -43,13 +46,16 @@ public class PlayerRegistry : MonoBehaviour
     // === Public 메서드 ===
 
     // S_EnterGame 수신 시 호출: 씬이 이미 로드된 상태이므로 즉시 스폰
+    // self도 여기서 함께 처리 - SelectedCharacter가 결정된 시점이라 PlayerCharacterBinder가 정상 동작
     public void SpawnPlayers(IEnumerable<GamePlayerInfo> players)
     {
         Vector3 spawnPos = FindSpawnPosition();
         foreach (var info in players)
         {
-            if (info.PlayerId == NetworkManager.Instance.MyPlayerId) continue;
-            SpawnRemotePlayer(info, spawnPos);
+            if (info.PlayerId == NetworkManager.Instance.MyPlayerId)
+                SpawnLocalPlayer(info, spawnPos);
+            else
+                SpawnRemotePlayer(info, spawnPos);
         }
     }
 
@@ -83,8 +89,36 @@ public class PlayerRegistry : MonoBehaviour
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         Vector3 spawnPos = FindSpawnPosition();
+
+        if (_localPlayer != null)
+            _localPlayer.transform.position = spawnPos;
+
         foreach (var np in _remotePlayers.Values)
             np.transform.position = spawnPos;
+    }
+
+    // 로컬 플레이어 스폰 - S_EnterGame 시점에서 호출
+    // PlayerController.Awake가 자체적으로 DontDestroyOnLoad를 적용하므로 명시 호출 불필요
+    private void SpawnLocalPlayer(GamePlayerInfo info, Vector3 pos)
+    {
+        if (_localPlayer != null)
+        {
+            // 재진입 등 이미 존재하면 위치만 이동 - 재인스턴시에이션은 PlayerCharacterBinder가 한 번만 도는 점에서 위험
+            _localPlayer.transform.position = pos;
+            Debug.Log($"[PlayerRegistry] 로컬 플레이어가 이미 존재 - 위치만 이동");
+            return;
+        }
+        if (_localPlayerPrefab == null)
+        {
+            Debug.LogError("[PlayerRegistry] _localPlayerPrefab 미할당");
+            return;
+        }
+
+        _localPlayer = Instantiate(_localPlayerPrefab, pos, Quaternion.identity);
+        Debug.Log($"[PlayerRegistry] 로컬 플레이어 스폰: {info.PlayerName} (id={info.PlayerId})");
+
+        // vcam 등 외부 시스템이 target을 wire up할 수 있도록 알림
+        PlayerEvents.LocalPlayerSpawned(_localPlayer.transform);
     }
 
     private void SpawnRemotePlayer(GamePlayerInfo info, Vector3 pos)

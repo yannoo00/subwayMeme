@@ -1,8 +1,14 @@
 using System;
+using UnityEngine;
 
 // 플레이어 관련 이벤트
 public static class PlayerEvents
 {
+    // 로컬 플레이어 스폰 직후 발행 - vcam target 바인딩 등 외부 시스템에서 구독
+    // 구독자는 이미 스폰된 상태에서도 LocalPlayerTransform로 즉시 wire up 가능
+    public static event Action<Transform> OnLocalPlayerSpawned;
+    public static Transform LocalPlayerTransform { get; private set; }
+
     public static event Action<int, int> OnHealthChanged;           // 현재, 최대
     public static event Action OnPlayerDied;
     public static event Action<int> OnPlayerDamaged;                // 데미지량
@@ -28,6 +34,12 @@ public static class PlayerEvents
 
     public static event Action<int> OnGenePointsChanged;
     public static event Action<int> OnEvolutionPointsChanged;
+
+    public static void LocalPlayerSpawned(Transform t)
+    {
+        LocalPlayerTransform = t;
+        OnLocalPlayerSpawned?.Invoke(t);
+    }
 
     public static void HealthChanged(int current, int max) => OnHealthChanged?.Invoke(current, max);
     public static void GenePointsChanged(int amount) => OnGenePointsChanged?.Invoke(amount);

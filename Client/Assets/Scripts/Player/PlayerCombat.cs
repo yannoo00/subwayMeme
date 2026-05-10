@@ -5,7 +5,9 @@ public class PlayerCombat : MonoBehaviour
 {
     [Header("Weapon Settings")]
     [SerializeField] private GameObject _fistPrefab;       // 기본 무기 (빈 슬롯 폴백)
-    [SerializeField] private Transform  _weaponHolder;
+    
+    // 캐릭터 모델의 WeaponSocket Transform. PlayerCharacterBinder가 Awake에서 주입.
+    private Transform  _weaponHolder;
 
     [Header("Drop Settings")]
     [SerializeField] private float _dropDistance = 1.5f;   // 슬롯 가득 시 드랍 거리(플레이어 정면)
@@ -23,6 +25,16 @@ public class PlayerCombat : MonoBehaviour
 
     // 활성 슬롯에 무기가 없으면 Fist 반환
     private WeaponBase ActiveWeapon => _slots[_activeSlotIndex] ?? _fistInstance;
+
+
+    // === 외부 주입 ===
+
+    // PlayerCharacterBinder가 Awake에서 호출. Start보다 먼저 실행되어야
+    // _fistPrefab 인스턴시에이션 부모가 올바른 캐릭터 모델의 손 본을 가리킴
+    public void SetWeaponHolder(Transform holder)
+    {
+        _weaponHolder = holder;
+    }
 
 
     // === Unity 생명주기 ===

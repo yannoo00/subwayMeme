@@ -72,12 +72,23 @@
         </ui:VisualElement>
     </ui:VisualElement>
 
-    <!-- 강화 화면 -->
+    <!-- 강화 - 1단계: 캐릭터 선택 -->
+    <ui:VisualElement name="upgrade-character-select-panel" class="full-panel" style="display: none;">
+        <ui:VisualElement class="dialog-box dialog-box--wide">
+            <ui:Label text="강화할 캐릭터 선택" class="dialog-title" />
+            <ui:Label name="upgrade-select-points-label" text="진화 포인트: 0" class="upgrade-gold-label" />
+            <ui:ScrollView name="upgrade-character-grid" class="char-select-grid upgrade-character-grid" />
+            <ui:VisualElement class="button-row">
+                <ui:Button name="upgrade-select-back-button" text="돌아가기" class="menu-button menu-button--danger" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+
+    <!-- 강화 - 2단계: 선택된 캐릭터의 스탯 강화 -->
     <ui:VisualElement name="upgrade-panel" class="full-panel" style="display: none;">
         <ui:VisualElement class="dialog-box dialog-box--wide">
-            <ui:Label text="캐릭터 강화" class="dialog-title" />
-            <ui:Label name="upgrade-gold-label" text="골드: 0" class="upgrade-gold-label" />
-            <ui:ScrollView name="character-row" mode="Horizontal" class="character-row" />
+            <ui:Label name="upgrade-detail-title" text="캐릭터 강화" class="dialog-title" />
+            <ui:Label name="upgrade-gold-label" text="진화 포인트: 0" class="upgrade-gold-label" />
             <ui:ScrollView name="upgrade-scroll" class="list-scroll upgrade-scroll" />
             <ui:VisualElement class="button-row">
                 <ui:Button name="upgrade-back-button" text="돌아가기" class="menu-button menu-button--danger" />

@@ -79,9 +79,15 @@ public class MainMenuUIDocument : MonoBehaviour
     // characterId -> 카드 VisualElement 매핑 (포커스 스타일 토글용)
     private readonly Dictionary<int, VisualElement> _characterCards = new();
 
-    // 강화 화면
+    // 강화 화면 - 1단계: 캐릭터 선택
+    private VisualElement _upgradeCharSelectPanel;
+    private ScrollView    _upgradeCharGrid;
+    private Label         _upgradeSelectPointsLabel;
+    private Button        _upgradeSelectBackButton;
+
+    // 강화 화면 - 2단계: 강화 상세
     private Label      _upgradeGoldLabel;
-    private ScrollView _characterRow;
+    private Label      _upgradeDetailTitle;
     private ScrollView _upgradeScroll;
     private Button     _upgradeBackButton;
 
@@ -150,10 +156,15 @@ public class MainMenuUIDocument : MonoBehaviour
         _leaveRoomButton = root.Q<Button>("leave-room-button");
         _startGameButton = root.Q<Button>("start-game-button");
 
-        _upgradeGoldLabel  = root.Q<Label>("upgrade-gold-label");
-        _characterRow      = root.Q<ScrollView>("character-row");
-        _upgradeScroll     = root.Q<ScrollView>("upgrade-scroll");
-        _upgradeBackButton = root.Q<Button>("upgrade-back-button");
+        _upgradeCharSelectPanel   = root.Q("upgrade-character-select-panel");
+        _upgradeCharGrid          = root.Q<ScrollView>("upgrade-character-grid");
+        _upgradeSelectPointsLabel = root.Q<Label>("upgrade-select-points-label");
+        _upgradeSelectBackButton  = root.Q<Button>("upgrade-select-back-button");
+
+        _upgradeDetailTitle = root.Q<Label>("upgrade-detail-title");
+        _upgradeGoldLabel   = root.Q<Label>("upgrade-gold-label");
+        _upgradeScroll      = root.Q<ScrollView>("upgrade-scroll");
+        _upgradeBackButton  = root.Q<Button>("upgrade-back-button");
 
         _playButton.clicked         += OnPlayClicked;
         _upgradeButton.clicked      += OnUpgradeClicked;
@@ -251,16 +262,29 @@ public class MainMenuUIDocument : MonoBehaviour
         NetworkManager.Instance.SendLobby(PacketId.CStartGame, new C_StartGame());
     }
 
+    // 강화 클릭: 1단계(캐릭터 선택 그리드) 진입
     private void OnUpgradeClicked()
     {
-        ShowPanel(_upgradePanel);
-        RefreshUpgradePanel();
-        _upgradeBackButton.clicked += OnUpgradeBackClicked;
+        ShowPanel(_upgradeCharSelectPanel);
+        RefreshUpgradeCharacterSelectPanel();
+
+        // 1단계의 돌아가기 = 메인 메뉴, 2단계의 돌아가기 = 1단계
+        _upgradeSelectBackButton.clicked += OnUpgradeSelectBackClicked;
+        _upgradeBackButton.clicked       += OnUpgradeBackClicked;
     }
 
+    // 2단계의 돌아가기: 캐릭터 선택 그리드(1단계)로 복귀
     private void OnUpgradeBackClicked()
     {
-        _upgradeBackButton.clicked -= OnUpgradeBackClicked;
+        ShowPanel(_upgradeCharSelectPanel);
+        RefreshUpgradeCharacterSelectPanel();
+    }
+
+    // 1단계의 돌아가기: 메인 메뉴로 복귀, 핸들러 해제
+    private void OnUpgradeSelectBackClicked()
+    {
+        _upgradeSelectBackButton.clicked -= OnUpgradeSelectBackClicked;
+        _upgradeBackButton.clicked       -= OnUpgradeBackClicked;
         ShowPanel(_mainMenuPanel);
     }
 
@@ -268,12 +292,13 @@ public class MainMenuUIDocument : MonoBehaviour
 
     private void ShowPanel(VisualElement target)
     {
-        _mainMenuPanel.style.display    = DisplayStyle.None;
-        _nameInputPanel.style.display   = DisplayStyle.None;
-        _roomListPanel.style.display    = DisplayStyle.None;
-        _createRoomPanel.style.display  = DisplayStyle.None;
-        _waitingRoomPanel.style.display = DisplayStyle.None;
-        _upgradePanel.style.display     = DisplayStyle.None;
+        _mainMenuPanel.style.display          = DisplayStyle.None;
+        _nameInputPanel.style.display         = DisplayStyle.None;
+        _roomListPanel.style.display          = DisplayStyle.None;
+        _createRoomPanel.style.display        = DisplayStyle.None;
+        _waitingRoomPanel.style.display       = DisplayStyle.None;
+        _upgradeCharSelectPanel.style.display = DisplayStyle.None;
+        _upgradePanel.style.display           = DisplayStyle.None;
 
         // 모달은 패널 전환 시 항상 닫음
         if (_characterSelectModal != null)
@@ -394,19 +419,35 @@ public class MainMenuUIDocument : MonoBehaviour
 
     // === 강화 화면 ===
 
-    private void RefreshUpgradePanel()
+    // 1단계: 강화할 캐릭터 그리드 갱신
+    private void RefreshUpgradeCharacterSelectPanel()
     {
-        RefreshCharacterRow();
+        RefreshUpgradeSelectPointsLabel();
+        RefreshUpgradeCharacterGrid();
+    }
+
+    // 2단계: 선택된 캐릭터의 강화 상세 갱신
+    private void RefreshUpgradeDetailPanel()
+    {
+        RefreshUpgradeDetailTitle();
         RefreshEvolutionPointsLabel();
         RefreshUpgradeList();
     }
 
+    // 진화 포인트 변동 시 현재 보이는 패널만 갱신
+    // CurrencyPickup 등 외부 변동에도 stale 상태가 안 남게 함
     private void OnEvolutionPointsChanged(int amount)
     {
-        // 강화 패널이 열려 있을 때만 갱신 - 다른 패널일 때는 캐싱된 채로 두고 다음 진입 시 새로 그림
-        if (_upgradePanel == null || _upgradePanel.style.display.value != DisplayStyle.Flex) return;
-        RefreshEvolutionPointsLabel();
-        RefreshUpgradeList();
+        if (_upgradeCharSelectPanel != null && _upgradeCharSelectPanel.style.display.value == DisplayStyle.Flex)
+        {
+            RefreshUpgradeSelectPointsLabel();
+            return;
+        }
+        if (_upgradePanel != null && _upgradePanel.style.display.value == DisplayStyle.Flex)
+        {
+            RefreshEvolutionPointsLabel();
+            RefreshUpgradeList();
+        }
     }
 
     private void RefreshEvolutionPointsLabel()
@@ -415,45 +456,63 @@ public class MainMenuUIDocument : MonoBehaviour
         _upgradeGoldLabel.text = $"진화 포인트: {CurrencyHelper.GetEvolutionPoints()}";
     }
 
-    // 캐릭터 카드 행 - GameManager에 등록된 캐릭터 목록 기준
-    // 클릭 시 GameManager.SelectCharacter -> SaveData 슬롯 자동 생성 + 강화 목록 다시 그림
-    private void RefreshCharacterRow()
+    private void RefreshUpgradeSelectPointsLabel()
     {
-        if (_characterRow == null) return;
-        _characterRow.Clear();
+        if (_upgradeSelectPointsLabel == null) return;
+        _upgradeSelectPointsLabel.text = $"진화 포인트: {CurrencyHelper.GetEvolutionPoints()}";
+    }
+
+    private void RefreshUpgradeDetailTitle()
+    {
+        if (_upgradeDetailTitle == null) return;
+
+        var def = GameManager.Instance?.SelectedCharacter;
+        _upgradeDetailTitle.text = def != null ? $"{def.displayName} 강화" : "캐릭터 강화";
+    }
+
+    // 1단계 그리드: 모달의 .char-select-card 스타일 재사용
+    // 카드 클릭 → SelectCharacter (전역 + 영속화) → 2단계 패널 진입
+    private void RefreshUpgradeCharacterGrid()
+    {
+        if (_upgradeCharGrid == null) return;
+        _upgradeCharGrid.Clear();
 
         if (GameManager.Instance == null) return;
 
         var characters = GameManager.Instance.AllCharacters;
         if (characters == null || characters.Length == 0)
         {
-            // 캐릭터 정의가 비어있어도 강화 시스템이 동작하도록 - characterId 0 으로 fallback
+            var empty = new Label("등록된 캐릭터가 없습니다.");
+            empty.AddToClassList("player-entry");
+            _upgradeCharGrid.Add(empty);
             return;
         }
 
         int selectedId = GameManager.Instance.SelectedCharacterId;
-        foreach (var c in characters)
+        foreach (var def in characters)
         {
-            if (c == null) continue;
-            _characterRow.Add(BuildCharacterCard(c, c.characterId == selectedId));
+            if (def == null) continue;
+            int capturedId = def.characterId;
+
+            var btn = new Button(() => OnUpgradeCharacterPicked(capturedId));
+            btn.text = def.displayName;
+            btn.AddToClassList("char-select-card");
+
+            // 현재 전역 선택된 캐릭터를 강조 (재진입 시 직관적 표시)
+            if (capturedId == selectedId)
+                btn.AddToClassList("char-select-card--focused");
+
+            _upgradeCharGrid.Add(btn);
         }
     }
 
-    private VisualElement BuildCharacterCard(CharacterDefinition def, bool isSelected)
+    private void OnUpgradeCharacterPicked(int characterId)
     {
-        int capturedId = def.characterId;
-        var btn = new Button(() =>
-        {
-            if (GameManager.Instance == null) return;
-            if (GameManager.Instance.SelectedCharacterId == capturedId) return;
-            GameManager.Instance.SelectCharacter(capturedId);
-            RefreshUpgradePanel();
-        });
-        btn.text = def.displayName;
-        btn.AddToClassList("character-card");
-        if (isSelected)
-            btn.AddToClassList("character-card--selected");
-        return btn;
+        // 전역 선택도 같이 변경 - 강화하는 캐릭터 = 인게임 캐릭터 (기존 동작 유지)
+        GameManager.Instance?.SelectCharacter(characterId);
+
+        ShowPanel(_upgradePanel);
+        RefreshUpgradeDetailPanel();
     }
 
     private void RefreshUpgradeList()
@@ -527,7 +586,7 @@ public class MainMenuUIDocument : MonoBehaviour
         var btn = new Button(() =>
         {
             if (UpgradeManager.Instance.TryUpgrade(characterId, def.type))
-                RefreshUpgradePanel();
+                RefreshUpgradeDetailPanel();
         });
         btn.text = btnText;
         btn.AddToClassList("upgrade-entry__button");
