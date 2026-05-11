@@ -98,16 +98,15 @@ public class PlayerRegistry : MonoBehaviour
     }
 
     // 로컬 플레이어 스폰 - S_EnterGame 시점에서 호출
-    // PlayerController.Awake가 자체적으로 DontDestroyOnLoad를 적용하므로 명시 호출 불필요
     private void SpawnLocalPlayer(GamePlayerInfo info, Vector3 pos)
     {
         if (_localPlayer != null)
         {
-            // 재진입 등 이미 존재하면 위치만 이동 - 재인스턴시에이션은 PlayerCharacterBinder가 한 번만 도는 점에서 위험
             _localPlayer.transform.position = pos;
             Debug.Log($"[PlayerRegistry] 로컬 플레이어가 이미 존재 - 위치만 이동");
             return;
         }
+
         if (_localPlayerPrefab == null)
         {
             Debug.LogError("[PlayerRegistry] _localPlayerPrefab 미할당");
@@ -117,7 +116,7 @@ public class PlayerRegistry : MonoBehaviour
         _localPlayer = Instantiate(_localPlayerPrefab, pos, Quaternion.identity);
         Debug.Log($"[PlayerRegistry] 로컬 플레이어 스폰: {info.PlayerName} (id={info.PlayerId})");
 
-        // vcam 등 외부 시스템이 target을 wire up할 수 있도록 알림
+        // vcam 등 외부 시스템이 target을 follow할 수 있도록 알림
         PlayerEvents.LocalPlayerSpawned(_localPlayer.transform);
     }
 

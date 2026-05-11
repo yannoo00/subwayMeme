@@ -1120,7 +1120,6 @@ GameObject:
   m_Component:
   - component: {fileID: 963849470}
   - component: {fileID: 963849471}
-  - component: {fileID: 963849472}
   m_Layer: 0
   m_Name: CameraSystem
   m_TagString: Untagged
@@ -1158,19 +1157,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e9e1620c80005d4faef96cf15d77be2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraSystem
---- !u!114 &963849472
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 963849469}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e3f4026f9833043dc820098adb4776e7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MouseLook
-  _cameraPivot: {fileID: 0}
+  _cameraHolderName: CameraHolder
   _sensitivityX: 0.15
   _sensitivityY: 0.12
   _aimSensitivityMultiplier: 0.5
@@ -1322,7 +1309,7 @@ Transform:
   m_GameObject: {fileID: 1885204066}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.58036, y: 3.4, z: -8.08967}
+  m_LocalPosition: {x: 2.08036, y: 3.4, z: -9.58967}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1520,6 +1507,7 @@ GameObject:
   - component: {fileID: 1923858955}
   - component: {fileID: 1923858954}
   - component: {fileID: 1923858956}
+  - component: {fileID: 1923858957}
   m_Layer: 0
   m_Name: Freelook
   m_TagString: Untagged
@@ -1629,6 +1617,21 @@ MonoBehaviour:
   IgnoreTag: 
   AimDistance: 200
   NoiseCancellation: 1
+--- !u!114 &1923858957
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1923858952}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 25af946cc37cb45f2a07258075a9f3d1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CinemachinePlayerTargetBinder
+  _setFollow: 1
+  _setLookAt: 1
+  _vcam: {fileID: 0}
 --- !u!1 &2100845560
 GameObject:
   m_ObjectHideFlags: 0
@@ -1641,6 +1644,7 @@ GameObject:
   - component: {fileID: 2100845563}
   - component: {fileID: 2100845564}
   - component: {fileID: 2100845562}
+  - component: {fileID: 2100845565}
   m_Layer: 0
   m_Name: Aim
   m_TagString: Untagged
@@ -1750,6 +1754,21 @@ MonoBehaviour:
     CameraRadius: 0.2
     DampingIntoCollision: 0
     DampingFromCollision: 0.5
+--- !u!114 &2100845565
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2100845560}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 25af946cc37cb45f2a07258075a9f3d1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CinemachinePlayerTargetBinder
+  _setFollow: 1
+  _setLookAt: 0
+  _vcam: {fileID: 0}
 --- !u!1001 &3572391770976564924
 PrefabInstance:
   m_ObjectHideFlags: 0

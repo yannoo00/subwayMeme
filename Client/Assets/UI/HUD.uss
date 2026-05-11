@@ -81,6 +81,27 @@
 }
 
 
+/* === 발전기 HP 바 (timer-panel 내부) === */
+
+.generator-title {
+    margin-top: 10px;
+}
+
+.generator-bar-bg {
+    width: 200px;
+    height: 6px;
+    background-color: rgba(255, 255, 255, 0.07);
+    border-radius: 1px;
+}
+
+.generator-bar-fill {
+    height: 100%;
+    width: 100%;
+    background-color: rgb(218, 180, 110);
+    border-radius: 1px;
+}
+
+
 /* === 우하단 column (탄약 + 무기 슬롯) === */
 
 .bottom-right {
