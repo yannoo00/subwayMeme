@@ -117,6 +117,14 @@ public class SpawnManager : MonoBehaviour
     }
 
 
+    // 게임 종료(오버/클리어) 시 진행 중이던 웨이브 스폰을 모두 중단
+    // 이미 스폰된 적은 그대로 둠 (정리는 다음 씬 로드 시 HandleSceneLoaded가 담당)
+    public void StopAllWaves()
+    {
+        StopAllGroupCoroutines();
+    }
+
+
     private void StopAllGroupCoroutines()
     {
         foreach (var c in _activeGroupCoroutines)

@@ -22,6 +22,7 @@ public class PlayerCombat : MonoBehaviour
 
     private bool _isAiming;
     private Animator _animator;
+    private PlayerStats _stats;
 
     // 활성 슬롯에 무기가 없으면 Fist 반환
     private WeaponBase ActiveWeapon => _slots[_activeSlotIndex] ?? _fistInstance;
@@ -42,6 +43,7 @@ public class PlayerCombat : MonoBehaviour
     private void Start()
     {
         _animator = GetComponentInChildren<Animator>();
+        _stats    = GetComponent<PlayerStats>();
 
         var fistObj  = Instantiate(_fistPrefab, _weaponHolder);
         _fistInstance = fistObj.GetComponent<WeaponBase>();
@@ -57,6 +59,8 @@ public class PlayerCombat : MonoBehaviour
     private void Update()
     {
         if (GameManager.Instance.CurrentState == GameState.Menu) return;
+        // 사망 시 입력 차단 - 관전 모드로 전환되므로 전투 입력은 무시
+        if (_stats != null && !_stats.IsAlive) return;
 
         HandleSlotSwitch();
 

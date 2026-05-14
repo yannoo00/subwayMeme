@@ -13,9 +13,6 @@ public enum GameState
                     // 이 구간에서 오는 게임 패킷은 전부 무시
 
     Playing,        // 인게임 (이동, 전투, 타이머 등 동기화 패킷 처리)
-
-    GameOver,
-    GameClear,
 }
 
 
@@ -24,6 +21,10 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
 
     public GameState CurrentState { get; private set; }
+
+    // 게임오버/클리어 중복 처리 방지 가드
+    // 발전기 파괴와 전원 사망이 같은 프레임에 발생해도 결과는 한 번만 확정되어야 함
+    private bool _isGameEnded;
 
     // 1차 개발 목표: Station 단일 맵에서 20분 웨이브 서바이벌
     // false로 바꾸면 기존 지하철 이동 루프로 복귀
@@ -77,17 +78,21 @@ public class GameManager : MonoBehaviour
 
     // === Public 메서드 ===
 
+
     public void ChangeState(GameState newState)
     {
         CurrentState = newState;
 
+        // 여기서는 마우스를 조작하지 않는것이 좋을듯 함(수정 예정)
         switch (newState)
         {
+
             case GameState.Playing:
                 Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;
                 break;
 
+            
             default:
                 Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
@@ -108,6 +113,7 @@ public class GameManager : MonoBehaviour
     public void StartGame(int seed)
     {
         Time.timeScale = 1f;
+        _isGameEnded = false;
         ChangeState(GameState.Playing);
 
         StageManager.Instance._TryGame(seed);
@@ -142,12 +148,27 @@ public class GameManager : MonoBehaviour
 
     public void EndGame()
     {
-        ChangeState(GameState.GameOver);
+        if (_isGameEnded) return;
+        _isGameEnded = true;
+
+        StopGameplayRoutines();
+        GameEvents.GameOver();
     }
 
     public void ClearGame()
     {
-        ChangeState(GameState.GameClear);
+        if (_isGameEnded) return;
+        _isGameEnded = true;
+
+        StopGameplayRoutines();
+        GameEvents.GameClear();
+    }
+
+    // 게임 종료(오버/클리어) 시 진행 중이던 타이머/웨이브 스폰을 일괄 정지
+    private void StopGameplayRoutines()
+    {
+        StageManager.Instance?.StopAllStageRoutines();
+        SpawnManager.Instance?.StopAllWaves();
     }
 
 

@@ -13,6 +13,9 @@ public static class PlayerEvents
     public static event Action OnPlayerDied;
     public static event Action<int> OnPlayerDamaged;                // 데미지량
 
+    // 로컬 플레이어 사망 후 관전 모드 진입/대상 전환 시 발행. 대상의 NetworkPlayer 전달
+    public static event Action<NetworkPlayer> OnSpectateTargetChanged;
+
     // 슬롯 내용 변경 (픽업/드랍/스왑). slotIndex: 0 or 1 / data: null이면 빈 슬롯
     public static event Action<int, WeaponData> OnWeaponSlotChanged;
 
@@ -32,6 +35,7 @@ public static class PlayerEvents
 
     public static event Action<bool> OnAimStateChanged;
 
+    //재화 관련 
     public static event Action<int> OnGenePointsChanged;
     public static event Action<int> OnEvolutionPointsChanged;
 
@@ -46,6 +50,7 @@ public static class PlayerEvents
     public static void EvolutionPointsChanged(int amount) => OnEvolutionPointsChanged?.Invoke(amount);
     public static void PlayerDied() => OnPlayerDied?.Invoke();
     public static void PlayerDamaged(int damage) => OnPlayerDamaged?.Invoke(damage);
+    public static void SpectateTargetChanged(NetworkPlayer target) => OnSpectateTargetChanged?.Invoke(target);
     public static void WeaponSlotChanged(int slotIndex, WeaponData data) => OnWeaponSlotChanged?.Invoke(slotIndex, data);
     public static void ActiveSlotChanged(int slotIndex, WeaponData data) => OnActiveSlotChanged?.Invoke(slotIndex, data);
     public static void SkillSlotChanged(int skillSlotIndex, SkillData data) => OnSkillSlotChanged?.Invoke(skillSlotIndex, data);

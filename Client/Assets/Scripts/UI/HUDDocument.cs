@@ -19,6 +19,7 @@ public class HUDDocument : MonoBehaviour
 
     private UIDocument _document;
 
+    private VisualElement _hpPanel;
     private VisualElement _hpBarFill;
     private Label _hpLabel;
 
@@ -30,6 +31,7 @@ public class HUDDocument : MonoBehaviour
     private Label _generatorLabel;
 
     // 무기 슬롯 - 인덱스 = 슬롯 번호
+    private VisualElement   _weaponPanel;
     private VisualElement[] _weaponSlots = new VisualElement[2];
     private Label[]         _weaponSlotNames = new Label[2];
 
@@ -41,6 +43,14 @@ public class HUDDocument : MonoBehaviour
 
     // 크로스헤어
     private VisualElement _crosshair;
+
+    // 게임 결과 패널 (클리어/오버)
+    private VisualElement _resultPanel;
+    private Label         _resultTitle;
+
+    // 관전 패널
+    private VisualElement _spectatorPanel;
+    private Label         _spectatorTarget;
 
     // 재장전 진행률 추적용
     private bool  _isReloading;
@@ -72,6 +82,9 @@ public class HUDDocument : MonoBehaviour
         StageEvents.OnSurvivalStarted     += OnSurvivalStarted;
         StageEvents.OnTimerTick           += OnTimerTick;
         GameEvents.OnGeneratorDamaged     += OnGeneratorDamaged;
+        GameEvents.OnGameOver             += OnGameOver;
+        GameEvents.OnGameClear            += OnGameClear;
+        PlayerEvents.OnSpectateTargetChanged += OnSpectateTargetChanged;
     }
 
     private void OnDisable()
@@ -88,6 +101,9 @@ public class HUDDocument : MonoBehaviour
         StageEvents.OnSurvivalStarted     -= OnSurvivalStarted;
         StageEvents.OnTimerTick           -= OnTimerTick;
         GameEvents.OnGeneratorDamaged     -= OnGeneratorDamaged;
+        GameEvents.OnGameOver             -= OnGameOver;
+        GameEvents.OnGameClear            -= OnGameClear;
+        PlayerEvents.OnSpectateTargetChanged -= OnSpectateTargetChanged;
     }
 
     private void Update()
@@ -111,6 +127,7 @@ public class HUDDocument : MonoBehaviour
         if (_styleSheet != null)
             root.styleSheets.Add(_styleSheet);
 
+        _hpPanel    = root.Q<VisualElement>("hp-panel");
         _hpBarFill  = root.Q<VisualElement>("hp-bar-fill");
         _hpLabel    = root.Q<Label>("hp-label");
 
@@ -121,6 +138,7 @@ public class HUDDocument : MonoBehaviour
         _generatorBarFill = root.Q<VisualElement>("generator-bar-fill");
         _generatorLabel   = root.Q<Label>("generator-label");
 
+        _weaponPanel        = root.Q<VisualElement>("weapon-panel");
         _weaponSlots[0]     = root.Q<VisualElement>("weapon-slot-0");
         _weaponSlots[1]     = root.Q<VisualElement>("weapon-slot-1");
         _weaponSlotNames[0] = root.Q<Label>("weapon-slot-0-name");
@@ -133,6 +151,14 @@ public class HUDDocument : MonoBehaviour
 
         _crosshair = root.Q<VisualElement>("crosshair");
         SetHidden(_crosshair, true);
+
+        _resultPanel = root.Q<VisualElement>("game-result-panel");
+        _resultTitle = root.Q<Label>("result-title");
+        SetHidden(_resultPanel, true);
+
+        _spectatorPanel  = root.Q<VisualElement>("spectator-panel");
+        _spectatorTarget = root.Q<Label>("spectator-target");
+        SetHidden(_spectatorPanel, true);
     }
 
 
@@ -179,6 +205,45 @@ public class HUDDocument : MonoBehaviour
         float ratio = max > 0 ? (float)current / max : 0f;
         _generatorBarFill.style.width = Length.Percent(ratio * 100f);
         _generatorLabel.text = $"발전기 {current} / {max}";
+    }
+
+
+    private void OnGameClear()
+    {
+        ShowResult("GAME CLEAR", "result-title--clear");
+    }
+
+    private void OnGameOver()
+    {
+        ShowResult("GAME OVER", "result-title--over");
+    }
+
+    // 결과 패널 표시: 타이틀 텍스트/컬러 클래스 세팅 후 패널 노출
+    private void ShowResult(string title, string variantClass)
+    {
+        if (_resultPanel == null || _resultTitle == null) return;
+
+        _resultTitle.text = title;
+        _resultTitle.RemoveFromClassList("result-title--clear");
+        _resultTitle.RemoveFromClassList("result-title--over");
+        _resultTitle.AddToClassList(variantClass);
+
+        SetHidden(_resultPanel, false);
+    }
+
+    // 로컬 플레이어 사망 후 관전 모드 진입/대상 전환 시 호출
+    // 관전 표시자를 띄우고, 더 이상 의미 없는 내 전투 패널들을 숨김
+    private void OnSpectateTargetChanged(NetworkPlayer target)
+    {
+        if (target == null) return;
+
+        _spectatorTarget.text = target.PlayerName;
+        SetHidden(_spectatorPanel, false);
+
+        SetHidden(_hpPanel, true);
+        SetHidden(_weaponPanel, true);
+        SetHidden(_ammoPanel, true);
+        SetHidden(_crosshair, true);
     }
 
 

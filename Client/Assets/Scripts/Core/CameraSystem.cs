@@ -54,6 +54,7 @@ public class CameraSystem : MonoBehaviour
     {
         PlayerEvents.OnLocalPlayerSpawned += OnLocalPlayerSpawned;
         PlayerEvents.OnAimStateChanged    += OnAimStateChanged;
+        PlayerEvents.OnSpectateTargetChanged += OnSpectateTargetChanged;
 
         // DDOL 특성상 이미 로컬 플레이어가 스폰된 뒤에 이 컴포넌트가 활성화되는 경우가 있음
         // PlayerEvents가 마지막 Transform을 보관하고 있으므로 즉시 바인딩
@@ -67,6 +68,7 @@ public class CameraSystem : MonoBehaviour
     {
         PlayerEvents.OnLocalPlayerSpawned -= OnLocalPlayerSpawned;
         PlayerEvents.OnAimStateChanged    -= OnAimStateChanged;
+        PlayerEvents.OnSpectateTargetChanged -= OnSpectateTargetChanged;
     }
 
     private void Update()
@@ -107,6 +109,25 @@ public class CameraSystem : MonoBehaviour
     {
         _isAiming = isAiming;
         SetCameraPriority(isAiming);
+    }
+
+    // 로컬 플레이어 사망 후 관전 대상이 바뀔 때마다 호출
+    // 카메라 피벗을 관전 대상의 CameraHolder로 재바인딩 - 마우스 회전(Update)이 그대로 동작해 자유 시점이 됨
+    private void OnSpectateTargetChanged(NetworkPlayer target)
+    {
+        if (target == null) return;
+
+        _cameraPivot = FindChildRecursive(target.transform, _cameraHolderName);
+        if (_cameraPivot == null)
+        {
+            Debug.LogWarning($"[CameraSystem] 관전 대상에서 '{_cameraHolderName}'를 찾지 못했습니다. 대상 루트를 사용합니다.");
+            _cameraPivot = target.transform;
+        }
+
+        _yRotation = _cameraPivot.eulerAngles.y;
+        _xRotation = _cameraPivot.eulerAngles.x;
+
+        BindVirtualCameras(_cameraPivot);
     }
 
     private void BindVirtualCameras(Transform target)

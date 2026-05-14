@@ -7,6 +7,7 @@ public class NetworkPlayer : MonoBehaviour
 {
     public int    PlayerId   { get; private set; }
     public string PlayerName { get; private set; }
+    public bool IsAlive = true;
 
     private Animator  _animator;
     private Transform _modelTransform;

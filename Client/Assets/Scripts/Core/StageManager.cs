@@ -173,6 +173,7 @@ public class StageManager : MonoBehaviour
             StageEvents.TimerTick(remaining, duration);
         }
 
+        //남은 시간이 끝났다면
         GameManager.Instance.ClearGame();
     }
 
@@ -324,6 +325,18 @@ public class StageManager : MonoBehaviour
 
 
 
+    // 게임 종료(오버/클리어) 시 진행 중이던 모든 스테이지 타이머를 정지
+    // 서바이벌 타이머는 _stayingCoroutine으로 시작되므로 함께 정지됨
+    public void StopAllStageRoutines()
+    {
+        if (_movingCoroutine != null)   StopCoroutine(_movingCoroutine);
+        if (_stayingCoroutine != null)  StopCoroutine(_stayingCoroutine);
+        if (_exitWaitCoroutine != null) StopCoroutine(_exitWaitCoroutine);
+
+        _movingCoroutine = _stayingCoroutine = _exitWaitCoroutine = null;
+    }
+
+
     public StageNode GetNodeByIndex(int idx)
     {
         return _stageMap.GetNodeByIndex(idx);
@@ -336,11 +349,10 @@ public class StageManager : MonoBehaviour
 
 
 
-/// <summary>
-/// 나중에 작업예정
-/// </summary>
+    // 비서바이벌 루프에서 최종 역 도달 시 호출 (StartStation)
     private void GameClear()
     {
         Debug.Log("[StageManager] 최종 역 도달! 게임 클리어!");
+        GameManager.Instance.ClearGame();
     }
 }

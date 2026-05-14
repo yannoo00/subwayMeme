@@ -1,4 +1,5 @@
 using GameProto;
+using Unity.Services.Lobbies.Models;
 using UnityEngine;
 
 // 게임 서버에서 오는 S_ 패킷 처리
@@ -28,7 +29,7 @@ public static class ClientGamePacketHandler
         NetworkManager.Instance.SendGame(GamePacketId.CReady, new C_Ready());
     }
 
-    // 게임 시작: 서버가 생성한 seed로 맵 생성 후 노선도 UI 표시
+    // 게임 시작: 서버가 생성한 seed로 맵 생성 
     public static void Handle_S_GameStart(byte[] body)
     {
         if (GameManager.Instance.CurrentState != GameState.EnteringGame) return;
@@ -207,11 +208,14 @@ public static class ClientGamePacketHandler
 
         if (isMe)
         {
-            // TODO: 사망 처리 (게임오버 UI, 또는 관전 모드 전환)
+            // PlayerStats.Die가 ApplyServerDamage 경로에서 먼저 호출됐을 수 있음 - 멱등이라 안전
+            PlayerRegistry.Instance.NotifyLocalPlayerDied();
         }
         else
         {
+            PlayerRegistry.Instance.NotifyRemotePlayerDied(pkt.PlayerId);
             // TODO: 해당 플레이어 오브젝트 사망 애니메이션
+            // 사망 애니메이션은 죽는 모션 다음에 나와야하니까 일단 '누구 죽음' event를 발생시켜야함
         }
     }
 
