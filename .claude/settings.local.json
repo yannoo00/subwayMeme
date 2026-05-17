@@ -10,7 +10,11 @@
       "Bash(cp 'D:/Unity/multiplayerThirdPersonGamePlay/My project/Assets/Shooter/Art/Animator/ShooterAnimator.controller.meta' D:/Unity/subwayMeme/Client/Assets/Animations/Shooter/ShooterAnimator.controller.meta)",
       "Bash(cp 'D:/Unity/multiplayerThirdPersonGamePlay/My project/Assets/Shooter/Art/Animator/UpperBody.mask' D:/Unity/subwayMeme/Client/Assets/Animations/Shooter/UpperBody.mask)",
       "Bash(grep -v \"^$\")",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(Get-ChildItem *)",
+      "Bash(Find \"D:\\\\unity\\\\subwayMeme\\\\Client\\\\Assets\\\\Animations\" -name \"*.controller\")",
+      "Bash(Find D:\\\\unity\\\\subwayMeme\\\\Client\\\\Assets *)",
+      "Bash(Find \"D:\\\\unity\\\\subwayMeme\\\\Client\\\\Assets\\\\Scripts\" -name \"*.cs\" -type f)"
     ]
   }
 }

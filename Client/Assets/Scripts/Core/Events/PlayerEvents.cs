@@ -35,7 +35,17 @@ public static class PlayerEvents
 
     public static event Action<bool> OnAimStateChanged;
 
-    //재화 관련 
+    // 로컬 플레이어 액션 - PlayerAnimator가 구독하여 Animator 트리거에 매핑
+    // 컨트롤러/전투 컴포넌트가 Animator를 직접 알지 않도록 의도(intent)만 발행
+    public static event Action OnAttackPerformed;
+    public static event Action OnDodgePerformed;
+
+    // 무기 스위칭 시작 - duration 동안 IsSwitchingWeapon bool 유지 후 false
+    // PlayerCombat이 실제 무기 swap을 duration 중간에 수행하고 종료 시 이 이벤트의
+    // duration 만큼 PlayerAnimator가 자체 코루틴으로 bool을 내림
+    public static event Action<float> OnWeaponSwitchStarted;
+
+    //재화 관련
     public static event Action<int> OnGenePointsChanged;
     public static event Action<int> OnEvolutionPointsChanged;
 
@@ -58,4 +68,7 @@ public static class PlayerEvents
     public static void ReloadStarted(float duration) => OnReloadStarted?.Invoke(duration);
     public static void ReloadFinished() => OnReloadFinished?.Invoke();
     public static void AimStateChanged(bool isAiming) => OnAimStateChanged?.Invoke(isAiming);
+    public static void AttackPerformed() => OnAttackPerformed?.Invoke();
+    public static void DodgePerformed() => OnDodgePerformed?.Invoke();
+    public static void WeaponSwitchStarted(float duration) => OnWeaponSwitchStarted?.Invoke(duration);
 }

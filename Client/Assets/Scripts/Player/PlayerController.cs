@@ -8,6 +8,8 @@ public class PlayerController : MonoBehaviour
     [Header("Movement")]
     // CharacterDefinition.baseMoveSpeed가 없을 때 fallback
     [SerializeField] private float _moveSpeed = 5f;
+    // Shift 누른 상태로 이동 시 _moveSpeed에 곱해지는 배율
+    [SerializeField] private float _dashMultiplier = 2f;
     // 카메라 forward를 기준으로 이동 방향 계산
     // PlayerRegistry가 동적 스폰하므로 Inspector 참조는 보통 끊김 -> Camera.main으로 자동 탐색
     private Transform _cameraTransform;
@@ -22,11 +24,19 @@ public class PlayerController : MonoBehaviour
     // CharacterDefinition.baseDodgeCooldown이 없을 때 fallback
     [SerializeField] private float _dodgeCooldown = 1.5f;
 
-    private Animator _animator;
     private PlayerStats _stats;
     private bool _isDodging = false;
     private bool _isAiming = false;
     private float _lastDodgeTime = -Mathf.Infinity;
+
+    // PlayerAnimator가 매 프레임 폴링하여 Animator의 Speed Blend Tree 입력으로 사용
+    // 컨트롤러 자체는 Animator를 모름 - 상태만 노출
+    // 0 = 정지, 1 = 일반 이동, _dashMultiplier (기본 2) = dash 이동
+    public float NormalizedSpeed { get; private set; }
+    // 조준 중 StrafeX/Y Blend Tree 입력. 키 입력 기반 -1~1
+    public Vector2 MoveInput { get; private set; }
+    // Shift 누르고 이동 중인 상태. 정지 상태에서 Shift만 누르면 false
+    public bool IsDashing { get; private set; }
 
     // 이동 동기화: 20Hz 고정 주기 + Dead Zone 필터
     private const float SEND_INTERVAL  = 0.05f;   // 20Hz
@@ -42,7 +52,6 @@ public class PlayerController : MonoBehaviour
     private void Awake()
     {
         DontDestroyOnLoad(gameObject);
-        _animator = GetComponentInChildren<Animator>();
         _stats = GetComponent<PlayerStats>();
 
         TryAcquireCameraTransform();
@@ -87,6 +96,12 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        // early return 경로에서도 폴링값이 stale하게 남지 않도록 매 프레임 기본값
+        // (사망/닷지/메뉴 등에서 walk 애니메이션이 끊기지 않는 버그 방지)
+        NormalizedSpeed = 0f;
+        MoveInput       = Vector2.zero;
+        IsDashing       = false;
+
         if (GameManager.Instance.CurrentState != GameState.Playing) return;
         if (Keyboard.current == null) return;
         if (_isDodging) return;
@@ -99,7 +114,12 @@ public class PlayerController : MonoBehaviour
             (Keyboard.current.dKey.isPressed ? 1 : 0) - (Keyboard.current.aKey.isPressed ? 1 : 0),
             (Keyboard.current.wKey.isPressed ? 1 : 0) - (Keyboard.current.sKey.isPressed ? 1 : 0));
 
-        _animator?.SetBool(AnimatorParams.IsMoving, input != Vector2.zero);
+        bool isMoving = input != Vector2.zero;
+        // Shift 단독으로는 dash 아님 - 이동 중일 때만 의미
+        IsDashing = isMoving && Keyboard.current.leftShiftKey.isPressed;
+        MoveInput = input;
+        // dash면 Blend Tree에서 dash 모션 (예: threshold 2)으로 가도록 _dashMultiplier 그대로 사용
+        NormalizedSpeed = isMoving ? (IsDashing ? _dashMultiplier : 1f) : 0f;
 
         // 스페이스바 닷지 입력 (쿨타임 체크 포함)
         if (Keyboard.current.spaceKey.wasPressedThisFrame && CanDodge())
@@ -149,7 +169,8 @@ public class PlayerController : MonoBehaviour
         // 조준 중: 카메라 기준 입력 방향으로 직접 이동 (스트레이프)
         // 비조준: PlayerModel이 바라보는 방향으로 이동
         Vector3 moveVelocity = _isAiming ? moveDir : rotateTarget.forward;
-        transform.position += moveVelocity * _moveSpeed * Time.deltaTime;
+        float currentSpeed   = _moveSpeed * (IsDashing ? _dashMultiplier : 1f);
+        transform.position += moveVelocity * currentSpeed * Time.deltaTime;
 
         TrySendMove(isMoving: true, isDodging: false);
     }
@@ -203,7 +224,7 @@ public class PlayerController : MonoBehaviour
         // 무적 프레임 시작
         if (_stats != null) _stats.IsInvincible = true;
 
-        _animator?.SetTrigger(AnimatorParams.Dodge);
+        PlayerEvents.DodgePerformed();
 
         // PlayerModel이 있으면 그 forward, 없으면 PlayerRoot forward
         Transform dirSource = _playerModel != null ? _playerModel : transform;

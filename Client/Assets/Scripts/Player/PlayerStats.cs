@@ -155,12 +155,8 @@ public class PlayerStats: MonoBehaviour, IDamageable
         PlayerEvents.PlayerDied();
 
         // 생존 카운터 감소 - 0이 되면 PlayerRegistry가 게임오버를 확정 (멱등)
-        PlayerRegistry.Instance?.NotifyLocalPlayerDied();
-
-        // Animator가 있으면 Death 애니메이션 재생
-        // EnemyAI와 달리 플레이어는 게임오버 처리가 별도로 필요하므로
+        // 사망 애니메이션은 PlayerAnimator가 OnPlayerDied 구독으로 처리
         // Destroy는 GameManager 또는 게임오버 시스템이 담당할 예정
-        Animator animator = GetComponentInChildren<Animator>();
-        animator?.SetBool(AnimatorParams.IsDead, true);
+        PlayerRegistry.Instance?.NotifyLocalPlayerDied();
     }
 }

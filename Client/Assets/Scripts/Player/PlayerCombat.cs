@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -5,12 +6,17 @@ public class PlayerCombat : MonoBehaviour
 {
     [Header("Weapon Settings")]
     [SerializeField] private GameObject _fistPrefab;       // 기본 무기 (빈 슬롯 폴백)
-    
+
     // 캐릭터 모델의 WeaponSocket Transform. PlayerCharacterBinder가 Awake에서 주입.
     private Transform  _weaponHolder;
 
     [Header("Drop Settings")]
     [SerializeField] private float _dropDistance = 1.5f;   // 슬롯 가득 시 드랍 거리(플레이어 정면)
+
+    [Header("Switching")]
+    // 무기 스위칭 애니메이션 길이 - 이 시간 동안 IsSwitchingWeapon=true 유지하고
+    // 시간이 끝나는 시점에 실제 무기 swap 수행 (예제 ShooterAnimator와 동일한 패턴)
+    [SerializeField] private float _weaponSwitchDuration = 0.4f;
 
     // 무기 슬롯: 0 = 1번키, 1 = 2번키
     private WeaponBase[] _slots     = new WeaponBase[2];
@@ -21,7 +27,8 @@ public class PlayerCombat : MonoBehaviour
     private SkillBase[] _skillSlots = new SkillBase[2];
 
     private bool _isAiming;
-    private Animator _animator;
+    private bool _isSwitching;            // 스위칭 코루틴 진행 중 - 발사/중복 스위치 차단용
+    private Coroutine _switchCoroutine;
     private PlayerStats _stats;
 
     // 활성 슬롯에 무기가 없으면 Fist 반환
@@ -42,7 +49,6 @@ public class PlayerCombat : MonoBehaviour
 
     private void Start()
     {
-        _animator = GetComponentInChildren<Animator>();
         _stats    = GetComponent<PlayerStats>();
 
         var fistObj  = Instantiate(_fistPrefab, _weaponHolder);
@@ -93,6 +99,19 @@ public class PlayerCombat : MonoBehaviour
     private void SwitchToSlot(int slotIndex)
     {
         if (slotIndex == _activeSlotIndex) return;
+        if (_isSwitching) return;   // 코루틴 진행 중에는 중복 입력 무시 (예제와 동일)
+
+        _switchCoroutine = StartCoroutine(SwitchToSlotCoroutine(slotIndex));
+    }
+
+    // 스위칭 애니메이션 길이만큼 대기 후 실제 무기 swap.
+    // IsSwitchingWeapon bool 동기화는 PlayerAnimator가 OnWeaponSwitchStarted 구독으로 처리.
+    private IEnumerator SwitchToSlotCoroutine(int slotIndex)
+    {
+        _isSwitching = true;
+        PlayerEvents.WeaponSwitchStarted(_weaponSwitchDuration);
+
+        yield return new WaitForSeconds(_weaponSwitchDuration);
 
         ActiveWeapon.Unequip();
         _activeSlotIndex = slotIndex;
@@ -105,6 +124,9 @@ public class PlayerCombat : MonoBehaviour
         // 슬롯 내용은 그대로, 활성만 바뀜 → ActiveSlotChanged 사용
         // 빈 슬롯이면 _slots[i]가 null이라 weaponData도 null로 전달됨 (Fist는 폴백이라 슬롯 데이터로 안 씀)
         PlayerEvents.ActiveSlotChanged(_activeSlotIndex, _slots[_activeSlotIndex]?.weaponData);
+
+        _isSwitching = false;
+        _switchCoroutine = null;
     }
 
 
@@ -123,17 +145,27 @@ public class PlayerCombat : MonoBehaviour
         _isAiming = isAiming;
         PlayerEvents.AimStateChanged(_isAiming);
     }
+    public bool IsAiming() => _isAiming;
 
 
+
+
+    #region Attack
     // === 전투 ===
-
     private void Attack()
     {
+        // 무기 스위칭 도중 발사 차단 (예제 WeaponController.HandleFirePressed와 동일한 가드)
+        // 재장전 중 차단은 무기 측 TryAttack에서 처리
+        if (_isSwitching) return;
+
         if (ActiveWeapon.TryAttack())
-            _animator?.SetTrigger(AnimatorParams.Attack);
+            PlayerEvents.AttackPerformed();
     }
 
+    #endregion
 
+
+    #region Skills
     // === 스킬 발동 ===
 
     private void ActivateSkill(int skillSlotIndex)
@@ -155,7 +187,9 @@ public class PlayerCombat : MonoBehaviour
         PlayerEvents.SkillSlotChanged(skillSlotIndex, _skillSlots[skillSlotIndex].SkillData);
     }
 
+    #endregion
 
+    #region weapon
     // === 무기 획득 (WeaponPickup에서 호출) ===
 
     // 픽업 성공 여부 반환. WeaponPickup은 true일 때만 자기 자신을 Destroy
@@ -241,4 +275,6 @@ public class PlayerCombat : MonoBehaviour
         if (isActive)
             PlayerEvents.ActiveSlotChanged(slotIndex, weapon.weaponData);
     }
+
+    #endregion
 }

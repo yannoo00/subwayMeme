@@ -46,6 +46,7 @@ GameObject:
   - component: {fileID: 8785083106981924590}
   - component: {fileID: -1993232360266286341}
   - component: {fileID: 5355109757149039173}
+  - component: {fileID: -907305794087183155}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -106,6 +107,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   _moveSpeed: 5
+  _dashMultiplier: 2
   _playerModel: {fileID: 6821767959779767583}
   _rotationSpeed: 15
   _dodgeDistance: 4
@@ -125,6 +127,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCombat
   _fistPrefab: {fileID: 8461495708005427365, guid: af3a8795737abd2439800c06835afda7, type: 3}
   _dropDistance: 1.5
+  _weaponSwitchDuration: 0.4
 --- !u!114 &8785083106981924590
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -164,6 +167,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCharacterBinder
   _modelHolder: {fileID: 6821767959779767583}
+--- !u!114 &-907305794087183155
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5126966563392139953}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f8d6b2586ebac947b74630494e79ca8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerAnimator
 --- !u!1 &6314813885598643899
 GameObject:
   m_ObjectHideFlags: 0
