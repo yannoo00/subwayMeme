@@ -116,7 +116,8 @@ public class PlayerController : MonoBehaviour
 
         bool isMoving = input != Vector2.zero;
         // Shift 단독으로는 dash 아님 - 이동 중일 때만 의미
-        IsDashing = isMoving && Keyboard.current.leftShiftKey.isPressed;
+        // 조준 중에는 Shift 눌러도 dash 금지 - 스트레이프 정밀도 유지 + 조준=신중한 무빙 컨셉
+        IsDashing = isMoving && Keyboard.current.leftShiftKey.isPressed && !_isAiming;
         MoveInput = input;
         // dash면 Blend Tree에서 dash 모션 (예: threshold 2)으로 가도록 _dashMultiplier 그대로 사용
         NormalizedSpeed = isMoving ? (IsDashing ? _dashMultiplier : 1f) : 0f;

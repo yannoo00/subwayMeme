@@ -3,8 +3,10 @@ using UnityEngine;
 
 public enum WeaponType
 {
-    Melee,
-    Ranged
+    Melee = -1,
+    rifle = 0,
+    handgun = 1,
+    shotgun = 2,
 }
 
 
@@ -27,3 +29,4 @@ public abstract class WeaponData : ScriptableObject
     // 런타임에서 캐스팅 없이 무기 종류 판별하기 위한 마커
     public abstract WeaponType weaponType { get; }
 }
+

@@ -101,6 +101,13 @@ public class PlayerCombat : MonoBehaviour
         if (slotIndex == _activeSlotIndex) return;
         if (_isSwitching) return;   // 코루틴 진행 중에는 중복 입력 무시 (예제와 동일)
 
+        // 비조준 상태에서는 스왑 대기 시간 없이 즉시 스왑
+        if (!_isAiming)
+        {
+            PerformSwap(slotIndex);
+            return;
+        }
+
         _switchCoroutine = StartCoroutine(SwitchToSlotCoroutine(slotIndex));
     }
 
@@ -113,20 +120,26 @@ public class PlayerCombat : MonoBehaviour
 
         yield return new WaitForSeconds(_weaponSwitchDuration);
 
+        PerformSwap(slotIndex);
+
+        _isSwitching = false;
+        _switchCoroutine = null;
+    }
+
+    // 실제 무기 교체 동작. 즉시 경로와 코루틴 경로가 공유
+    private void PerformSwap(int slotIndex)
+    {
         ActiveWeapon.Unequip();
         _activeSlotIndex = slotIndex;
         ActiveWeapon.Equip();
 
         // Ranged가 아닌 무기로 전환 시 조준 해제
-        if (_isAiming && _slots[_activeSlotIndex]?.weaponData?.weaponType != WeaponType.Ranged)
+        if (_isAiming && _slots[_activeSlotIndex]?.weaponData?.weaponType == WeaponType.Melee)
             SetAiming(false);
 
         // 슬롯 내용은 그대로, 활성만 바뀜 → ActiveSlotChanged 사용
         // 빈 슬롯이면 _slots[i]가 null이라 weaponData도 null로 전달됨 (Fist는 폴백이라 슬롯 데이터로 안 씀)
         PlayerEvents.ActiveSlotChanged(_activeSlotIndex, _slots[_activeSlotIndex]?.weaponData);
-
-        _isSwitching = false;
-        _switchCoroutine = null;
     }
 
 
@@ -135,7 +148,7 @@ public class PlayerCombat : MonoBehaviour
     private void HandleAimToggle()
     {
         // Ranged 무기를 들고 있을 때만 조준 토글
-        if (ActiveWeapon.weaponData?.weaponType != WeaponType.Ranged) return;
+        if (ActiveWeapon.weaponData?.weaponType == WeaponType.Melee) return;
         SetAiming(!_isAiming);
     }
 
