@@ -12,6 +12,6 @@ public class HitscanWeaponData : WeaponData
     public float spread = 0f;           // 0이면 확산 없음. 카메라 forward를 중심으로 좌우/상하로 흩뿌림
 
     [Header("무기 타입")]
-    public WeaponType weapontype = WeaponType.rifle;
-    public override WeaponType weaponType { get => WeaponType.rifle; }
+    public WeaponType selectedWeaponType = WeaponType.rifle;
+    public override WeaponType weaponType { get => selectedWeaponType; }
 }

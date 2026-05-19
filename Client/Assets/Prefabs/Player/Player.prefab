@@ -125,7 +125,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc136fc5561126049a0bb4a7039d4e3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCombat
-  _fistPrefab: {fileID: 8461495708005427365, guid: af3a8795737abd2439800c06835afda7, type: 3}
   _dropDistance: 1.5
   _weaponSwitchDuration: 0.4
 --- !u!114 &8785083106981924590

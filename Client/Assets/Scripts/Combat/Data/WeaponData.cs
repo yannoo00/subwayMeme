@@ -3,7 +3,6 @@ using UnityEngine;
 
 public enum WeaponType
 {
-    Melee = -1,
     rifle = 0,
     handgun = 1,
     shotgun = 2,
@@ -11,7 +10,7 @@ public enum WeaponType
 
 
 // 무기 데이터의 추상 베이스
-// 공용 필드만 보유. 무기 종류별 필드는 파생 ScriptableObject(MeleeWeaponData, HitscanWeaponData)에서 정의
+// 공용 필드만 보유. 무기 종류별 필드는 파생 ScriptableObject(HitscanWeaponData)에서 정의
 public abstract class WeaponData : ScriptableObject
 {
     [Header("기본 정보")]

@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: base02
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeDefinition
   type: 1
-  displayName: melee attack damage
-  descriptionFormat: increase melee attack damage
+  displayName: attack damage
+  descriptionFormat: increase attack damage
   maxLevel: 3
   costPerLevel: 64000000c80000002c010000
   valuePerLevel:

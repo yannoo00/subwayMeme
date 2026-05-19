@@ -4,9 +4,6 @@ using UnityEngine.InputSystem;
 
 public class PlayerCombat : MonoBehaviour
 {
-    [Header("Weapon Settings")]
-    [SerializeField] private GameObject _fistPrefab;       // 기본 무기 (빈 슬롯 폴백)
-
     // 캐릭터 모델의 WeaponSocket Transform. PlayerCharacterBinder가 Awake에서 주입.
     private Transform  _weaponHolder;
 
@@ -20,7 +17,6 @@ public class PlayerCombat : MonoBehaviour
 
     // 무기 슬롯: 0 = 1번키, 1 = 2번키
     private WeaponBase[] _slots     = new WeaponBase[2];
-    private WeaponBase   _fistInstance;
     private int          _activeSlotIndex = 0;
 
     // 스킬 슬롯: 0 = 3번키, 1 = 4번키
@@ -31,14 +27,14 @@ public class PlayerCombat : MonoBehaviour
     private Coroutine _switchCoroutine;
     private PlayerStats _stats;
 
-    // 활성 슬롯에 무기가 없으면 Fist 반환
-    private WeaponBase ActiveWeapon => _slots[_activeSlotIndex] ?? _fistInstance;
+    // 활성 슬롯에 무기가 없으면 null - 호출 측에서 null 체크 필요
+    private WeaponBase ActiveWeapon => _slots[_activeSlotIndex];
 
 
     // === 외부 주입 ===
 
-    // PlayerCharacterBinder가 Awake에서 호출. Start보다 먼저 실행되어야
-    // _fistPrefab 인스턴시에이션 부모가 올바른 캐릭터 모델의 손 본을 가리킴
+    // PlayerCharacterBinder가 Awake에서 호출. 픽업으로 들어오는 무기 프리팹의
+    // Instantiate 부모로 사용되므로 EquipToSlot 호출 전에는 반드시 주입되어야 함
     public void SetWeaponHolder(Transform holder)
     {
         _weaponHolder = holder;
@@ -51,12 +47,7 @@ public class PlayerCombat : MonoBehaviour
     {
         _stats    = GetComponent<PlayerStats>();
 
-        var fistObj  = Instantiate(_fistPrefab, _weaponHolder);
-        _fistInstance = fistObj.GetComponent<WeaponBase>();
-        _fistInstance.Equip();
-
         // HUD 초기 상태 동기화 - 두 슬롯 비어있고 0번 활성
-        // Fist는 폴백 표시용이라 슬롯 데이터로는 null 전송 (HUD에서 Empty로 표시)
         PlayerEvents.WeaponSlotChanged(0, null);
         PlayerEvents.WeaponSlotChanged(1, null);
         PlayerEvents.ActiveSlotChanged(0, null);
@@ -78,9 +69,9 @@ public class PlayerCombat : MonoBehaviour
         if (Mouse.current != null && Mouse.current.leftButton.isPressed)
             Attack();
 
-        // R: 재장전 (원거리 무기에서만 의미 있음, 근접은 가상 메서드 비어있음)
+        // R: 재장전 (빈 슬롯이면 ActiveWeapon == null)
         if (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
-            ActiveWeapon.TryReload();
+            ActiveWeapon?.TryReload();
     }
 
 
@@ -129,16 +120,16 @@ public class PlayerCombat : MonoBehaviour
     // 실제 무기 교체 동작. 즉시 경로와 코루틴 경로가 공유
     private void PerformSwap(int slotIndex)
     {
-        ActiveWeapon.Unequip();
+        ActiveWeapon?.Unequip();
         _activeSlotIndex = slotIndex;
-        ActiveWeapon.Equip();
+        ActiveWeapon?.Equip();
 
-        // Ranged가 아닌 무기로 전환 시 조준 해제
-        if (_isAiming && _slots[_activeSlotIndex]?.weaponData?.weaponType == WeaponType.Melee)
+        // 빈 슬롯으로 전환 시 조준 해제 - 들고 있는 무기가 없으면 조준 상태 유지 의미 없음
+        if (_isAiming && ActiveWeapon == null)
             SetAiming(false);
 
         // 슬롯 내용은 그대로, 활성만 바뀜 → ActiveSlotChanged 사용
-        // 빈 슬롯이면 _slots[i]가 null이라 weaponData도 null로 전달됨 (Fist는 폴백이라 슬롯 데이터로 안 씀)
+        // 빈 슬롯이면 _slots[i]가 null이라 weaponData도 null로 전달됨
         PlayerEvents.ActiveSlotChanged(_activeSlotIndex, _slots[_activeSlotIndex]?.weaponData);
     }
 
@@ -147,8 +138,8 @@ public class PlayerCombat : MonoBehaviour
 
     private void HandleAimToggle()
     {
-        // Ranged 무기를 들고 있을 때만 조준 토글
-        if (ActiveWeapon.weaponData?.weaponType == WeaponType.Melee) return;
+        // 무기가 없으면 조준 불가
+        if (ActiveWeapon == null) return;
         SetAiming(!_isAiming);
     }
 
@@ -170,6 +161,7 @@ public class PlayerCombat : MonoBehaviour
         // 무기 스위칭 도중 발사 차단 (예제 WeaponController.HandleFirePressed와 동일한 가드)
         // 재장전 중 차단은 무기 측 TryAttack에서 처리
         if (_isSwitching) return;
+        if (ActiveWeapon == null) return;
 
         if (ActiveWeapon.TryAttack())
             PlayerEvents.AttackPerformed();
@@ -266,11 +258,6 @@ public class PlayerCombat : MonoBehaviour
         {
             if (isActive) _slots[slotIndex].Unequip();
             Destroy(_slots[slotIndex].gameObject);
-        }
-        else if (isActive)
-        {
-            // 기존 슬롯에 무기가 없다면 이  활성 슬롯에 무기가 들어오는 것이므로 Fist 비활성화
-            _fistInstance.Unequip();
         }
 
         var weaponObj = Instantiate(prefab, _weaponHolder);

@@ -32,7 +32,7 @@ public abstract class WeaponBase : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    // 원거리 무기에서 오버라이드. 근접 등은 무시
+    // 재장전이 필요한 무기에서 오버라이드 (HitscanWeapon 등). 기본은 no-op
     public virtual void TryReload() { }
 
     protected abstract void PerformAttack();
