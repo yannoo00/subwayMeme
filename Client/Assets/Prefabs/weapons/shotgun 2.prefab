@@ -45,7 +45,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 24e37b1b977f6f04583a19fc5fa864eb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HitscanWeapon
-  _weaponData: {fileID: 11400000, guid: 494e51cc96add334ead233ad1bd97e31, type: 2}
+  _weaponData: {fileID: 11400000, guid: 71ad5df378230f742a24dca207df1070, type: 2}
+  _model: {fileID: 4750649518780207756}
   _muzzle: {fileID: 381997764402038230}
   _hitMask:
     serializedVersion: 2
@@ -155,6 +156,11 @@ PrefabInstance:
       addedObject: {fileID: 381997764402038230}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5a0d999ce72b55b4a800f878594ddfc4, type: 3}
+--- !u!1 &4750649518780207756 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1763774921165762338, guid: 5a0d999ce72b55b4a800f878594ddfc4, type: 3}
+  m_PrefabInstance: {fileID: 6455801639865793966}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &5379094821790418998 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1383167342948890008, guid: 5a0d999ce72b55b4a800f878594ddfc4, type: 3}

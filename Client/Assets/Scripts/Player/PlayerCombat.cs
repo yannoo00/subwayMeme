@@ -124,6 +124,9 @@ public class PlayerCombat : MonoBehaviour
         _activeSlotIndex = slotIndex;
         ActiveWeapon?.Equip();
 
+        // 새 활성 무기는 Equip이 모델을 켠 상태로 시작하므로 조준 상태에 맞춰 다시 조정
+        ActiveWeapon?.SetVisible(_isAiming);
+
         // 빈 슬롯으로 전환 시 조준 해제 - 들고 있는 무기가 없으면 조준 상태 유지 의미 없음
         if (_isAiming && ActiveWeapon == null)
             SetAiming(false);
@@ -148,6 +151,9 @@ public class PlayerCombat : MonoBehaviour
         if (_isAiming == isAiming) return;
         _isAiming = isAiming;
         PlayerEvents.AimStateChanged(_isAiming);
+
+        // 조준 중에만 무기 모델 노출. 빈 슬롯이면 null이라 호출 자체 스킵
+        ActiveWeapon?.SetVisible(_isAiming);
     }
     public bool IsAiming() => _isAiming;
 
@@ -243,8 +249,7 @@ public class PlayerCombat : MonoBehaviour
             return;
         }
 
-        Vector3 dropPos = transform.position + transform.forward * _dropDistance;
-        Instantiate(pickupPrefab, dropPos, Quaternion.identity);
+        Instantiate(pickupPrefab, transform.position, Quaternion.identity);
     }
 
 
@@ -265,7 +270,11 @@ public class PlayerCombat : MonoBehaviour
         _slots[slotIndex] = weapon;
 
         if (isActive)
+        {
             weapon.Equip();
+            // 비조준 중에 픽업한 경우 한 프레임이라도 모델이 보이지 않도록 즉시 동기화
+            weapon.SetVisible(_isAiming);
+        }
         else
             weapon.Unequip();
 

@@ -16,7 +16,7 @@ MonoBehaviour:
   damage: 20
   attackCooldown: 0.5
   range: 20
-  pickupPrefab: {fileID: 5554834611176692639, guid: 71ffbcf29764a304eb8c555db4d96ba2, type: 3}
+  pickupPrefab: {fileID: 5554834611176692639, guid: ca9a0d241d8b8eb4b96c5627b8694962, type: 3}
   magazineSize: 12
   reloadTime: 1.5
   spread: 0
