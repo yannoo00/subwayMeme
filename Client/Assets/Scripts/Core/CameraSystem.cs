@@ -105,7 +105,7 @@ public class CameraSystem : MonoBehaviour
         SetCameraPriority(_isAiming);
     }
 
-    private void OnAimStateChanged(bool isAiming)
+    private void OnAimStateChanged(bool isAiming, int weaponTypeID)
     {
         _isAiming = isAiming;
         SetCameraPriority(isAiming);

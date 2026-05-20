@@ -92,15 +92,15 @@ public class PlayerAnimator : MonoBehaviour
     private void HandleDodge()  => _animator?.SetTrigger(AnimatorParams.Dodge);
     private void HandleDeath()  => _animator?.SetBool(AnimatorParams.IsDead, true);
 
-    private void HandleAimStateChanged(bool isAiming)
+    private void HandleAimStateChanged(bool isAiming, int weaponTypeID)
     {
         _isAiming = isAiming;   // Update의 Strafe 폴링에서 참조
         _animator?.SetBool(AnimatorParams.IsAiming, isAiming);
+        _animator?.SetInteger(AnimatorParams.WeaponTypeID, weaponTypeID);
     }
 
 
     // === 이벤트 핸들러: 지속 상태 (duration 기반 자동 종료) ===
-
     private void HandleReloadStarted(float duration)
     {
         if (_animator == null) return;

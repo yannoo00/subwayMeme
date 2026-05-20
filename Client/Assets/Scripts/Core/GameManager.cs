@@ -26,11 +26,6 @@ public class GameManager : MonoBehaviour
     // 발전기 파괴와 전원 사망이 같은 프레임에 발생해도 결과는 한 번만 확정되어야 함
     private bool _isGameEnded;
 
-    // 1차 개발 목표: Station 단일 맵에서 20분 웨이브 서바이벌
-    // false로 바꾸면 기존 지하철 이동 루프로 복귀
-    [SerializeField] private bool _survivalMode = true;
-    public bool IsSurvivalMode => _survivalMode;
-
     [Header("캐릭터")]
     [SerializeField] private CharacterDefinition[] _characters;
 

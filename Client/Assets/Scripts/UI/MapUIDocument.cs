@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using GameProto;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -187,9 +186,6 @@ public class MapUIDocument : MonoBehaviour
                 Button btn = _allNodes[node.floor, node.column];
                 btn.AddToClassList("active");
                 btn.text = node.type.ToString();
-
-                // 클릭 이벤트 등록
-                btn.clickable = new Clickable(() => OnNodeSelected(node));
             }
         }
 
@@ -280,21 +276,6 @@ public class MapUIDocument : MonoBehaviour
             if (_allPaths.TryGetValue(key, out VisualElement path))
                 path.AddToClassList("path--visited");
         }
-    }
-
-    private void OnNodeSelected(StageNode node)
-    {
-        CloseMap();
-
-        foreach (var availNode in _currentAvailableNodes)
-            if (availNode != node)
-                SetNodeState(availNode, NodeState.Normal);
-        _currentAvailableNodes.Clear();
-
-        // 씬 전환은 S_AllBoarded 수신 후 처리되므로 여기서는 서버에 선택만 전달
-        // 여기서 직접 moveToNode 하지 않고 서버에서 전원 탑승 수신 후 이동한다. 
-        int nodeIndex = StageManager.Instance.GetIndex(node);
-        NetworkManager.Instance.SendGame(GamePacketId.CSelectRoute, new C_SelectRoute { NodeIndex = nodeIndex });
     }
 
     // 노드의 상태 클래스만 토글

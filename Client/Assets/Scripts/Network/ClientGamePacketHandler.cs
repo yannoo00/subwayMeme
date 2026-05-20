@@ -255,16 +255,6 @@ public static class ClientGamePacketHandler
         // TODO: HUD에 하차 카운트 표시 갱신
     }
 
-    // 전원 하차 완료: 역 씬으로 전환
-    public static void Handle_S_AllExited(byte[] body)
-    {
-        if (GameManager.Instance.CurrentState != GameState.Playing) return;
-
-        Debug.Log("[Game] S_AllExited: 전원 하차 완료");
-
-        StageManager.Instance.StartStation();
-    }
-
     // 특정 플레이어 탑승 알림
     public static void Handle_S_PlayerBoarded(byte[] body)
     {
@@ -275,29 +265,6 @@ public static class ClientGamePacketHandler
         Debug.Log($"[Game] S_PlayerBoarded: playerId={pkt.PlayerId} ({pkt.BoardedCount}/{pkt.TotalCount})");
 
         // TODO: HUD에 탑승 카운트 표시 갱신
-    }
-
-    // 전원 탑승 + 경로 확정: 지하철 씬으로 전환
-    public static void Handle_S_AllBoarded(byte[] body)
-    {
-        var pkt = S_AllBoarded.Parser.ParseFrom(body);
-        Debug.Log($"[Game] S_AllBoarded 수신: nodeIndex={pkt.NodeIndex}, CurrentState={GameManager.Instance.CurrentState}");
-
-        // 상태 체크를 하되, 무시될 경우 로그를 남깁니다.
-        if (GameManager.Instance.CurrentState != GameState.Playing)
-        {
-            Debug.LogWarning($"[Game] S_AllBoarded 무시됨: 현재 상태가 {GameManager.Instance.CurrentState}입니다.");
-            return;
-        }
-
-        StageNode nextNode = StageManager.Instance.GetNodeByIndex(pkt.NodeIndex);
-        if (nextNode == null)
-        {
-            Debug.LogError($"[Game] S_AllBoarded 에러: index {pkt.NodeIndex}에 해당하는 노드가 없습니다.");
-            return;
-        }
-
-        StageManager.Instance.MoveToNode(nextNode);
     }
 
     // 게임 클리어

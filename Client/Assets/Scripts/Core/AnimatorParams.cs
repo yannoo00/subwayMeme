@@ -22,4 +22,5 @@ public static class AnimatorParams
     // 서버 C_Move 패킷이 IsMoving bool만 전달하므로 원격 측은 단순 토글 유지
     // 패킷에 Speed/Strafe 추가 협의 후 NetworkPlayer 마이그레이션 가능
     public static readonly int IsMoving          = Animator.StringToHash("IsMoving");
+    public static readonly int WeaponTypeID      = Animator.StringToHash("WeaponTypeID");
 }

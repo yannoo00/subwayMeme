@@ -22,6 +22,7 @@ public class PlayerCombat : MonoBehaviour
     // 스킬 슬롯: 0 = 3번키, 1 = 4번키
     private SkillBase[] _skillSlots = new SkillBase[2];
 
+    private int weaponTypeID;
     private bool _isAiming;
     private bool _isSwitching;            // 스위칭 코루틴 진행 중 - 발사/중복 스위치 차단용
     private Coroutine _switchCoroutine;
@@ -98,7 +99,7 @@ public class PlayerCombat : MonoBehaviour
             PerformSwap(slotIndex);
             return;
         }
-
+        weaponTypeID = (int)_slots[slotIndex].weaponData.weaponType;
         _switchCoroutine = StartCoroutine(SwitchToSlotCoroutine(slotIndex));
     }
 
@@ -134,6 +135,10 @@ public class PlayerCombat : MonoBehaviour
         // 슬롯 내용은 그대로, 활성만 바뀜 → ActiveSlotChanged 사용
         // 빈 슬롯이면 _slots[i]가 null이라 weaponData도 null로 전달됨
         PlayerEvents.ActiveSlotChanged(_activeSlotIndex, _slots[_activeSlotIndex]?.weaponData);
+
+        // 조준 중 무기 교체 시 새 weaponTypeID를 Animator에 즉시 동기화
+        if (_isAiming && ActiveWeapon != null)
+            PlayerEvents.AimStateChanged(_isAiming, weaponTypeID);
     }
 
 
@@ -150,7 +155,7 @@ public class PlayerCombat : MonoBehaviour
     {
         if (_isAiming == isAiming) return;
         _isAiming = isAiming;
-        PlayerEvents.AimStateChanged(_isAiming);
+        PlayerEvents.AimStateChanged(_isAiming, weaponTypeID);
 
         // 조준 중에만 무기 모델 노출. 빈 슬롯이면 null이라 호출 자체 스킵
         ActiveWeapon?.SetVisible(_isAiming);
@@ -274,6 +279,7 @@ public class PlayerCombat : MonoBehaviour
             weapon.Equip();
             // 비조준 중에 픽업한 경우 한 프레임이라도 모델이 보이지 않도록 즉시 동기화
             weapon.SetVisible(_isAiming);
+            weaponTypeID = (int)weapon.weaponData.weaponType;
         }
         else
             weapon.Unequip();

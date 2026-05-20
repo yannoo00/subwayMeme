@@ -88,7 +88,7 @@ public class PlayerController : MonoBehaviour
         PlayerEvents.OnAimStateChanged -= OnAimStateChanged;
     }
 
-    private void OnAimStateChanged(bool isAiming)
+    private void OnAimStateChanged(bool isAiming, int weaponTypeID)
     {
         _isAiming = isAiming;
     }

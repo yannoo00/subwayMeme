@@ -316,7 +316,7 @@ public class HUDDocument : MonoBehaviour
     }
 
 
-    private void OnAimStateChanged(bool isAiming)
+    private void OnAimStateChanged(bool isAiming, int weaponTypeID)
     {
         SetHidden(_crosshair, !isAiming);
     }

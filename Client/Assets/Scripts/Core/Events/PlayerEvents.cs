@@ -33,7 +33,7 @@ public static class PlayerEvents
     public static event Action<float> OnReloadStarted;              // duration(초)
     public static event Action OnReloadFinished;
 
-    public static event Action<bool> OnAimStateChanged;
+    public static event Action<bool, int> OnAimStateChanged;
 
     // 로컬 플레이어 액션 - PlayerAnimator가 구독하여 Animator 트리거에 매핑
     // 컨트롤러/전투 컴포넌트가 Animator를 직접 알지 않도록 의도(intent)만 발행
@@ -67,7 +67,7 @@ public static class PlayerEvents
     public static void AmmoChanged(int current, int max) => OnAmmoChanged?.Invoke(current, max);
     public static void ReloadStarted(float duration) => OnReloadStarted?.Invoke(duration);
     public static void ReloadFinished() => OnReloadFinished?.Invoke();
-    public static void AimStateChanged(bool isAiming) => OnAimStateChanged?.Invoke(isAiming);
+    public static void AimStateChanged(bool isAiming, int weaponTypeID) => OnAimStateChanged?.Invoke(isAiming, weaponTypeID);
     public static void AttackPerformed() => OnAttackPerformed?.Invoke();
     public static void DodgePerformed() => OnDodgePerformed?.Invoke();
     public static void WeaponSwitchStarted(float duration) => OnWeaponSwitchStarted?.Invoke(duration);

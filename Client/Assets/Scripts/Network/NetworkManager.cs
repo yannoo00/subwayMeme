@@ -136,9 +136,7 @@ public class NetworkManager : MonoBehaviour
         game.Register((ushort)GamePacketId.SWaveStart,     ClientGamePacketHandler.Handle_S_WaveStart);
         game.Register((ushort)GamePacketId.STimerSync,     ClientGamePacketHandler.Handle_S_TimerSync);
         game.Register((ushort)GamePacketId.SPlayerExited,  ClientGamePacketHandler.Handle_S_PlayerExited);
-        game.Register((ushort)GamePacketId.SAllExited,     ClientGamePacketHandler.Handle_S_AllExited);
         game.Register((ushort)GamePacketId.SPlayerBoarded, ClientGamePacketHandler.Handle_S_PlayerBoarded);
-        game.Register((ushort)GamePacketId.SAllBoarded,    ClientGamePacketHandler.Handle_S_AllBoarded);
         game.Register((ushort)GamePacketId.SGameClear,     ClientGamePacketHandler.Handle_S_GameClear);
         game.Register((ushort)GamePacketId.SGameOver,      ClientGamePacketHandler.Handle_S_GameOver);
         game.Register((ushort)GamePacketId.SInteractResult,ClientGamePacketHandler.Handle_S_InteractResult);
