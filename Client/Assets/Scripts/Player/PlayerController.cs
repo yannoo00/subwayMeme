@@ -1,4 +1,3 @@
-using System.Collections;
 using GameProto;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -18,16 +17,8 @@ public class PlayerController : MonoBehaviour
     // 캐릭터가 이동 방향으로 회전하는 속도
     [SerializeField] private float _rotationSpeed = 15f;
 
-    [Header("Dodge")]
-    [SerializeField] private float _dodgeDistance = 4f;
-    [SerializeField] private float _dodgeDuration = 0.25f;
-    // CharacterDefinition.baseDodgeCooldown이 없을 때 fallback
-    [SerializeField] private float _dodgeCooldown = 1.5f;
-
     private PlayerStats _stats;
-    private bool _isDodging = false;
     private bool _isAiming = false;
-    private float _lastDodgeTime = -Mathf.Infinity;
 
     // PlayerAnimator가 매 프레임 폴링하여 Animator의 Speed Blend Tree 입력으로 사용
     // 컨트롤러 자체는 Animator를 모름 - 상태만 노출
@@ -46,7 +37,6 @@ public class PlayerController : MonoBehaviour
     private Vector3 _lastSentPos;
     private float   _lastSentRotY;
     private bool    _lastSentIsMoving;
-    private bool    _lastSentIsDodging;
 
 
     private void Awake()
@@ -60,8 +50,7 @@ public class PlayerController : MonoBehaviour
         var charDef = GameManager.Instance?.SelectedCharacter;
         if (charDef != null)
         {
-            _moveSpeed     = charDef.baseMoveSpeed;
-            _dodgeCooldown = charDef.baseDodgeCooldown;
+            _moveSpeed = charDef.baseMoveSpeed;
         }
     }
 
@@ -97,14 +86,13 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         // early return 경로에서도 폴링값이 stale하게 남지 않도록 매 프레임 기본값
-        // (사망/닷지/메뉴 등에서 walk 애니메이션이 끊기지 않는 버그 방지)
+        // (사망/메뉴 등에서 walk 애니메이션이 끊기지 않는 버그 방지)
         NormalizedSpeed = 0f;
         MoveInput       = Vector2.zero;
         IsDashing       = false;
 
         if (GameManager.Instance.CurrentState != GameState.Playing) return;
         if (Keyboard.current == null) return;
-        if (_isDodging) return;
         if (!_stats.IsAlive) return;
 
         // Awake 시점에 카메라가 없을 수도 있어 매 프레임 폴백 (이미 잡혔으면 즉시 return)
@@ -117,16 +105,16 @@ public class PlayerController : MonoBehaviour
         bool isMoving = input != Vector2.zero;
         // Shift 단독으로는 dash 아님 - 이동 중일 때만 의미
         // 조준 중에는 Shift 눌러도 dash 금지 - 스트레이프 정밀도 유지 + 조준=신중한 무빙 컨셉
-        IsDashing = isMoving && Keyboard.current.leftShiftKey.isPressed && !_isAiming;
+        // CanDash: 스테미나 0이거나 탈진(임계값 회복 전)이면 dash 금지 - PlayerStats가 관리
+        IsDashing = isMoving && Keyboard.current.leftShiftKey.isPressed && !_isAiming && _stats.CanDash;
         MoveInput = input;
         // dash면 Blend Tree에서 dash 모션 (예: threshold 2)으로 가도록 _dashMultiplier 그대로 사용
         NormalizedSpeed = isMoving ? (IsDashing ? _dashMultiplier : 1f) : 0f;
 
-        // 스페이스바 닷지 입력 (쿨타임 체크 포함)
-        if (Keyboard.current.spaceKey.wasPressedThisFrame && CanDodge())
+        // dash 발동 중 매 프레임 스테미나 소비. 0 도달 시 CanDash가 false로 떨어져 다음 프레임 dash 해제
+        if (IsDashing)
         {
-            StartCoroutine(DodgeCoroutine());
-            return;
+            _stats.ConsumeStamina(Time.deltaTime);
         }
 
         Vector3 camForward = _cameraTransform != null ? _cameraTransform.forward : transform.forward;
@@ -147,7 +135,7 @@ public class PlayerController : MonoBehaviour
                 rotateTarget.rotation = Quaternion.Slerp(rotateTarget.rotation, aimRot, _rotationSpeed * Time.deltaTime);
             }
 
-            TrySendMove(isMoving: false, isDodging: false);
+            TrySendMove(isMoving: false);
             return;
         }
 
@@ -173,19 +161,19 @@ public class PlayerController : MonoBehaviour
         float currentSpeed   = _moveSpeed * (IsDashing ? _dashMultiplier : 1f);
         transform.position += moveVelocity * currentSpeed * Time.deltaTime;
 
-        TrySendMove(isMoving: true, isDodging: false);
+        TrySendMove(isMoving: true);
     }
 
 
     // === 이동 동기화 ===
 
     // 20Hz 주기 + Dead Zone 필터: 변화가 없으면 전송 생략
-    // 상태(IsMoving, IsDodging) 변화는 Dead Zone 무시하고 즉시 전송
-    private void TrySendMove(bool isMoving, bool isDodging)
+    // 상태(IsMoving) 변화는 Dead Zone 무시하고 즉시 전송
+    private void TrySendMove(bool isMoving)
     {
         if (GameManager.Instance.CurrentState != GameState.Playing) return;
 
-        bool stateChanged = isMoving != _lastSentIsMoving || isDodging != _lastSentIsDodging;
+        bool stateChanged = isMoving != _lastSentIsMoving;
         if (!stateChanged && Time.time - _lastSendTime < SEND_INTERVAL) return;
 
         float rotY = (_playerModel != null ? _playerModel : transform).eulerAngles.y;
@@ -196,59 +184,16 @@ public class PlayerController : MonoBehaviour
 
         NetworkManager.Instance.SendGame(GamePacketId.CMove, new C_Move
         {
-            PosX      = transform.position.x,
-            PosY      = transform.position.y,
-            PosZ      = transform.position.z,
-            RotY      = rotY,
-            IsMoving  = isMoving,
-            IsDodging = isDodging,
+            PosX     = transform.position.x,
+            PosY     = transform.position.y,
+            PosZ     = transform.position.z,
+            RotY     = rotY,
+            IsMoving = isMoving,
         });
 
-        _lastSentPos       = transform.position;
-        _lastSentRotY      = rotY;
-        _lastSentIsMoving  = isMoving;
-        _lastSentIsDodging = isDodging;
-        _lastSendTime      = Time.time;
-    }
-
-    private bool CanDodge()
-    {
-        return Time.time - _lastDodgeTime >= _dodgeCooldown;
-    }
-
-
-    private IEnumerator DodgeCoroutine()
-    {
-        _isDodging = true;
-        _lastDodgeTime = Time.time;
-
-        // 무적 프레임 시작
-        if (_stats != null) _stats.IsInvincible = true;
-
-        PlayerEvents.DodgePerformed();
-
-        // PlayerModel이 있으면 그 forward, 없으면 PlayerRoot forward
-        Transform dirSource = _playerModel != null ? _playerModel : transform;
-        Vector3 dodgeDir = dirSource.forward;
-
-        float elapsed = 0f;
-        float startTime = Time.time;
-
-        TrySendMove(isMoving: false, isDodging: true);
-
-        while (elapsed < _dodgeDuration)
-        {
-            elapsed = Time.time - startTime;
-            // 초반에 빠르고 후반에 느려지는 커브로 자연스러운 닷지 느낌
-            float t = 1f - (elapsed / _dodgeDuration);
-            transform.position += dodgeDir * (_dodgeDistance * t * Time.deltaTime / _dodgeDuration);
-            TrySendMove(isMoving: false, isDodging: true);
-            yield return null;
-        }
-
-        // 무적 프레임 종료
-        if (_stats != null) _stats.IsInvincible = false;
-        _isDodging = false;
-        TrySendMove(isMoving: false, isDodging: false);
+        _lastSentPos      = transform.position;
+        _lastSentRotY     = rotY;
+        _lastSentIsMoving = isMoving;
+        _lastSendTime     = Time.time;
     }
 }

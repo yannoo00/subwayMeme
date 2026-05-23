@@ -87,6 +87,27 @@
 }
 
 
+/* === 스테미나 바 (hp-panel 내부) === */
+
+.stamina-title {
+    margin-top: 10px;
+}
+
+.stamina-bar-bg {
+    width: 180px;
+    height: 5px;
+    background-color: rgba(255, 255, 255, 0.07);
+    border-radius: 1px;
+}
+
+.stamina-bar-fill {
+    height: 100%;
+    width: 100%;
+    background-color: rgb(130, 195, 215);
+    border-radius: 1px;
+}
+
+
 /* === 발전기 HP 바 (timer-panel 내부) === */
 
 .generator-title {

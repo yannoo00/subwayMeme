@@ -8,6 +8,23 @@ public class PlayerStats: MonoBehaviour, IDamageable
 
     private int _currentHealth;
 
+    [Header("Stamina")]
+    // dash 소비/자연 회복용. 시간 기반이라 float로 보관, 표시할 때만 int 변환
+    [SerializeField] private float _baseMaxStamina = 100f;
+    // dash 1초당 소비량 (25 -> Max 100 기준 약 4초 dash 가능)
+    [SerializeField] private float _staminaDrainPerSec = 25f;
+    // 회복 1초당 회복량 (15 -> 0->100 약 6.7초)
+    [SerializeField] private float _staminaRegenPerSec = 15f;
+    // 마지막 소비 후 회복 시작까지 지연 (shift 떼자마자 회복되면 dash 자원감이 사라짐)
+    [SerializeField] private float _staminaRegenDelay = 1f;
+    // 탈진 후 dash 재개 가능 비율 (0.3 = 30% 이상 회복돼야 다시 dash 가능)
+    [SerializeField, Range(0f, 1f)] private float _staminaRecoveryThreshold = 0.3f;
+
+    private float _currentStamina;
+    private float _lastStaminaDrainTime;
+    // 0 도달 시 true, 임계값까지 회복하면 false. PlayerController는 CanDash로만 판단
+    private bool  _isExhausted;
+
     // 캐릭터 베이스 보너스 (CharacterDefinition.baseAttackPower)
     private float _baseAttackBonus;
 
@@ -29,6 +46,11 @@ public class PlayerStats: MonoBehaviour, IDamageable
     public bool IsAlive         => _currentHealth > 0;
     public bool IsInvincible { get; set; }
 
+    public float CurrentStamina => _currentStamina;
+    public float MaxStamina     => _baseMaxStamina;
+    // 탈진 중이면 임계값 회복 전까지 false 유지. dash 진입 게이트는 이 프로퍼티만 보면 됨
+    public bool  CanDash        => !_isExhausted && _currentStamina > 0f;
+
     public float AttackBonus       => _baseAttackBonus + _attackBonus + _mutationAttackBonus;
     public float DodgeReduction    => _dodgeReduction;
     public float MoveSpeedBonus    => _mutationMoveSpeedBonus; // PlayerController에서 읽어서 이속에 가산
@@ -47,10 +69,12 @@ public class PlayerStats: MonoBehaviour, IDamageable
         }
 
         _currentHealth = _baseMaxHealth;
+        _currentStamina = _baseMaxStamina;
 
         // 강화/UpgradeManager가 없는 환경에서도 HUD가 정확한 값을 보도록 즉시 1회 발행
         // ApplyPermanentBonuses 가 뒤따라 호출되면 거기서 다시 한 번 발행됨 (멱등)
         PlayerEvents.HealthChanged(_currentHealth, MaxHealth);
+        PlayerEvents.StaminaChanged(_currentStamina, MaxStamina);
 
         // 영구 강화 보너스 자동 적용 - GameManager가 보관하는 SelectedCharacterId 기준
         // GameManager는 Persistent 씬의 DontDestroyOnLoad라 게임 씬 진입 시 항상 존재
@@ -59,6 +83,43 @@ public class PlayerStats: MonoBehaviour, IDamageable
             int characterId = GameManager.Instance != null ? GameManager.Instance.SelectedCharacterId : 0;
             UpgradeManager.Instance.ApplyBonusesToPlayer(characterId, this);
         }
+    }
+
+    private void Update()
+    {
+        // 마지막 소비 후 regen delay 경과 + 최대치 미달일 때만 회복
+        // 매 프레임 이벤트를 발행하지만, 만피 상태에서는 if문에서 끊겨 부담 없음
+        if (!IsAlive) return;
+        if (_currentStamina >= _baseMaxStamina) return;
+        if (Time.time - _lastStaminaDrainTime < _staminaRegenDelay) return;
+
+        _currentStamina = Mathf.Min(_currentStamina + _staminaRegenPerSec * Time.deltaTime, _baseMaxStamina);
+
+        // 탈진 상태에서 임계값 이상 회복되면 해제 - dash 재개 가능
+        if (_isExhausted && _currentStamina >= _baseMaxStamina * _staminaRecoveryThreshold)
+        {
+            _isExhausted = false;
+        }
+
+        PlayerEvents.StaminaChanged(_currentStamina, _baseMaxStamina);
+    }
+
+    // PlayerController가 dash 발동 중 매 프레임 호출. deltaTime 기반으로 일정 비율 소비
+    // 0 도달 시 _isExhausted true 세팅 -> CanDash가 false로 떨어져 dash 자동 종료
+    public void ConsumeStamina(float deltaTime)
+    {
+        if (deltaTime <= 0f) return;
+        if (_currentStamina <= 0f) return;
+
+        _currentStamina = Mathf.Max(_currentStamina - _staminaDrainPerSec * deltaTime, 0f);
+        _lastStaminaDrainTime = Time.time;
+
+        if (_currentStamina <= 0f)
+        {
+            _isExhausted = true;
+        }
+
+        PlayerEvents.StaminaChanged(_currentStamina, _baseMaxStamina);
     }
 
     // UpgradeManager에서 호출 - 영구 강화 보너스 일괄 적용

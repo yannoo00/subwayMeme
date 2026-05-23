@@ -7,6 +7,11 @@
                 <ui:VisualElement name="hp-bar-fill" class="hp-bar-fill"/>
             </ui:VisualElement>
             <ui:Label name="hp-label" text="100 / 100" class="hud-label"/>
+            <ui:Label name="stamina-title" text="STAMINA" class="hud-label--title stamina-title"/>
+            <ui:VisualElement name="stamina-bar-bg" class="stamina-bar-bg">
+                <ui:VisualElement name="stamina-bar-fill" class="stamina-bar-fill"/>
+            </ui:VisualElement>
+            <ui:Label name="stamina-label" text="100 / 100" class="hud-label"/>
         </ui:VisualElement>
         <ui:VisualElement name="timer-panel" class="hud-panel hud-panel--hidden">
             <ui:Label name="timer-title" text="다음 역까지" class="hud-label--title"/>

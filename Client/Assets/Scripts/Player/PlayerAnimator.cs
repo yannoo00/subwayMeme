@@ -6,7 +6,7 @@ using UnityEngine;
 //
 // 두 가지 채널 혼용:
 //  - 연속값(IsMoving 등): 매 프레임 PlayerController 의 프로퍼티를 폴링하여 SetBool/SetFloat
-//  - 단발 액션(Attack/Dodge/Death): PlayerEvents 구독으로 SetTrigger/SetBool
+//  - 단발 액션(Attack/Death): PlayerEvents 구독으로 SetTrigger/SetBool
 //  - 지속 상태(IsReloading/IsSwitchingWeapon): 시작 이벤트의 duration 을 받아
 //    코루틴으로 대기 후 SetBool(false) - Animation Event 의존 없이 동기화
 //
@@ -48,7 +48,6 @@ public class PlayerAnimator : MonoBehaviour
     private void OnEnable()
     {
         PlayerEvents.OnAttackPerformed      += HandleAttack;
-        PlayerEvents.OnDodgePerformed       += HandleDodge;
         PlayerEvents.OnPlayerDied           += HandleDeath;
         PlayerEvents.OnReloadStarted        += HandleReloadStarted;
         PlayerEvents.OnWeaponSwitchStarted  += HandleWeaponSwitchStarted;
@@ -58,7 +57,6 @@ public class PlayerAnimator : MonoBehaviour
     private void OnDisable()
     {
         PlayerEvents.OnAttackPerformed      -= HandleAttack;
-        PlayerEvents.OnDodgePerformed       -= HandleDodge;
         PlayerEvents.OnPlayerDied           -= HandleDeath;
         PlayerEvents.OnReloadStarted        -= HandleReloadStarted;
         PlayerEvents.OnWeaponSwitchStarted  -= HandleWeaponSwitchStarted;
@@ -85,11 +83,10 @@ public class PlayerAnimator : MonoBehaviour
 
     // === 이벤트 핸들러: 단발 액션 ===
 
-    private void HandleAttack() 
+    private void HandleAttack()
     {
         _animator?.SetTrigger(AnimatorParams.Attack);
     }
-    private void HandleDodge()  => _animator?.SetTrigger(AnimatorParams.Dodge);
     private void HandleDeath()  => _animator?.SetBool(AnimatorParams.IsDead, true);
 
     private void HandleAimStateChanged(bool isAiming, int weaponTypeID)

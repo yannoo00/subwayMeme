@@ -14,7 +14,6 @@ public class NetworkPlayer : MonoBehaviour
 
     private Vector3 _targetPos;
     private float   _targetRotY;
-    private bool    _isDodging;
 
     // === 초기화 ===
 
@@ -31,16 +30,11 @@ public class NetworkPlayer : MonoBehaviour
 
     // === S_Move 수신 시 호출 ===
 
-    public void SetTargetState(Vector3 pos, float rotY, bool isMoving, bool isDodging)
+    public void SetTargetState(Vector3 pos, float rotY, bool isMoving)
     {
         _targetPos  = pos;
         _targetRotY = rotY;
 
-        // 닷지 시작 시점에만 트리거 (연속 호출 방지)
-        if (!_isDodging && isDodging)
-            _animator?.SetTrigger(AnimatorParams.Dodge);
-
-        _isDodging = isDodging;
         _animator?.SetBool(AnimatorParams.IsMoving, isMoving);
     }
 

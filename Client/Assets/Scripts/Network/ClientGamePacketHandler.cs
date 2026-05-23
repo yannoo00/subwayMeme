@@ -99,8 +99,7 @@ public static class ClientGamePacketHandler
         np.SetTargetState(
             new UnityEngine.Vector3(pkt.PosX, pkt.PosY, pkt.PosZ),
             pkt.RotY,
-            pkt.IsMoving,
-            pkt.IsDodging
+            pkt.IsMoving
         );
     }
 

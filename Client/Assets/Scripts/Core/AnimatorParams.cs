@@ -13,7 +13,6 @@ public static class AnimatorParams
 
     public static readonly int Attack            = Animator.StringToHash("Attack");
     public static readonly int IsDead            = Animator.StringToHash("IsDead");
-    public static readonly int Dodge             = Animator.StringToHash("Dodge");
     public static readonly int IsReloading       = Animator.StringToHash("IsReloading");
     public static readonly int IsSwitchingWeapon = Animator.StringToHash("IsSwitchingWeapon");
     public static readonly int IsAiming          = Animator.StringToHash("IsAiming");

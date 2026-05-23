@@ -23,6 +23,9 @@ public class HUDDocument : MonoBehaviour
     private VisualElement _hpBarFill;
     private Label _hpLabel;
 
+    private VisualElement _staminaBarFill;
+    private Label _staminaLabel;
+
     private VisualElement _timerPanel;
     private Label _timerTitle;
     private Label _timerLabel;
@@ -71,6 +74,7 @@ public class HUDDocument : MonoBehaviour
         BindUI();
 
         PlayerEvents.OnHealthChanged      += OnHealthChanged;
+        PlayerEvents.OnStaminaChanged     += OnStaminaChanged;
         PlayerEvents.OnWeaponSlotChanged  += OnWeaponSlotChanged;
         PlayerEvents.OnActiveSlotChanged  += OnActiveSlotChanged;
         PlayerEvents.OnAmmoChanged        += OnAmmoChanged;
@@ -90,6 +94,7 @@ public class HUDDocument : MonoBehaviour
     private void OnDisable()
     {
         PlayerEvents.OnHealthChanged      -= OnHealthChanged;
+        PlayerEvents.OnStaminaChanged     -= OnStaminaChanged;
         PlayerEvents.OnWeaponSlotChanged  -= OnWeaponSlotChanged;
         PlayerEvents.OnActiveSlotChanged  -= OnActiveSlotChanged;
         PlayerEvents.OnAmmoChanged        -= OnAmmoChanged;
@@ -131,6 +136,9 @@ public class HUDDocument : MonoBehaviour
         _hpBarFill  = root.Q<VisualElement>("hp-bar-fill");
         _hpLabel    = root.Q<Label>("hp-label");
 
+        _staminaBarFill = root.Q<VisualElement>("stamina-bar-fill");
+        _staminaLabel   = root.Q<Label>("stamina-label");
+
         _timerPanel = root.Q<VisualElement>("timer-panel");
         _timerTitle = root.Q<Label>("timer-title");
         _timerLabel = root.Q<Label>("timer-label");
@@ -171,6 +179,16 @@ public class HUDDocument : MonoBehaviour
         // HP 바 너비를 퍼센트로 설정
         _hpBarFill.style.width = Length.Percent(ratio * 100f);
         _hpLabel.text = $"{current} / {max}";
+    }
+
+    private void OnStaminaChanged(float current, float max)
+    {
+        if (_staminaBarFill == null || _staminaLabel == null) return;
+
+        float ratio = max > 0f ? current / max : 0f;
+        _staminaBarFill.style.width = Length.Percent(ratio * 100f);
+        // 라벨은 정수로 표시 - dash 중 매 프레임 소수점 출렁임 방지
+        _staminaLabel.text = $"{Mathf.CeilToInt(current)} / {Mathf.CeilToInt(max)}";
     }
 
     private void OnSubwayStarted(StageNode node)

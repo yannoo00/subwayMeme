@@ -13,6 +13,9 @@ public static class PlayerEvents
     public static event Action OnPlayerDied;
     public static event Action<int> OnPlayerDamaged;                // 데미지량
 
+    // 스테미나 변경 (dash 소비 / 자동 회복 시). float로 발행하여 시간 기반 부드러운 변화 표현
+    public static event Action<float, float> OnStaminaChanged;      // 현재, 최대
+
     // 로컬 플레이어 사망 후 관전 모드 진입/대상 전환 시 발행. 대상의 NetworkPlayer 전달
     public static event Action<NetworkPlayer> OnSpectateTargetChanged;
 
@@ -38,7 +41,6 @@ public static class PlayerEvents
     // 로컬 플레이어 액션 - PlayerAnimator가 구독하여 Animator 트리거에 매핑
     // 컨트롤러/전투 컴포넌트가 Animator를 직접 알지 않도록 의도(intent)만 발행
     public static event Action OnAttackPerformed;
-    public static event Action OnDodgePerformed;
 
     // 무기 스위칭 시작 - duration 동안 IsSwitchingWeapon bool 유지 후 false
     // PlayerCombat이 실제 무기 swap을 duration 중간에 수행하고 종료 시 이 이벤트의
@@ -56,6 +58,7 @@ public static class PlayerEvents
     }
 
     public static void HealthChanged(int current, int max) => OnHealthChanged?.Invoke(current, max);
+    public static void StaminaChanged(float current, float max) => OnStaminaChanged?.Invoke(current, max);
     public static void GenePointsChanged(int amount) => OnGenePointsChanged?.Invoke(amount);
     public static void EvolutionPointsChanged(int amount) => OnEvolutionPointsChanged?.Invoke(amount);
     public static void PlayerDied() => OnPlayerDied?.Invoke();
@@ -69,6 +72,5 @@ public static class PlayerEvents
     public static void ReloadFinished() => OnReloadFinished?.Invoke();
     public static void AimStateChanged(bool isAiming, int weaponTypeID) => OnAimStateChanged?.Invoke(isAiming, weaponTypeID);
     public static void AttackPerformed() => OnAttackPerformed?.Invoke();
-    public static void DodgePerformed() => OnDodgePerformed?.Invoke();
     public static void WeaponSwitchStarted(float duration) => OnWeaponSwitchStarted?.Invoke(duration);
 }
