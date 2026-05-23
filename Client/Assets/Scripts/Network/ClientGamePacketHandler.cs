@@ -93,15 +93,49 @@ public static class ClientGamePacketHandler
 
         var pkt = S_Move.Parser.ParseFrom(body);
 
+        // 임시 측정 코드 - 누적 큐잉 진단용 (진단 후 제거)
+        // 패킷별 도착 간격(gap), 1초당 수신율, 최대 gap 측정
+        // 만약 maxGap 이 200ms 를 넘어가면 burst 도착이 일어나는 것 = 큐잉 누적 신호
+        _moveRecvCount++;
+        float now = Time.realtimeSinceStartup;
+        if (_moveRecvLastTime > 0f)
+        {
+            float gap = now - _moveRecvLastTime;
+            if (gap > _moveRecvMaxGap) _moveRecvMaxGap = gap;
+        }
+        _moveRecvLastTime = now;
+
+        if (now - _moveRecvLogTime >= 1f)
+        {
+            UnityEngine.Debug.Log(
+                $"[NETDIAG-RECV] S_Move recv={_moveRecvCount} " +
+                $"rate={_moveRecvCount - _moveRecvLastCount}/s " +
+                $"maxGap={_moveRecvMaxGap * 1000f:F0}ms " +
+                $"time={Time.time:F2}"
+            );
+            _moveRecvLastCount = _moveRecvCount;
+            _moveRecvLogTime   = now;
+            _moveRecvMaxGap    = 0f;
+        }
+
         var np = PlayerRegistry.Instance.Get(pkt.PlayerId);
         if (np == null) return;
 
         np.SetTargetState(
             new UnityEngine.Vector3(pkt.PosX, pkt.PosY, pkt.PosZ),
             pkt.RotY,
-            pkt.IsMoving
+            pkt.Speed,
+            pkt.StrafeX,
+            pkt.StrafeY
         );
     }
+
+    // 임시 측정 변수 - 진단 후 제거
+    private static int   _moveRecvCount     = 0;
+    private static int   _moveRecvLastCount = 0;
+    private static float _moveRecvLogTime   = 0f;
+    private static float _moveRecvLastTime  = 0f;
+    private static float _moveRecvMaxGap    = 0f;
 
     // 다른 플레이어 공격 애니메이션 재생
     public static void Handle_S_Attack(byte[] body)
@@ -114,6 +148,42 @@ public static class ClientGamePacketHandler
         if (np == null) return;
 
         np.TriggerAttackAnim();
+    }
+
+    // === 무기 액션 (Aim / Reload / Switch) ===
+    // 셋 다 동일 패턴: 패킷 파싱 -> 대상 NetworkPlayer 조회 -> 해당 메서드 호출
+
+    public static void Handle_S_Aiming(byte[] body)
+    {
+        if (GameManager.Instance.CurrentState != GameState.Playing) return;
+
+        var pkt = S_Aiming.Parser.ParseFrom(body);
+        var np  = PlayerRegistry.Instance.Get(pkt.PlayerId);
+        if (np == null) return;
+
+        np.OnAiming(pkt.IsAiming, pkt.WeaponTypeId);
+    }
+
+    public static void Handle_S_Reload(byte[] body)
+    {
+        if (GameManager.Instance.CurrentState != GameState.Playing) return;
+
+        var pkt = S_Reload.Parser.ParseFrom(body);
+        var np  = PlayerRegistry.Instance.Get(pkt.PlayerId);
+        if (np == null) return;
+
+        np.OnReload(pkt.Duration);
+    }
+
+    public static void Handle_S_WeaponSwitch(byte[] body)
+    {
+        if (GameManager.Instance.CurrentState != GameState.Playing) return;
+
+        var pkt = S_WeaponSwitch.Parser.ParseFrom(body);
+        var np  = PlayerRegistry.Instance.Get(pkt.PlayerId);
+        if (np == null) return;
+
+        np.OnWeaponSwitch(pkt.Duration, pkt.NewWeaponTypeId);
     }
 
     // 적 스폰 (서버 권위)

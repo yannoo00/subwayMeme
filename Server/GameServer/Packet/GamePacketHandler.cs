@@ -11,21 +11,25 @@ namespace GameServer
 
         static GamePacketHandler()
         {
-            int maxId = (int)GamePacketId.SMutationResult + 1;
+            // C_WEAPON_SWITCH(80) / S_WEAPON_SWITCH(81) 가 최대 ID 라 배열 크기 기준이 됨
+            int maxId = (int)GamePacketId.SWeaponSwitch + 1;
             Handlers = new Action<PacketSession, ArraySegment<byte>>[maxId];
 
-            Handlers[(int)GamePacketId.CEnterGame]  = Handle_C_EnterGame;
-            Handlers[(int)GamePacketId.CReady]       = Handle_C_Ready;
-            Handlers[(int)GamePacketId.CMove]        = Handle_C_Move;
-            Handlers[(int)GamePacketId.CAttack]      = Handle_C_Attack;
+            Handlers[(int)GamePacketId.CEnterGame]    = Handle_C_EnterGame;
+            Handlers[(int)GamePacketId.CReady]        = Handle_C_Ready;
+            Handlers[(int)GamePacketId.CMove]         = Handle_C_Move;
+            Handlers[(int)GamePacketId.CAttack]       = Handle_C_Attack;
+            Handlers[(int)GamePacketId.CAiming]       = Handle_C_Aiming;
+            Handlers[(int)GamePacketId.CReload]       = Handle_C_Reload;
+            Handlers[(int)GamePacketId.CWeaponSwitch] = Handle_C_WeaponSwitch;
             Handlers[(int)GamePacketId.CEnemySpawned] = Handle_C_EnemySpawned;
             Handlers[(int)GamePacketId.CEnemySync]    = Handle_C_EnemySync;
             Handlers[(int)GamePacketId.CEnemyAttack]  = Handle_C_EnemyAttack;
-            Handlers[(int)GamePacketId.CExitSubway]  = Handle_C_ExitSubway;
-            Handlers[(int)GamePacketId.CBoardSubway] = Handle_C_BoardSubway;
-            Handlers[(int)GamePacketId.CSelectRoute] = Handle_C_SelectRoute;
-            Handlers[(int)GamePacketId.CInteract]    = Handle_C_Interact;
-            Handlers[(int)GamePacketId.CMutation]    = Handle_C_Mutation;
+            Handlers[(int)GamePacketId.CExitSubway]   = Handle_C_ExitSubway;
+            Handlers[(int)GamePacketId.CBoardSubway]  = Handle_C_BoardSubway;
+            Handlers[(int)GamePacketId.CSelectRoute]  = Handle_C_SelectRoute;
+            Handlers[(int)GamePacketId.CInteract]     = Handle_C_Interact;
+            Handlers[(int)GamePacketId.CMutation]     = Handle_C_Mutation;
         }
 
         // === 접속/초기화 ===
@@ -34,9 +38,9 @@ namespace GameServer
         {
             var pkt    = C_EnterGame.Parser.ParseFrom(body.Array, body.Offset, body.Count);
             var gs     = (GameSession)session;
-            var player = GameRoom.Instance.Add(gs, pkt.PlayerId, pkt.PlayerName);
+            var player = GameRoom.Instance.Add(gs, pkt.PlayerId, pkt.PlayerName, pkt.CharacterId);
 
-            Console.WriteLine($"[Game] C_EnterGame: playerId={player.PlayerId}, name={player.PlayerName}, isHost={player.IsHost}");
+            Console.WriteLine($"[Game] C_EnterGame: playerId={player.PlayerId}, name={player.PlayerName}, characterId={player.CharacterId}, isHost={player.IsHost}");
 
             // 입장한 본인에게: 역할 + 현재 방 플레이어 목록
             var enterRes = new S_EnterGame { IsHost = player.IsHost };
@@ -74,11 +78,12 @@ namespace GameServer
 
             var relay = new S_Move
             {
-                PlayerId  = player.PlayerId,
-                PosX      = pkt.PosX, PosY = pkt.PosY, PosZ = pkt.PosZ,
-                RotY      = pkt.RotY,
-                IsMoving  = pkt.IsMoving,
-                IsDodging = pkt.IsDodging,
+                PlayerId = player.PlayerId,
+                PosX     = pkt.PosX, PosY = pkt.PosY, PosZ = pkt.PosZ,
+                RotY     = pkt.RotY,
+                Speed    = pkt.Speed,
+                StrafeX  = pkt.StrafeX,
+                StrafeY  = pkt.StrafeY,
             };
             var relayBytes = MakePacket(GamePacketId.SMove, relay);
             foreach (var s in GameRoom.Instance.GetOtherSessions(session.SessionId))
@@ -123,6 +128,59 @@ namespace GameServer
                         s.Send(dmgBytes);
                 }
             }
+        }
+
+        // === 무기 액션 (Aim / Reload / Switch) ===
+        // 전부 단순 broadcast. 본인은 이미 로컬에서 처리했으므로 제외.
+
+        static void Handle_C_Aiming(PacketSession session, ArraySegment<byte> body)
+        {
+            var pkt    = C_Aiming.Parser.ParseFrom(body.Array, body.Offset, body.Count);
+            var player = GameRoom.Instance.Get(session.SessionId);
+            if (player == null) return;
+
+            var relay = new S_Aiming
+            {
+                PlayerId     = player.PlayerId,
+                IsAiming     = pkt.IsAiming,
+                WeaponTypeId = pkt.WeaponTypeId,
+            };
+            var relayBytes = MakePacket(GamePacketId.SAiming, relay);
+            foreach (var s in GameRoom.Instance.GetOtherSessions(session.SessionId))
+                s.Send(relayBytes);
+        }
+
+        static void Handle_C_Reload(PacketSession session, ArraySegment<byte> body)
+        {
+            var pkt    = C_Reload.Parser.ParseFrom(body.Array, body.Offset, body.Count);
+            var player = GameRoom.Instance.Get(session.SessionId);
+            if (player == null) return;
+
+            var relay = new S_Reload
+            {
+                PlayerId = player.PlayerId,
+                Duration = pkt.Duration,
+            };
+            var relayBytes = MakePacket(GamePacketId.SReload, relay);
+            foreach (var s in GameRoom.Instance.GetOtherSessions(session.SessionId))
+                s.Send(relayBytes);
+        }
+
+        static void Handle_C_WeaponSwitch(PacketSession session, ArraySegment<byte> body)
+        {
+            var pkt    = C_WeaponSwitch.Parser.ParseFrom(body.Array, body.Offset, body.Count);
+            var player = GameRoom.Instance.Get(session.SessionId);
+            if (player == null) return;
+
+            var relay = new S_WeaponSwitch
+            {
+                PlayerId        = player.PlayerId,
+                Duration        = pkt.Duration,
+                NewWeaponTypeId = pkt.NewWeaponTypeId,
+            };
+            var relayBytes = MakePacket(GamePacketId.SWeaponSwitch, relay);
+            foreach (var s in GameRoom.Instance.GetOtherSessions(session.SessionId))
+                s.Send(relayBytes);
         }
 
         // === 적 동기화 (호스트만 전송) ===

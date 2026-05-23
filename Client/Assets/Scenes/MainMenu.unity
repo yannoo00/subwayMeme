@@ -577,6 +577,54 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &420753495
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 420753497}
+  - component: {fileID: 420753496}
+  m_Layer: 0
+  m_Name: WeaponeDatabase
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &420753496
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 420753495}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f55dff66b5fd94a2bba414b6a5250661, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponDatabase
+  _weaponPrefabs:
+  - {fileID: 3280494568404297399, guid: 941ee8b3978037d4ab34146b16e82594, type: 3}
+  - {fileID: 3280494568404297399, guid: 23351f9c404d21444860ecbb0764986e, type: 3}
+  - {fileID: 3280494568404297399, guid: 530b3583bae7ec643a81c302d082eee2, type: 3}
+--- !u!4 &420753497
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 420753495}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 4.06413, y: 0.53768, z: -1.79148}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &450499549
 GameObject:
   m_ObjectHideFlags: 0
@@ -882,8 +930,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36b5f438ccc7c49078fca623f0af4eb4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StageManager
-  _mapGenerator: {fileID: 684758301}
-  _exitWaitDuration: 15
   _survivalWaveData: {fileID: 11400000, guid: 2dc379b23ba8544deb01a5cf7ed427a8, type: 2}
   _survivalDuration: 1200
 --- !u!4 &685965957
@@ -1905,3 +1951,4 @@ SceneRoots:
   - {fileID: 181116241}
   - {fileID: 1225738178}
   - {fileID: 450499551}
+  - {fileID: 420753497}

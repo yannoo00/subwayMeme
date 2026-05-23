@@ -50,12 +50,12 @@ namespace GameServer
         // ==== 플레이어 관리 ======================================================
 
         // 입장: 로비 방장(hostPlayerId)이 호스트
-        public GamePlayer Add(GameSession session, int playerId, string playerName)
+        public GamePlayer Add(GameSession session, int playerId, string playerName, int characterId)
         {
             lock (_lock)
             {
                 bool isHost = (playerId == _hostPlayerId);
-                var player  = new GamePlayer(session, playerId, playerName, isHost);
+                var player  = new GamePlayer(session, playerId, playerName, characterId, isHost);
                 _players[session.SessionId] = player;
                 return player;
             }

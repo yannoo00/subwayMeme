@@ -110,6 +110,14 @@ public class PlayerCombat : MonoBehaviour
         _isSwitching = true;
         PlayerEvents.WeaponSwitchStarted(_weaponSwitchDuration);
 
+        // 원격 동기화: duration 동안 IsSwitchingWeapon=true 유지, 종료 시 new_weapon_type_id 로 WeaponTypeID 갱신
+        // weaponTypeID 는 호출부 SwitchToSlot 에서 이미 새 슬롯 무기 타입으로 갱신된 상태
+        NetworkManager.Instance.SendGame(GameProto.GamePacketId.CWeaponSwitch, new GameProto.C_WeaponSwitch
+        {
+            Duration        = _weaponSwitchDuration,
+            NewWeaponTypeId = weaponTypeID,
+        });
+
         yield return new WaitForSeconds(_weaponSwitchDuration);
 
         PerformSwap(slotIndex);
@@ -137,8 +145,16 @@ public class PlayerCombat : MonoBehaviour
         PlayerEvents.ActiveSlotChanged(_activeSlotIndex, _slots[_activeSlotIndex]?.weaponData);
 
         // 조준 중 무기 교체 시 새 weaponTypeID를 Animator에 즉시 동기화
+        // 원격 측에도 새 weaponType 으로 WeaponSocket 모델을 갈아끼우도록 Aim 패킷 재발행
         if (_isAiming && ActiveWeapon != null)
+        {
             PlayerEvents.AimStateChanged(_isAiming, weaponTypeID);
+            NetworkManager.Instance.SendGame(GameProto.GamePacketId.CAiming, new GameProto.C_Aiming
+            {
+                IsAiming     = _isAiming,
+                WeaponTypeId = weaponTypeID,
+            });
+        }
     }
 
 
@@ -156,6 +172,13 @@ public class PlayerCombat : MonoBehaviour
         if (_isAiming == isAiming) return;
         _isAiming = isAiming;
         PlayerEvents.AimStateChanged(_isAiming, weaponTypeID);
+
+        // 원격 플레이어 동기화 - is_aiming=true 시 weaponType 으로 WeaponSocket 모델 생성, false 시 디스폰
+        NetworkManager.Instance.SendGame(GameProto.GamePacketId.CAiming, new GameProto.C_Aiming
+        {
+            IsAiming     = _isAiming,
+            WeaponTypeId = weaponTypeID,
+        });
 
         // 조준 중에만 무기 모델 노출. 빈 슬롯이면 null이라 호출 자체 스킵
         ActiveWeapon?.SetVisible(_isAiming);

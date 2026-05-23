@@ -240,10 +240,10 @@ public class PlayerRegistry : MonoBehaviour
         DontDestroyOnLoad(obj);
 
         var np = obj.GetComponent<NetworkPlayer>();
-        np.Init(info.PlayerId, info.PlayerName);
+        np.Init(info.PlayerId, info.PlayerName, info.CharacterId);
         _remotePlayers[info.PlayerId] = np;
 
-        Debug.Log($"[PlayerRegistry] 원격 플레이어 스폰: {info.PlayerName} (id={info.PlayerId})");
+        Debug.Log($"[PlayerRegistry] 원격 플레이어 스폰: {info.PlayerName} (id={info.PlayerId}, characterId={info.CharacterId})");
     }
 
     private Vector3 FindSpawnPosition()

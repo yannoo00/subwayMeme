@@ -2,6 +2,7 @@ using System;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
 using UnityEngine;
 
 
@@ -46,7 +47,7 @@ public class ServerSession : MonoBehaviour
 
             _cts    = new CancellationTokenSource();
             _client = new TcpClient();
-
+            _client.NoDelay = true; 
             await _client.ConnectAsync(host, port);
             _stream = _client.GetStream();
 

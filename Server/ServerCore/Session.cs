@@ -35,7 +35,7 @@ namespace ServerCore
         {
             SessionId = Interlocked.Increment(ref _nextId);
             _socket   = socket;
-
+            _socket.NoDelay = true; // Nagle 알고리즘 끔 (지연 시간 감소)
             //EventHandler<TEventArgs>(object sender, TEventArgs e);        
             _recvArgs.Completed += new EventHandler<SocketAsyncEventArgs>(OnRecvCompleted);
             _sendArgs.Completed += new EventHandler<SocketAsyncEventArgs>(OnSendCompleted);

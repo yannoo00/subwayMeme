@@ -132,7 +132,7 @@ public class PlayerStats: MonoBehaviour, IDamageable
         PlayerEvents.HealthChanged(_currentHealth, MaxHealth);
     }
 
-
+ 
 
     public void TakeDamage(int damage)
     {

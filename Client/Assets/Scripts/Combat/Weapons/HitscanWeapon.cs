@@ -112,6 +112,13 @@ public class HitscanWeapon : WeaponBase
 
         _reloadEndTime = Time.time + Data.reloadTime;
         PlayerEvents.ReloadStarted(Data.reloadTime);
+
+        // 원격 동기화: duration 동안 IsReloading=true 유지 후 자동 false
+        // Equip 시점의 ReloadStarted 재발행(슬롯 복귀)은 HUD 진행률 복구용이라 네트워크 송신하지 않음
+        NetworkManager.Instance.SendGame(GameProto.GamePacketId.CReload, new GameProto.C_Reload
+        {
+            Duration = Data.reloadTime,
+        });
     }
 
 

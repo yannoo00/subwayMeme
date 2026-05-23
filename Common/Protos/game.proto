@@ -36,6 +36,12 @@ enum GamePacketId {
   S_PLAYER_DAMAGED   = 34;
   S_PLAYER_DIED      = 35;
 
+  // --- 무기 액션 (Aim / Reload / Switch) ---
+  C_AIMING           = 36;
+  S_AIMING           = 37;
+  C_RELOAD           = 38;
+  S_RELOAD           = 39;
+
   // --- 적 동기화 (호스트 AI, 서버 릴레이 / HP는 서버 권위) ---
   S_ENEMY_SPAWN      = 40;
   C_ENEMY_SYNC       = 41;
@@ -62,6 +68,10 @@ enum GamePacketId {
   S_INTERACT_RESULT  = 71;
   C_MUTATION         = 72;
   S_MUTATION_RESULT  = 73;
+
+  // --- 무기 스왑 (전투 섹션 36-39 가 꽉 차서 별도 범위에 배치) ---
+  C_WEAPON_SWITCH    = 80;
+  S_WEAPON_SWITCH    = 81;
 }
 
 // ===================================================
@@ -69,9 +79,10 @@ enum GamePacketId {
 // ===================================================
 
 message GamePlayerInfo {
-  int32  player_id   = 1;
-  string player_name = 2;
-  bool   is_host     = 3;
+  int32  player_id    = 1;
+  string player_name  = 2;
+  bool   is_host      = 3;
+  int32  character_id = 4;
 }
 
 message EnemySyncData {
@@ -90,8 +101,9 @@ message EnemySyncData {
 
 // 클라 -> 서버: 게임서버 접속 (로비에서 받은 ID 사용)
 message C_EnterGame {
-  int32  player_id   = 1;
-  string player_name = 2;
+  int32  player_id    = 1;
+  string player_name  = 2;
+  int32  character_id = 3;
 }
 
 // 서버 -> 클라: 접속 수락 + 현재 플레이어 목록
@@ -145,9 +157,10 @@ message C_Move {
   float pos_x      = 1;
   float pos_y      = 2;
   float pos_z      = 3;
-  float rot_y      = 4;   // PlayerModel 수평 회전
-  bool  is_moving  = 5;
-  bool  is_dodging = 6;
+  float rot_y      = 4;
+  float speed      = 5;
+  float strafeX    = 6;
+  float strafeY    = 7;
 }
 
 // 서버 -> 클라: 다른 플레이어 위치 브로드캐스트
@@ -157,13 +170,43 @@ message S_Move {
   float pos_y      = 3;
   float pos_z      = 4;
   float rot_y      = 5;
-  bool  is_moving  = 6;
-  bool  is_dodging = 7;
+  float speed      = 6;
+  float strafeX    = 7;
+  float strafeY    = 8;
 }
 
 // ===================================================
 //  4. 전투 (클라 보고 + 서버 검증)
 // ===================================================
+
+
+// ===================================================
+//  무기 액션 (Aim / Reload / Switch)
+// ===================================================
+
+// 조준 상태 토글 알림.
+// is_aiming=true 일 때 weapon_type_id 가 의미 있음 (원격 WeaponSocket 에 모델 인스턴시에이션용).
+// is_aiming=false 일 때는 무기 모델 디스폰.
+message C_Aiming {
+  bool  isAiming       = 1;
+  int32 weapon_type_id = 2;
+}
+
+message S_Aiming {
+  int32 player_id      = 1;
+  bool  isAiming       = 2;
+  int32 weapon_type_id = 3;
+}
+
+// 재장전 시작 알림. 원격 측은 duration 동안 IsReloading=true 유지 후 자동 false.
+message C_Reload {
+  float duration = 1;
+}
+
+message S_Reload {
+  int32 player_id = 1;
+  float duration  = 2;
+}
 
 // 클라 -> 서버: 공격 입력 + 히트 대상 보고
 message C_Attack {
@@ -343,4 +386,22 @@ message C_Mutation {
 message S_MutationResult {
   int32      player_id   = 1;
   MutationId mutation_id = 2;
+}
+
+// ===================================================
+//  9. 무기 스왑
+// ===================================================
+
+// 무기 스위칭 시작 알림.
+// duration 동안 IsSwitchingWeapon=true 유지, 종료 시 new_weapon_type_id 로 WeaponTypeID 갱신.
+// 조준 중 스위칭이면 다음 Aim 패킷에서 갱신값이 다시 흘러오니, 종료 시점 갱신만으로 충분.
+message C_WeaponSwitch {
+  float duration           = 1;
+  int32 new_weapon_type_id = 2;
+}
+
+message S_WeaponSwitch {
+  int32 player_id          = 1;
+  float duration           = 2;
+  int32 new_weapon_type_id = 3;
 }

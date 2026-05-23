@@ -88,8 +88,10 @@ public class NetworkManager : MonoBehaviour
 
         SendGame(GamePacketId.CEnterGame, new C_EnterGame
         {
-            PlayerId   = MyPlayerId,
-            PlayerName = MyPlayerName,
+            PlayerId    = MyPlayerId,
+            PlayerName  = MyPlayerName,
+            // 다른 플레이어들이 내 모델을 올바르게 인스턴시에이션할 수 있도록 동봉
+            CharacterId = GameManager.Instance.SelectedCharacterId,
         });
     }
 
@@ -127,6 +129,9 @@ public class NetworkManager : MonoBehaviour
         game.Register((ushort)GamePacketId.SGameStart,     ClientGamePacketHandler.Handle_S_GameStart);
         game.Register((ushort)GamePacketId.SMove,          ClientGamePacketHandler.Handle_S_Move);
         game.Register((ushort)GamePacketId.SAttack,        ClientGamePacketHandler.Handle_S_Attack);
+        game.Register((ushort)GamePacketId.SAiming,        ClientGamePacketHandler.Handle_S_Aiming);
+        game.Register((ushort)GamePacketId.SReload,        ClientGamePacketHandler.Handle_S_Reload);
+        game.Register((ushort)GamePacketId.SWeaponSwitch,  ClientGamePacketHandler.Handle_S_WeaponSwitch);
         game.Register((ushort)GamePacketId.SEnemySpawn,    ClientGamePacketHandler.Handle_S_EnemySpawn);
         game.Register((ushort)GamePacketId.SEnemySync,     ClientGamePacketHandler.Handle_S_EnemySync);
         game.Register((ushort)GamePacketId.SEnemyDamaged,  ClientGamePacketHandler.Handle_S_EnemyDamaged);

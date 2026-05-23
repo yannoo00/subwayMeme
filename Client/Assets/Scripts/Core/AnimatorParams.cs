@@ -5,7 +5,8 @@ using UnityEngine;
 // StringToHash는 앱 시작 시 1회만 계산되므로 매 프레임 문자열 변환보다 성능상 유리
 public static class AnimatorParams
 {
-    // 로컬 플레이어 이동 - Speed Blend Tree 입력 (0=idle, 1=walk, 2=dash)
+    // 플레이어 이동 - Speed Blend Tree 입력 (0=idle, 1=walk, 2=dash)
+    // 로컬/원격 모두 사용 (S_Move 패킷의 Speed 필드를 NetworkPlayer가 그대로 전달)
     public static readonly int Speed             = Animator.StringToHash("Speed");
     // 조준 중 스트레이프 Blend Tree 입력 (-1~1). 비조준 시에는 0으로 수렴
     public static readonly int StrafeX           = Animator.StringToHash("StrafeX");
@@ -17,9 +18,7 @@ public static class AnimatorParams
     public static readonly int IsSwitchingWeapon = Animator.StringToHash("IsSwitchingWeapon");
     public static readonly int IsAiming          = Animator.StringToHash("IsAiming");
 
-    // NetworkPlayer 원격 동기화용 - 로컬 플레이어는 Speed 사용 -> 이것도 수정 필요함. 원격의 속도도 동기화.
-    // 서버 C_Move 패킷이 IsMoving bool만 전달하므로 원격 측은 단순 토글 유지
-    // 패킷에 Speed/Strafe 추가 협의 후 NetworkPlayer 마이그레이션 가능
+    // 적(Enemy) 전용 토글 - EnemyAnimator 가 Idle/Move 상태 전환에 사용
     public static readonly int IsMoving          = Animator.StringToHash("IsMoving");
     public static readonly int WeaponTypeID      = Animator.StringToHash("WeaponTypeID");
 }
