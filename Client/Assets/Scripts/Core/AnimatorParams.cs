@@ -20,5 +20,6 @@ public static class AnimatorParams
 
     // 적(Enemy) 전용 토글 - EnemyAnimator 가 Idle/Move 상태 전환에 사용
     public static readonly int IsMoving          = Animator.StringToHash("IsMoving");
+    public static readonly int Hit              = Animator.StringToHash("Hit");   
     public static readonly int WeaponTypeID      = Animator.StringToHash("WeaponTypeID");
 }

@@ -11,6 +11,15 @@
 */
 
 
+.damage-vignette {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    -unity-background-image-tint-color: rgba(255, 0, 0, 0);
+}
+
 .hud-root {
     position: absolute;
     width: 100%;

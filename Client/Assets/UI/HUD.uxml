@@ -52,4 +52,5 @@
             <ui:Label name="result-title" text="GAME CLEAR" class="result-title"/>
         </ui:VisualElement>
     </ui:VisualElement>
+    <ui:VisualElement name="damage-vignette" picking-mode="Ignore" class="damage-vignette"/>
 </ui:UXML>

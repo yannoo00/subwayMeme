@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -55,6 +56,12 @@ public class HUDDocument : MonoBehaviour
     private VisualElement _spectatorPanel;
     private Label         _spectatorTarget;
 
+    // 피격 비네트
+    private VisualElement _damageVignette;
+    private Coroutine     _vignetteCoroutine;
+    private const float   VIGNETTE_FLASH_ALPHA = 0.55f;
+    private const float   VIGNETTE_FADE_DURATION = 0.7f;
+
     // 재장전 진행률 추적용
     private bool  _isReloading;
     private float _reloadStartTime;
@@ -73,6 +80,7 @@ public class HUDDocument : MonoBehaviour
     {
         BindUI();
 
+        PlayerEvents.OnPlayerDamaged      += OnPlayerDamaged;
         PlayerEvents.OnHealthChanged      += OnHealthChanged;
         PlayerEvents.OnStaminaChanged     += OnStaminaChanged;
         PlayerEvents.OnWeaponSlotChanged  += OnWeaponSlotChanged;
@@ -93,6 +101,7 @@ public class HUDDocument : MonoBehaviour
 
     private void OnDisable()
     {
+        PlayerEvents.OnPlayerDamaged      -= OnPlayerDamaged;
         PlayerEvents.OnHealthChanged      -= OnHealthChanged;
         PlayerEvents.OnStaminaChanged     -= OnStaminaChanged;
         PlayerEvents.OnWeaponSlotChanged  -= OnWeaponSlotChanged;
@@ -159,6 +168,10 @@ public class HUDDocument : MonoBehaviour
 
         _crosshair = root.Q<VisualElement>("crosshair");
         SetHidden(_crosshair, true);
+
+        _damageVignette = root.Q<VisualElement>("damage-vignette");
+        _damageVignette.style.backgroundImage = new StyleBackground(BuildVignetteSprite(256));
+        _damageVignette.style.unityBackgroundImageTintColor = new StyleColor(new Color(1f, 0f, 0f, 0f));
 
         _resultPanel = root.Q<VisualElement>("game-result-panel");
         _resultTitle = root.Q<Label>("result-title");
@@ -337,6 +350,61 @@ public class HUDDocument : MonoBehaviour
     private void OnAimStateChanged(bool isAiming, int weaponTypeID)
     {
         SetHidden(_crosshair, !isAiming);
+    }
+
+
+    // === 피격 비네트 ===
+
+    private void OnPlayerDamaged(int _)
+    {
+        if (_vignetteCoroutine != null) StopCoroutine(_vignetteCoroutine);
+        _vignetteCoroutine = StartCoroutine(VignetteFlash());
+    }
+
+    private IEnumerator VignetteFlash()
+    {
+        SetVignetteAlpha(VIGNETTE_FLASH_ALPHA);
+
+        float elapsed = 0f;
+        while (elapsed < VIGNETTE_FADE_DURATION)
+        {
+            elapsed += Time.deltaTime;
+            float t     = elapsed / VIGNETTE_FADE_DURATION;
+            float alpha = Mathf.Lerp(VIGNETTE_FLASH_ALPHA, 0f, t * t);
+            SetVignetteAlpha(alpha);
+            yield return null;
+        }
+
+        SetVignetteAlpha(0f);
+        _vignetteCoroutine = null;
+    }
+
+    private void SetVignetteAlpha(float alpha)
+    {
+        if (_damageVignette == null) return;
+        _damageVignette.style.unityBackgroundImageTintColor = new StyleColor(new Color(1f, 0f, 0f, alpha));
+    }
+
+    // 중앙 투명 → 테두리 불투명 방사형 그라디언트 텍스처 런타임 생성
+    private static Sprite BuildVignetteSprite(int size)
+    {
+        var tex    = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        var center = new Vector2(size * 0.5f, size * 0.5f);
+        float r    = size * 0.5f;
+
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float dist  = Vector2.Distance(new Vector2(x, y), center) / r;
+                float alpha = Mathf.Clamp01((dist - 0.3f) / 0.7f);
+                alpha       = alpha * alpha;
+                tex.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+            }
+        }
+
+        tex.Apply();
+        return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
     }
 
 

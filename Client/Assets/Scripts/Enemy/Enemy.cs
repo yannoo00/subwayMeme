@@ -55,6 +55,8 @@ public abstract class Enemy : MonoBehaviour, IDamageable
         _currentHealth = Mathf.Max(_currentHealth, 0);
         Debug.Log($"[Enemy] {gameObject.name} 피격! HP: {_currentHealth}/{_data.maxHealth}");
 
+        _anim?.PlayHit();
+
         if (!IsAlive)
             Die();
     }
@@ -65,7 +67,11 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     {
         if (!IsAlive) return;
 
+        bool damaged = currentHp < _currentHealth;
         _currentHealth = currentHp;
+
+        if (damaged)
+            _anim?.PlayHit();
 
         if (!IsAlive)
             Die();
