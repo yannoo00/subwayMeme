@@ -181,11 +181,11 @@ public class NetworkPlayer : MonoBehaviour
     private void Update()
     {
         // 위치: 50ms 주기 패킷 사이에 자연스럽게 도달하는 속도
-        transform.position = Vector3.Lerp(transform.position, _targetPos, 30f * Time.deltaTime);
+        transform.position = Vector3.Lerp(transform.position, _targetPos, 15f * Time.deltaTime);
 
         // 회전: PlayerModel만 회전 (PlayerRoot는 카메라와 공유하지 않으므로 여기선 동일)
         Quaternion targetRot = Quaternion.Euler(0f, _targetRotY, 0f);
-        _modelTransform.rotation = Quaternion.Slerp(_modelTransform.rotation, targetRot, 30f * Time.deltaTime);
+        _modelTransform.rotation = Quaternion.Slerp(_modelTransform.rotation, targetRot, 15f * Time.deltaTime);
 
         // 애니메이션 Blend Tree 입력 - PlayerAnimator 와 동일한 SetFloat damping 사용
         if (_animator != null)

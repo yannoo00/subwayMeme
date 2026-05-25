@@ -202,15 +202,6 @@ public class PlayerController : MonoBehaviour
             StrafeY = MoveInput.y,
         });
 
-        // 임시 측정 코드 - 누적 큐잉 진단용 (진단 후 제거)
-        _moveSentCount++;
-        if (Time.time - _moveSentLogTime >= 1f)
-        {
-            Debug.Log($"[NETDIAG-SEND] C_Move sent={_moveSentCount} rate={_moveSentCount - _moveSentLastCount}/s time={Time.time:F2}");
-            _moveSentLastCount = _moveSentCount;
-            _moveSentLogTime   = Time.time;
-        }
-
         _lastSentPos     = transform.position;
         _lastSentRotY    = rotY;
         _lastSentSpeed   = NormalizedSpeed;
@@ -219,8 +210,4 @@ public class PlayerController : MonoBehaviour
         _lastSendTime    = Time.time;
     }
 
-    // 임시 측정 변수 - 진단 후 제거
-    private static int   _moveSentCount     = 0;
-    private static int   _moveSentLastCount = 0;
-    private static float _moveSentLogTime   = 0f;
 }

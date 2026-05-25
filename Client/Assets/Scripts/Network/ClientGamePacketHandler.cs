@@ -93,31 +93,6 @@ public static class ClientGamePacketHandler
 
         var pkt = S_Move.Parser.ParseFrom(body);
 
-        // 임시 측정 코드 - 누적 큐잉 진단용 (진단 후 제거)
-        // 패킷별 도착 간격(gap), 1초당 수신율, 최대 gap 측정
-        // 만약 maxGap 이 200ms 를 넘어가면 burst 도착이 일어나는 것 = 큐잉 누적 신호
-        _moveRecvCount++;
-        float now = Time.realtimeSinceStartup;
-        if (_moveRecvLastTime > 0f)
-        {
-            float gap = now - _moveRecvLastTime;
-            if (gap > _moveRecvMaxGap) _moveRecvMaxGap = gap;
-        }
-        _moveRecvLastTime = now;
-
-        if (now - _moveRecvLogTime >= 1f)
-        {
-            UnityEngine.Debug.Log(
-                $"[NETDIAG-RECV] S_Move recv={_moveRecvCount} " +
-                $"rate={_moveRecvCount - _moveRecvLastCount}/s " +
-                $"maxGap={_moveRecvMaxGap * 1000f:F0}ms " +
-                $"time={Time.time:F2}"
-            );
-            _moveRecvLastCount = _moveRecvCount;
-            _moveRecvLogTime   = now;
-            _moveRecvMaxGap    = 0f;
-        }
-
         var np = PlayerRegistry.Instance.Get(pkt.PlayerId);
         if (np == null) return;
 
@@ -129,13 +104,6 @@ public static class ClientGamePacketHandler
             pkt.StrafeY
         );
     }
-
-    // 임시 측정 변수 - 진단 후 제거
-    private static int   _moveRecvCount     = 0;
-    private static int   _moveRecvLastCount = 0;
-    private static float _moveRecvLogTime   = 0f;
-    private static float _moveRecvLastTime  = 0f;
-    private static float _moveRecvMaxGap    = 0f;
 
     // 다른 플레이어 공격 애니메이션 재생
     public static void Handle_S_Attack(byte[] body)

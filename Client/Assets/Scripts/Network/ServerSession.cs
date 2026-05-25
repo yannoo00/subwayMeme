@@ -2,13 +2,11 @@ using System;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Concurrent;
 using System.Xml;
 using UnityEngine;
 
-
-
-
-public class ServerSession : MonoBehaviour 
+public class ServerSession : MonoBehaviour
 {
 
     public static ServerSession Instance {get; private set;}
@@ -16,6 +14,7 @@ public class ServerSession : MonoBehaviour
     private TcpClient _client;
     private NetworkStream _stream;
     private CancellationTokenSource _cts;
+    private ConcurrentQueue<(ushort packetId, byte[] body)> _receiveQueue = new();
 
     private const int HEADER_SIZE = 4;
 
@@ -29,6 +28,14 @@ public class ServerSession : MonoBehaviour
         else
         {
             Destroy(gameObject);
+        }
+    }
+
+    private void Update()
+    {
+        while (_receiveQueue.TryDequeue(out var packet))
+        {
+            NetworkManager.Instance.CurrentDispatcher.Dispatch(packet.packetId, packet.body);
         }
     }
 
@@ -48,7 +55,7 @@ public class ServerSession : MonoBehaviour
             _cts    = new CancellationTokenSource();
             _client = new TcpClient();
             _client.NoDelay = true; 
-            await _client.ConnectAsync(host, port);
+            await _client.ConnectAsync(host, port).ConfigureAwait(false);
             _stream = _client.GetStream();
 
             Debug.Log($"[ServerSession] 접속 성공: {host}:{port}");
@@ -76,7 +83,7 @@ public class ServerSession : MonoBehaviour
     public void Send(byte[] data)
     {
         if (_stream == null || !_client.Connected) return;
-        _ = _stream.WriteAsync(data, 0, data.Length);
+        _ = _stream.WriteAsync(data, 0, data.Length).ConfigureAwait(false);
     }
 
     // === Private 메서드 ===
@@ -88,7 +95,7 @@ public class ServerSession : MonoBehaviour
             while (!ct.IsCancellationRequested)
             {
                 // 1단계: 헤더 4바이트를 정확히 읽기
-                byte[] header = await ReadExactAsync(HEADER_SIZE, ct);
+                byte[] header = await ReadExactAsync(HEADER_SIZE, ct).ConfigureAwait(false);
 
                 // 2단계: 헤더 파싱 (서버와 동일하게 LittleEndian)
                 ushort totalSize = BitConverter.ToUInt16(header, 0);
@@ -97,11 +104,11 @@ public class ServerSession : MonoBehaviour
                 // 3단계: body 읽기 (전체 크기 - 헤더 크기)
                 int    bodySize = totalSize - HEADER_SIZE;
                 byte[] body     = bodySize > 0
-                    ? await ReadExactAsync(bodySize, ct)
+                    ? await ReadExactAsync(bodySize, ct).ConfigureAwait(false)
                     : Array.Empty<byte>();
 
-                // 4단계: 현재 연결 대상(로비/게임)의 디스패처로 전달
-                NetworkManager.Instance.CurrentDispatcher.Dispatch(packetId, body);
+                // 4단계: 큐에 패킷 추가 (메인스레드에서 처리)
+                _receiveQueue.Enqueue((packetId, body));
             }
         }
         catch (OperationCanceledException)
@@ -124,7 +131,7 @@ public class ServerSession : MonoBehaviour
 
         while (received < count)
         {
-            int read = await _stream.ReadAsync(buffer, received, count - received, ct);
+            int read = await _stream.ReadAsync(buffer, received, count - received, ct).ConfigureAwait(false);
 
             // read == 0 이면 서버가 연결을 끊은 것
             if (read == 0) throw new Exception("서버 연결 종료");
