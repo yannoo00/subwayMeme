@@ -6,7 +6,6 @@ using UnityEngine.SceneManagement;
 [System.Serializable]
 public struct EnemyPrefabEntry
 {
-    public string typeName;   // game.proto의 enemy_type 값과 일치 (EnemyData 이름)
     public GameObject prefab;
 }
 
@@ -171,13 +170,13 @@ public class SpawnManager : MonoBehaviour
         Vector3 pos = GetSpawnPosition();
         NetworkManager.Instance.SendGame(GameProto.GamePacketId.CEnemySpawned, new GameProto.C_EnemySpawned
         {
-            EnemyType = enemyComp.Data.enemyName,
+            EnemyType = enemyComp.Data.enemyType,
             PosX = pos.x,
             PosY = pos.y,
             PosZ = pos.z,
             MaxHp = enemyComp.Data.maxHealth
         });
-        Debug.Log($"[SpawnManager] C_EnemySpawned 전송 - type: {enemyComp.Data.enemyName}, pos: {pos}");
+        Debug.Log($"[SpawnManager] C_EnemySpawned 전송 - type: {enemyComp.Data.enemyType}, pos: {pos}");
     }
 
 
@@ -188,7 +187,8 @@ public class SpawnManager : MonoBehaviour
         GameObject prefab = null;
         foreach (var entry in _enemyPrefabs)
         {
-            if (entry.typeName == enemyType)
+            var data = entry.prefab?.GetComponent<Enemy>()?.Data;
+            if (data != null && data.enemyType == enemyType)
             {
                 prefab = entry.prefab;
                 break;

@@ -6,7 +6,7 @@ public enum EnemyGrade { Normal, Elite, Boss }
 public class EnemyData : ScriptableObject
 {
     [Header("기본 스탯")]
-    public string   enemyName;
+    public string   enemyType;
     public int      maxHealth;
     public float    moveSpeed;
     public float    detectionRange;

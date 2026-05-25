@@ -60,6 +60,7 @@
             <ui:VisualElement class="char-select-content">
                 <ui:ScrollView name="char-select-grid" class="char-select-grid" />
                 <ui:VisualElement name="char-select-detail" class="char-select-detail">
+                    <ui:VisualElement name="char-preview" class="char-preview"/>
                     <ui:Label name="char-detail-name"  text="캐릭터를 선택하세요" class="char-detail-name" />
                     <ui:Label name="char-detail-stats" text=""                  class="char-detail-stats" />
                     <ui:Label name="char-detail-desc"  text=""                  class="char-detail-desc" />

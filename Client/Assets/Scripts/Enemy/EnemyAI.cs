@@ -10,7 +10,7 @@ public abstract class EnemyAI : MonoBehaviour
     public enum State { Idle, Chase, Attack, Dead }
 
     [Header("Death")]
-    [SerializeField] private float _destroyDelay = 2f;
+    private float _destroyDelay = 2f;
 
     protected Enemy     _enemy;
     protected Transform _player;

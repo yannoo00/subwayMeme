@@ -29,7 +29,7 @@ public class EnemyAI_generatorChase : EnemyAI
 
         float distance       = Vector3.Distance(transform.position, target.position);
         float attackRange    = _enemy?.Data?.attackRange    ?? 2f;
-        float detectionRange = _enemy?.Data?.detectionRange ?? 10f;
+        float detectionRange = _enemy?.Data?.detectionRange ?? 1000f;
 
         if (distance <= attackRange)
             SetState(State.Attack);

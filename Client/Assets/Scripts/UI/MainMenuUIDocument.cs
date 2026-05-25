@@ -17,6 +17,9 @@ public class MainMenuUIDocument : MonoBehaviour
     [Header("Style")]
     [SerializeField] private StyleSheet _styleSheet;
 
+    [Header("Character Preview")]
+    [SerializeField] private CharacterPreviewRenderer _previewRenderer;
+
     // === Private 변수 ===
 
     private UIDocument _document;
@@ -66,6 +69,9 @@ public class MainMenuUIDocument : MonoBehaviour
     private readonly Dictionary<int, PlayerEntry> _playerEntries = new();
     private int  _maxPlayers;
     private bool _isRoomCreator;
+
+    // 캐릭터 미리보기
+    private VisualElement _charPreview;
 
     // 캐릭터 선택 모달 상태
     private ScrollView   _charSelectGrid;
@@ -135,6 +141,13 @@ public class MainMenuUIDocument : MonoBehaviour
         _charDetailDesc          = root.Q<Label>("char-detail-desc");
         _charSelectCancelButton  = root.Q<Button>("char-select-cancel");
         _charSelectConfirmButton = root.Q<Button>("char-select-confirm");
+
+        _charPreview = root.Q<VisualElement>("char-preview");
+        if (_previewRenderer != null && _charPreview != null)
+        {
+            _charPreview.style.backgroundImage = new StyleBackground(
+                Background.FromRenderTexture(_previewRenderer.PreviewTexture));
+        }
 
         _playButton    = root.Q<Button>("play-button");
         _upgradeButton = root.Q<Button>("upgrade-button");
@@ -698,6 +711,7 @@ public class MainMenuUIDocument : MonoBehaviour
         if (_characterSelectModal == null) return;
         _characterSelectModal.style.display = DisplayStyle.None;
         _focusedCharacterCard = null;
+        _previewRenderer?.ClearPreview();
     }
 
     private void BuildCharacterSelectGrid()
@@ -762,6 +776,7 @@ public class MainMenuUIDocument : MonoBehaviour
             _charDetailStats.text = "";
             _charDetailDesc.text  = "";
             _charSelectConfirmButton?.SetEnabled(false);
+            _previewRenderer?.ClearPreview();
             return;
         }
 
@@ -769,6 +784,7 @@ public class MainMenuUIDocument : MonoBehaviour
         _charDetailStats.text = $"체력 {def.baseMaxHealth}\n공격 +{def.baseAttackPower * 100f:0}%\n이속 {def.baseMoveSpeed}\n닷지 쿨타임 {def.baseDodgeCooldown:0.0}s";
         _charDetailDesc.text  = def.description;
         _charSelectConfirmButton?.SetEnabled(true);
+        _previewRenderer?.Preview(def);
     }
 
     private void OnCharacterSelectCancel()

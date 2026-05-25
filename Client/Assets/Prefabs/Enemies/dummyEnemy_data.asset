@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 123148df8e9bc4b489700342e07956df, type: 3}
-  m_Name: Enemy_basic
+  m_Name: dummyEnemy_data
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
-  enemyName: Enemy Temp
+  enemyType: dummyEnemy
   maxHealth: 100
   moveSpeed: 1
-  detectionRange: 10
+  detectionRange: 1000
   attackRange: 1
   attackDamage: 10
   attackCooldown: 1

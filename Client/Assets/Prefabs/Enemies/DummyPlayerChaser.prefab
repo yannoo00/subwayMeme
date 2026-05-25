@@ -15,9 +15,9 @@ GameObject:
   - component: {fileID: 6180712365200795820}
   - component: {fileID: 6515752726692789728}
   - component: {fileID: 5690913461387829479}
-  - component: {fileID: 8443738607767013233}
+  - component: {fileID: 5006728266105476166}
   m_Layer: 3
-  m_Name: DummyGeneratorChaser
+  m_Name: DummyPlayerChaser
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -72,7 +72,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 271758d5ebed60a489bd3db445da9ecf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy_basic
-  _data: {fileID: 11400000, guid: 810aa4bbb6feb494aa86088590d96729, type: 2}
+  _data: {fileID: 11400000, guid: abb70a9fbfb4c4512a7a6356a0f7e7e8, type: 2}
 --- !u!114 &6233799516305193640
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -131,7 +131,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d1c78413184ead4429a4ef79fc2a5f9b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAnimator
---- !u!114 &8443738607767013233
+--- !u!114 &5006728266105476166
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -140,9 +140,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1155741758266991740}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f6e69a431d63e41d6936dcc1da68cb58, type: 3}
+  m_Script: {fileID: 11500000, guid: fec1a9118593348d6b76d8ade072654c, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyAI_generatorChase
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyAI_playerChase
 --- !u!1 &2852234379681664132
 GameObject:
   m_ObjectHideFlags: 0
@@ -186,7 +186,7 @@ PrefabInstance:
     - target: {fileID: 1216688472153998210, guid: 06cb2b131fe009c47a523671a8fa9ed8, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: 49e3280bed4ae4e0bbea1c19ad75cfc6, type: 2}
+      objectReference: {fileID: 2100000, guid: 7a3444d4ecf2f47239100943f12e05e8, type: 2}
     - target: {fileID: 4803014352389650695, guid: 06cb2b131fe009c47a523671a8fa9ed8, type: 3}
       propertyPath: m_Name
       value: Zombie3
