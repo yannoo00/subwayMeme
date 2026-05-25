@@ -40,13 +40,13 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2883969543521585641}
-  - component: {fileID: 7662188487124252308}
   - component: {fileID: 5078477591560159313}
   - component: {fileID: 3086233706806265516}
   - component: {fileID: 8785083106981924590}
   - component: {fileID: -1993232360266286341}
   - component: {fileID: 5355109757149039173}
   - component: {fileID: -907305794087183155}
+  - component: {fileID: 4698195448523632651}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -71,29 +71,6 @@ Transform:
   - {fileID: 6821767959779767583}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!136 &7662188487124252308
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5126966563392139953}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &5078477591560159313
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -110,9 +87,6 @@ MonoBehaviour:
   _dashMultiplier: 2
   _playerModel: {fileID: 6821767959779767583}
   _rotationSpeed: 15
-  _dodgeDistance: 4
-  _dodgeDuration: 0.25
-  _dodgeCooldown: 1.5
 --- !u!114 &3086233706806265516
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -153,6 +127,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
   _baseMaxHealth: 100
+  _baseMaxStamina: 100
+  _staminaDrainPerSec: 25
+  _staminaRegenPerSec: 15
+  _staminaRegenDelay: 1
+  _staminaRecoveryThreshold: 0.3
 --- !u!114 &5355109757149039173
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -166,6 +145,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCharacterBinder
   _modelHolder: {fileID: 6821767959779767583}
+  _autoBindOnAwake: 1
 --- !u!114 &-907305794087183155
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -178,6 +158,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f8d6b2586ebac947b74630494e79ca8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAnimator
+--- !u!143 &4698195448523632651
+CharacterController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5126966563392139953}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Height: 2
+  m_Radius: 0.5
+  m_SlopeLimit: 45
+  m_StepOffset: 0.3
+  m_SkinWidth: 0.08
+  m_MinMoveDistance: 0.001
+  m_Center: {x: 0, y: 1, z: 0}
 --- !u!1 &6314813885598643899
 GameObject:
   m_ObjectHideFlags: 0

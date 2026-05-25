@@ -15,8 +15,8 @@ MonoBehaviour:
   enemyType: dummyGeneratorChaser
   maxHealth: 100
   moveSpeed: 2
-  detectionRange: 10000
-  attackRange: 1
+  detectionRange: 10
+  attackRange: 3
   attackDamage: 10
   attackCooldown: 1
   grade: 0

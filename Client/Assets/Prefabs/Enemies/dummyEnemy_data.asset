@@ -15,7 +15,7 @@ MonoBehaviour:
   enemyType: dummyEnemy
   maxHealth: 100
   moveSpeed: 1
-  detectionRange: 1000
+  detectionRange: 4
   attackRange: 1
   attackDamage: 10
   attackCooldown: 1

@@ -12,13 +12,12 @@ public class EnemyAI_playerChase : EnemyAI
             return;
         }
 
-        float distance       = Vector3.Distance(transform.position, _player.position);
-        float attackRange    = _enemy?.Data?.attackRange    ?? 2f;
-        float detectionRange = _enemy?.Data?.detectionRange ?? 10f;
+        float distance    = GetDistanceTo(_player);
+        float attackRange = _enemy?.Data?.attackRange ?? 2f;
 
         if (distance <= attackRange)
             SetState(State.Attack);
-        else if (distance <= detectionRange)
+        else if (distance <= _enemy.Data.detectionRange)
             SetState(State.Chase);
         else
             SetState(State.Idle);

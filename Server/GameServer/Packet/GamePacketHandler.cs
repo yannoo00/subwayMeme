@@ -11,25 +11,26 @@ namespace GameServer
 
         static GamePacketHandler()
         {
-            // C_WEAPON_SWITCH(80) / S_WEAPON_SWITCH(81) 가 최대 ID 라 배열 크기 기준이 됨
-            int maxId = (int)GamePacketId.SWeaponSwitch + 1;
+            // S_GENERATOR_DESTROYED(92) 가 최대 ID 라 배열 크기 기준이 됨
+            int maxId = (int)GamePacketId.SGeneratorDestroyed + 1;
             Handlers = new Action<PacketSession, ArraySegment<byte>>[maxId];
 
-            Handlers[(int)GamePacketId.CEnterGame]    = Handle_C_EnterGame;
-            Handlers[(int)GamePacketId.CReady]        = Handle_C_Ready;
-            Handlers[(int)GamePacketId.CMove]         = Handle_C_Move;
-            Handlers[(int)GamePacketId.CAttack]       = Handle_C_Attack;
-            Handlers[(int)GamePacketId.CAiming]       = Handle_C_Aiming;
-            Handlers[(int)GamePacketId.CReload]       = Handle_C_Reload;
-            Handlers[(int)GamePacketId.CWeaponSwitch] = Handle_C_WeaponSwitch;
-            Handlers[(int)GamePacketId.CEnemySpawned] = Handle_C_EnemySpawned;
-            Handlers[(int)GamePacketId.CEnemySync]    = Handle_C_EnemySync;
-            Handlers[(int)GamePacketId.CEnemyAttack]  = Handle_C_EnemyAttack;
-            Handlers[(int)GamePacketId.CExitSubway]   = Handle_C_ExitSubway;
-            Handlers[(int)GamePacketId.CBoardSubway]  = Handle_C_BoardSubway;
-            Handlers[(int)GamePacketId.CSelectRoute]  = Handle_C_SelectRoute;
-            Handlers[(int)GamePacketId.CInteract]     = Handle_C_Interact;
-            Handlers[(int)GamePacketId.CMutation]     = Handle_C_Mutation;
+            Handlers[(int)GamePacketId.CEnterGame]     = Handle_C_EnterGame;
+            Handlers[(int)GamePacketId.CReady]         = Handle_C_Ready;
+            Handlers[(int)GamePacketId.CMove]          = Handle_C_Move;
+            Handlers[(int)GamePacketId.CAttack]        = Handle_C_Attack;
+            Handlers[(int)GamePacketId.CAiming]        = Handle_C_Aiming;
+            Handlers[(int)GamePacketId.CReload]        = Handle_C_Reload;
+            Handlers[(int)GamePacketId.CWeaponSwitch]  = Handle_C_WeaponSwitch;
+            Handlers[(int)GamePacketId.CEnemySpawned]  = Handle_C_EnemySpawned;
+            Handlers[(int)GamePacketId.CEnemySync]     = Handle_C_EnemySync;
+            Handlers[(int)GamePacketId.CEnemyAttack]   = Handle_C_EnemyAttack;
+            Handlers[(int)GamePacketId.CExitSubway]    = Handle_C_ExitSubway;
+            Handlers[(int)GamePacketId.CBoardSubway]   = Handle_C_BoardSubway;
+            Handlers[(int)GamePacketId.CSelectRoute]   = Handle_C_SelectRoute;
+            Handlers[(int)GamePacketId.CInteract]      = Handle_C_Interact;
+            Handlers[(int)GamePacketId.CMutation]      = Handle_C_Mutation;
+            Handlers[(int)GamePacketId.CGeneratorInit] = Handle_C_GeneratorInit;
         }
 
         // === 접속/초기화 ===
@@ -227,7 +228,14 @@ namespace GameServer
             var player = GameRoom.Instance.Get(session.SessionId);
             if (player == null || !player.IsHost) return;
 
-            Console.WriteLine($"[Game] C_EnemyAttack: enemyId={pkt.EnemyId}, target={pkt.TargetPlayerId}, dmg={pkt.Damage}");
+            // target_type 에 따라 플레이어/발전기 분기
+            if (pkt.TargetType == AttackTargetType.AttackTargetGenerator)
+            {
+                ApplyGeneratorDamage(pkt);
+                return;
+            }
+
+            Console.WriteLine($"[Game] C_EnemyAttack(Player): enemyId={pkt.EnemyId}, target={pkt.TargetPlayerId}, dmg={pkt.Damage}");
 
             var result = GameRoom.Instance.ApplyPlayerDamage(pkt.TargetPlayerId, pkt.Damage);
             if (result.Player == null) return;
@@ -247,6 +255,42 @@ namespace GameServer
                 foreach (var s in GameRoom.Instance.GetAllSessions())
                     s.Send(dmgBytes);
             }
+        }
+
+
+        // 발전기 피격 처리 - target_type=GENERATOR 인 C_EnemyAttack 분기에서 호출
+        static void ApplyGeneratorDamage(C_EnemyAttack pkt)
+        {
+            var result = GameRoom.Instance.ApplyGeneratorDamage(pkt.Damage);
+
+            Console.WriteLine($"[Game] C_EnemyAttack(Generator): enemyId={pkt.EnemyId}, dmg={pkt.Damage}, currentHp={result.CurrentHp}, destroyed={result.IsDestroyed}");
+
+            // 피격 브로드캐스트
+            var dmgBytes = MakePacket(GamePacketId.SGeneratorDamaged,
+                new S_GeneratorDamaged { Damage = pkt.Damage, CurrentHp = result.CurrentHp });
+            foreach (var s in GameRoom.Instance.GetAllSessions())
+                s.Send(dmgBytes);
+
+            // 파괴 브로드캐스트 - 클라가 게임오버 처리
+            if (result.IsDestroyed)
+            {
+                var destroyedBytes = MakePacket(GamePacketId.SGeneratorDestroyed, new S_GeneratorDestroyed());
+                foreach (var s in GameRoom.Instance.GetAllSessions())
+                    s.Send(destroyedBytes);
+            }
+        }
+
+
+        // 호스트가 게임 시작 시 발전기 max_hp 통보
+        // GameRoom 의 발전기 HP 를 max_hp 로 초기화. 호스트만 처리.
+        static void Handle_C_GeneratorInit(PacketSession session, ArraySegment<byte> body)
+        {
+            var pkt    = C_GeneratorInit.Parser.ParseFrom(body.Array, body.Offset, body.Count);
+            var player = GameRoom.Instance.Get(session.SessionId);
+            if (player == null || !player.IsHost) return;
+
+            Console.WriteLine($"[Game] C_GeneratorInit: maxHp={pkt.MaxHp}");
+            GameRoom.Instance.InitGenerator(pkt.MaxHp);
         }
 
         // === 스테이지 진행 ===

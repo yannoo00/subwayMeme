@@ -27,13 +27,16 @@ public class EnemyAI_generatorChase : EnemyAI
             return;
         }
 
-        float distance       = Vector3.Distance(transform.position, target.position);
-        float attackRange    = _enemy?.Data?.attackRange    ?? 2f;
-        float detectionRange = _enemy?.Data?.detectionRange ?? 1000f;
+        float distance    = GetDistanceTo(target);
+        float attackRange = _enemy?.Data?.attackRange ?? 2f;
+
+        // 발전기가 타겟이면 거리 무관 무조건 추격
+        // 플레이어 폴백인 경우만 EnemyData.detectionRange 적용
+        bool isGenerator = (target == _generator);
 
         if (distance <= attackRange)
             SetState(State.Attack);
-        else if (distance <= detectionRange)
+        else if (isGenerator || distance <= _enemy.Data.detectionRange)
             SetState(State.Chase);
         else
             SetState(State.Idle);

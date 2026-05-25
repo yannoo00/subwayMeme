@@ -22,7 +22,11 @@ public class CurrencyPickup : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!other.CompareTag("Player")) return;
+        // 픽업은 클라이언트 귀속 - LocalPlayer 만 자기 화면의 재화를 획득.
+        // CompareTag("Player") 만으로는 RemotePlayer 도 같은 태그라 잘못 획득될 수 있어 LocalPlayer 직접 비교
+        var localPlayer = PlayerRegistry.Instance != null ? PlayerRegistry.Instance.LocalPlayer : null;
+        if (localPlayer == null) return;
+        if (other.gameObject != localPlayer) return;
 
         var stats = other.GetComponent<PlayerStats>();
         if (stats == null) return;

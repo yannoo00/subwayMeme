@@ -19,34 +19,34 @@ public class EnemyAI_basicChase : EnemyAI
     protected override void Think()
     {
         float attackRange    = _enemy?.Data?.attackRange    ?? 2f;
-        float detectionRange = _enemy?.Data?.detectionRange ?? 10f;
+        // detectionRange는 플레이어 추적에만 사용 - 발전기는 거리 무관 무조건 추적
+        float detectionRange = _enemy.Data.detectionRange;
 
-        // 탐지 범위 안에 플레이어가 있으면 플레이어 우선
-        bool playerInRange = _player != null &&
-                             Vector3.Distance(transform.position, _player.position) <= detectionRange;
-
-        if (playerInRange)
+        // 플레이어가 탐지 범위 안이면 플레이어 우선
+        if (_player != null)
         {
-            float distToPlayer = Vector3.Distance(transform.position, _player.position);
+            float distToPlayer = GetDistanceTo(_player);
+            if (distToPlayer <= detectionRange)
+            {
+                if (distToPlayer <= attackRange)
+                    SetState(State.Attack);
+                else
+                    SetState(State.Chase);
 
-            if (distToPlayer <= attackRange)
-                SetState(State.Attack);
-            else
-                SetState(State.Chase);
+                if (CurrentState == State.Chase)
+                    _enemy.Move?.MoveTo(_player.position);
 
-            if (CurrentState == State.Chase)
-                _enemy.Move?.MoveTo(_player.position);
+                if (CurrentState == State.Attack)
+                    _enemy.Attack?.TryAttack();
 
-            if (CurrentState == State.Attack)
-                _enemy.Attack?.TryAttack();
-
-            return;
+                return;
+            }
         }
 
-        // 플레이어가 범위 밖이면 발전기 무조건 추격
+        // 플레이어가 범위 밖이면 발전기 무조건 추격 (거리 무관)
         if (_generator != null)
         {
-            float distToGen = Vector3.Distance(transform.position, _generator.position);
+            float distToGen = GetDistanceTo(_generator);
 
             if (distToGen <= attackRange)
                 SetState(State.Attack);

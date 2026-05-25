@@ -2,6 +2,7 @@ using GameProto;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+[RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
@@ -18,7 +19,13 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float _rotationSpeed = 15f;
 
     private PlayerStats _stats;
+    private CharacterController _characterController;
     private bool _isAiming = false;
+
+    // 중력 누적 속도 (y축). 매 프레임 가산되고 isGrounded 시 안정값으로 리셋
+    private float _verticalVelocity;
+    // 착지 시 음수 유지: 정확히 0으로 두면 다음 프레임에 isGrounded가 깜빡거리는 Unity 특성 회피
+    private const float GROUNDED_GRAVITY = -2f;
 
     // PlayerAnimator가 매 프레임 폴링하여 Animator의 Speed Blend Tree 입력으로 사용
     // 컨트롤러 자체는 Animator를 모름 - 상태만 노출
@@ -47,6 +54,7 @@ public class PlayerController : MonoBehaviour
     {
         DontDestroyOnLoad(gameObject);
         _stats = GetComponent<PlayerStats>();
+        _characterController = GetComponent<CharacterController>();
 
         TryAcquireCameraTransform();
 
@@ -130,6 +138,13 @@ public class PlayerController : MonoBehaviour
 
         Transform rotateTarget = _playerModel != null ? _playerModel : transform;
 
+        // 중력 누적: 착지 중이면 안정값 유지, 공중이면 매 프레임 가속
+        // 수평 입력이 없어도 중력은 매 프레임 적용되어야 경사/계단 끝에서 떠 있지 않음
+        if (_characterController.isGrounded && _verticalVelocity < 0f)
+            _verticalVelocity = GROUNDED_GRAVITY;
+        else
+            _verticalVelocity += Physics.gravity.y * Time.deltaTime;
+
         if (input == Vector2.zero)
         {
             // 조준 중에는 정지 상태에서도 카메라 방향으로 몸체를 회전
@@ -138,6 +153,9 @@ public class PlayerController : MonoBehaviour
                 Quaternion aimRot = Quaternion.LookRotation(camForward);
                 rotateTarget.rotation = Quaternion.Slerp(rotateTarget.rotation, aimRot, _rotationSpeed * Time.deltaTime);
             }
+
+            // 입력 없어도 중력은 적용 (Move 호출 한 번으로 처리)
+            _characterController.Move(new Vector3(0f, _verticalVelocity, 0f) * Time.deltaTime);
 
             TrySendMove();
             return;
@@ -163,7 +181,11 @@ public class PlayerController : MonoBehaviour
         // 비조준: PlayerModel이 바라보는 방향으로 이동
         Vector3 moveVelocity = _isAiming ? moveDir : rotateTarget.forward;
         float currentSpeed   = _moveSpeed * (IsDashing ? _dashMultiplier : 1f);
-        transform.position += moveVelocity * currentSpeed * Time.deltaTime;
+
+        // 수평 + 중력을 합쳐 한 번에 Move - CharacterController가 콜라이더와 충돌/슬라이딩 처리
+        Vector3 horizontal = moveVelocity * currentSpeed;
+        Vector3 motion     = new Vector3(horizontal.x, _verticalVelocity, horizontal.z);
+        _characterController.Move(motion * Time.deltaTime);
 
         TrySendMove();
     }

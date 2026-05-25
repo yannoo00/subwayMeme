@@ -152,7 +152,8 @@ public class MutationManager : MonoBehaviour
         _activeMutations.Clear();
         _myNextSkillSlot = 0;
 
-        var player = GameObject.FindGameObjectWithTag("Player");
+        // 본인의 변이만 리셋 - RemotePlayer 의 PassiveBase 는 그 플레이어의 클라이언트가 알아서 처리
+        var player = PlayerRegistry.Instance != null ? PlayerRegistry.Instance.LocalPlayer : null;
         if (player == null) return;
 
         player.GetComponent<PlayerStats>()?.ResetMutationBonuses();
@@ -189,7 +190,8 @@ public class MutationManager : MonoBehaviour
     {
         if (isMe)
         {
-            var go = GameObject.FindGameObjectWithTag("Player");
+            // FindGameObjectWithTag 는 RemotePlayer 도 잡힐 수 있으므로 PlayerRegistry 의 LocalPlayer 사용
+            var go = PlayerRegistry.Instance != null ? PlayerRegistry.Instance.LocalPlayer : null;
             return go != null ? go.transform : null;
         }
         var np = PlayerRegistry.Instance != null ? PlayerRegistry.Instance.Get(playerId) : null;

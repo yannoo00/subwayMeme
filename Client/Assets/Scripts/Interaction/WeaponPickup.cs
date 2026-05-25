@@ -10,21 +10,24 @@ public class WeaponPickup : MonoBehaviour, IInteractable
 
     public void Interact()
     {
-        var player = GameObject.FindGameObjectWithTag("Player");
-        if (player == null) 
+        // FindGameObjectWithTag("Player") 는 RemotePlayer 도 같은 태그라 운에 따라 다른 플레이어가 잡힘.
+        // 픽업은 클라이언트 귀속 동작이므로 PlayerRegistry.LocalPlayer 만 대상으로 한다.
+        var player = PlayerRegistry.Instance != null ? PlayerRegistry.Instance.LocalPlayer : null;
+        if (player == null)
         {
-            Debug.Log("There's no player object in the scene.");
+            Debug.Log("[WeaponPickup] LocalPlayer 미존재 - 픽업 무시");
             return;
         }
 
         var combat = player.GetComponent<PlayerCombat>();
-        if (combat == null) 
+        if (combat == null)
         {
-            Debug.Log("Player doesn't have a PlayerCombat component.");
+            Debug.Log("[WeaponPickup] LocalPlayer 에 PlayerCombat 미부착");
             return;
         }
 
         // 같은 무기 중복 등으로 픽업 거부 시 Destroy 안 함 (월드에 그대로 남음)
+        // 네트워크 동기화 없음 - 다른 클라이언트의 화면에선 픽업이 계속 존재
         if (combat.TryPickupWeapon(_weaponPrefab))
             Destroy(gameObject);
     }

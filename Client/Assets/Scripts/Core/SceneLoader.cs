@@ -53,14 +53,15 @@ public class SceneLoader : MonoBehaviour
     }
 
 
-    // "PlayerSpawnPoint" 태그 오브젝트 위치로 플레이어를 텔레포트
+    // "PlayerSpawnPoint" 태그 오브젝트 위치로 로컬 플레이어를 텔레포트
     // 태그가 없으면 이동하지 않음 (폴백)
+    // 원격 플레이어는 PlayerRegistry.OnSceneLoaded 에서 별도로 처리됨
     private void RepositionPlayer()
     {
         GameObject spawnPoint = GameObject.FindGameObjectWithTag("PlayerSpawnPoint");
         if (spawnPoint == null) return;
 
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        GameObject player = PlayerRegistry.Instance != null ? PlayerRegistry.Instance.LocalPlayer : null;
         if (player == null) return;
 
         player.transform.SetPositionAndRotation(

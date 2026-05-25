@@ -227,7 +227,8 @@ public static class ClientGamePacketHandler
 
         if (isMe)
         {
-            var playerObj = GameObject.FindWithTag("Player");
+            // FindWithTag("Player") 는 RemotePlayer 도 잡힐 수 있으므로 PlayerRegistry 의 LocalPlayer 사용
+            var playerObj = PlayerRegistry.Instance != null ? PlayerRegistry.Instance.LocalPlayer : null;
             playerObj?.GetComponent<PlayerStats>()?.ApplyServerDamage(pkt.Damage, pkt.CurrentHp);
         }
         // else: 다른 플레이어 피격 이펙트는 추후 구현
@@ -255,6 +256,34 @@ public static class ClientGamePacketHandler
             // 사망 애니메이션은 죽는 모션 다음에 나와야하니까 일단 '누구 죽음' event를 발생시켜야함
         }
     }
+
+
+    // 발전기 피격 - 서버가 확정한 currentHp 로 갱신
+    // 호스트/논호스트 동일하게 처리 (모두 서버 통보를 기다리는 구조)
+    public static void Handle_S_GeneratorDamaged(byte[] body)
+    {
+        if (GameManager.Instance.CurrentState != GameState.Playing) return;
+
+        var pkt = S_GeneratorDamaged.Parser.ParseFrom(body);
+        Debug.Log($"[Game] S_GeneratorDamaged: dmg={pkt.Damage}, hp={pkt.CurrentHp}");
+
+        // 씬에 발전기가 없으면(스폰 전 등) 조용히 무시
+        var generatorObj = GameObject.FindGameObjectWithTag("Generator");
+        generatorObj?.GetComponent<Generator>()?.ApplyServerDamage(pkt.Damage, pkt.CurrentHp);
+    }
+
+
+    // 발전기 파괴 - 게임오버 트리거
+    public static void Handle_S_GeneratorDestroyed(byte[] body)
+    {
+        if (GameManager.Instance.CurrentState != GameState.Playing) return;
+
+        Debug.Log("[Game] S_GeneratorDestroyed");
+
+        var generatorObj = GameObject.FindGameObjectWithTag("Generator");
+        generatorObj?.GetComponent<Generator>()?.ApplyServerDestroyed();
+    }
+
 
     // 웨이브 시작 (서버 권위)
     public static void Handle_S_WaveStart(byte[] body)

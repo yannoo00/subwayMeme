@@ -72,6 +72,11 @@ enum GamePacketId {
   // --- 무기 스왑 (전투 섹션 36-39 가 꽉 차서 별도 범위에 배치) ---
   C_WEAPON_SWITCH    = 80;
   S_WEAPON_SWITCH    = 81;
+
+  // --- 발전기 (서버 권위 HP) ---
+  C_GENERATOR_INIT      = 90;   // 호스트가 게임 시작 시 max_hp 통보
+  S_GENERATOR_DAMAGED   = 91;   // 발전기 피격 브로드캐스트
+  S_GENERATOR_DESTROYED = 92;   // 발전기 파괴, 게임오버 트리거
 }
 
 // ===================================================
@@ -276,11 +281,39 @@ message S_EnemySync {
   repeated EnemySyncData enemies = 1;
 }
 
-// 호스트 -> 서버: 적이 플레이어를 공격함 보고
+// 적의 공격 대상 타입
+enum AttackTargetType {
+  ATTACK_TARGET_PLAYER    = 0;  // 기본값
+  ATTACK_TARGET_GENERATOR = 1;
+}
+
+// 호스트 -> 서버: 적이 공격함 보고
+// target_type 에 따라 target_player_id 의 의미가 달라짐 (GENERATOR면 무시)
 message C_EnemyAttack {
-  int32 enemy_id         = 1;
-  int32 target_player_id = 2;
-  int32 damage           = 3;
+  int32            enemy_id         = 1;
+  int32            target_player_id = 2;  // PLAYER일 때만 유효
+  int32            damage           = 3;
+  AttackTargetType target_type      = 4;  // 어디를 때렸는지
+}
+
+// ===================================================
+//  5b. 발전기 (서버 권위 HP)
+// ===================================================
+
+// 호스트 -> 서버: 게임 시작 시 발전기 max_hp 통보
+// 서버는 이 값으로 _generatorMaxHp/_generatorCurrentHp 초기화
+message C_GeneratorInit {
+  int32 max_hp = 1;
+}
+
+// 서버 -> 클라: 발전기 피격 브로드캐스트
+message S_GeneratorDamaged {
+  int32 damage     = 1;
+  int32 current_hp = 2;
+}
+
+// 서버 -> 클라: 발전기 파괴 (게임오버 트리거)
+message S_GeneratorDestroyed {
 }
 
 // ===================================================

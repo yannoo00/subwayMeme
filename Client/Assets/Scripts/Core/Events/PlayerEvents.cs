@@ -13,6 +13,11 @@ public static class PlayerEvents
     public static event Action OnPlayerDied;
     public static event Action<int> OnPlayerDamaged;                // 데미지량
 
+    // 로컬/원격 구분 없이 어떤 플레이어든 사망/퇴장 시 발행
+    // EnemyAI 가 자기 타겟과 비교해 즉시 재타겟하기 위해 구독
+    // Transform 은 사망한 플레이어의 transform (Destroy 이전 시점에 호출됨)
+    public static event Action<Transform> OnAnyPlayerDied;
+
     // 스테미나 변경 (dash 소비 / 자동 회복 시). float로 발행하여 시간 기반 부드러운 변화 표현
     public static event Action<float, float> OnStaminaChanged;      // 현재, 최대
 
@@ -63,6 +68,7 @@ public static class PlayerEvents
     public static void EvolutionPointsChanged(int amount) => OnEvolutionPointsChanged?.Invoke(amount);
     public static void PlayerDied() => OnPlayerDied?.Invoke();
     public static void PlayerDamaged(int damage) => OnPlayerDamaged?.Invoke(damage);
+    public static void AnyPlayerDied(Transform t) => OnAnyPlayerDied?.Invoke(t);
     public static void SpectateTargetChanged(NetworkPlayer target) => OnSpectateTargetChanged?.Invoke(target);
     public static void WeaponSlotChanged(int slotIndex, WeaponData data) => OnWeaponSlotChanged?.Invoke(slotIndex, data);
     public static void ActiveSlotChanged(int slotIndex, WeaponData data) => OnActiveSlotChanged?.Invoke(slotIndex, data);

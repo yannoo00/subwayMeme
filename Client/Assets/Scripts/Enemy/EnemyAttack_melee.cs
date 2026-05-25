@@ -33,24 +33,54 @@ public class EnemyAttack_Melee : EnemyAttack
 
         Debug.Log($"[MeleeAttack] OverlapSphere 감지된 콜라이더 수: {hits.Length}");
 
+        // 발전기 우선 - 두 종류 다 범위 안이면 발전기를 때리는 게 일관됨
+        // (PlayerChase 타입이 아닌 좀비는 어차피 발전기가 본 목표)
+        Collider generatorHit = null;
+        Collider playerHit    = null;
+
         foreach (var hit in hits)
         {
             Debug.Log($"  - {hit.gameObject.name} / 태그: {hit.tag}");
-            if (!hit.transform.root.CompareTag("Player") && !hit.CompareTag("Player")) continue;
 
-            // 방장만 공격 판정 권한 보유 - 서버에 보고하면 서버가 S_PlayerDamaged로 브로드캐스트
-            if (NetworkManager.Instance.IsHost)
+            if (generatorHit == null &&
+                (hit.transform.root.CompareTag("Generator") || hit.CompareTag("Generator")))
             {
-                int targetPlayerId = GetHitPlayerId(hit.gameObject);
-                NetworkManager.Instance.SendGame(GameProto.GamePacketId.CEnemyAttack, new GameProto.C_EnemyAttack
-                {
-                    EnemyId        = _enemy.NetworkId,
-                    TargetPlayerId = targetPlayerId,
-                    Damage         = _enemy.Data.attackDamage
-                });
+                generatorHit = hit;
+                continue;
             }
-            // 공격 1회당 1명만 타격
-            break;
+
+            if (playerHit == null &&
+                (hit.transform.root.CompareTag("Player") || hit.CompareTag("Player")))
+            {
+                playerHit = hit;
+            }
+        }
+
+        // 호스트만 공격 판정 권한 보유 - 서버에 보고하면 서버가 S_*Damaged로 브로드캐스트
+        if (!NetworkManager.Instance.IsHost) return;
+
+        if (generatorHit != null)
+        {
+            NetworkManager.Instance.SendGame(GameProto.GamePacketId.CEnemyAttack, new GameProto.C_EnemyAttack
+            {
+                EnemyId        = _enemy.NetworkId,
+                TargetPlayerId = 0,                                        // GENERATOR면 무시되는 필드
+                Damage         = _enemy.Data.attackDamage,
+                TargetType     = GameProto.AttackTargetType.AttackTargetGenerator,
+            });
+            return;
+        }
+
+        if (playerHit != null)
+        {
+            int targetPlayerId = GetHitPlayerId(playerHit.gameObject);
+            NetworkManager.Instance.SendGame(GameProto.GamePacketId.CEnemyAttack, new GameProto.C_EnemyAttack
+            {
+                EnemyId        = _enemy.NetworkId,
+                TargetPlayerId = targetPlayerId,
+                Damage         = _enemy.Data.attackDamage,
+                TargetType     = GameProto.AttackTargetType.AttackTargetPlayer,
+            });
         }
     }
 

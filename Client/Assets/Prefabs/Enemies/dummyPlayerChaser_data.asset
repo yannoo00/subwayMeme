@@ -15,7 +15,7 @@ MonoBehaviour:
   enemyType: dummyPlayerChaser
   maxHealth: 100
   moveSpeed: 1
-  detectionRange: 10000
+  detectionRange: 1000
   attackRange: 1
   attackDamage: 10
   attackCooldown: 1
