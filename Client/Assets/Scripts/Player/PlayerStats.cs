@@ -64,8 +64,11 @@ public class PlayerStats: MonoBehaviour, IDamageable
         var charDef = GameManager.Instance?.SelectedCharacter;
         if (charDef != null)
         {
-            _baseMaxHealth   = charDef.baseMaxHealth;
-            _baseAttackBonus = charDef.baseAttackPower;
+            _baseMaxHealth      = charDef.baseMaxHealth;
+            _baseAttackBonus    = charDef.baseAttackPower;
+            _baseMaxStamina     = charDef.baseMaxStamina;
+            _staminaDrainPerSec = charDef.baseStaminaDrain;
+            _staminaRegenPerSec = charDef.baseStaminaRegen;
         }
 
         _currentHealth = _baseMaxHealth;
