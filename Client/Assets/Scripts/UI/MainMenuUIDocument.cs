@@ -698,12 +698,36 @@ public class MainMenuUIDocument : MonoBehaviour
         // 본인 라인의 현재 선택 ID를 모달 포커스 기본값으로
         int myId = NetworkManager.Instance.MyPlayerId;
         int currentId = _playerEntries.TryGetValue(myId, out var entry) ? entry.CharacterId : -1;
+
+        // 미선택 상태면 첫 번째 캐릭터를 기본 포커스로
+        if (currentId < 0)
+        {
+            var characters = GameManager.Instance?.AllCharacters;
+            if (characters != null && characters.Length > 0 && characters[0] != null)
+                currentId = characters[0].characterId;
+        }
+
         _focusedCharacterId = currentId;
+
+        // UIDocument가 핫리로드 등으로 트리를 재빌드하면 이전에 쿼리한 _charPreview가
+        // 고아 원소(orphaned element)가 돼서 backgroundImage가 렌더되지 않음
+        // 모달을 열 때마다 다시 쿼리해서 재연결
+        RebindPreviewBackground();
 
         BuildCharacterSelectGrid();
         RefreshCharacterDetail();
 
         _characterSelectModal.style.display = DisplayStyle.Flex;
+    }
+
+    private void RebindPreviewBackground()
+    {
+        if (_previewRenderer == null) return;
+        var root = _document.rootVisualElement;
+        _charPreview = root.Q<VisualElement>("char-preview");
+        if (_charPreview == null) return;
+        _charPreview.style.backgroundImage = new StyleBackground(
+            Background.FromRenderTexture(_previewRenderer.PreviewTexture));
     }
 
     private void CloseCharacterSelectModal()
@@ -781,7 +805,7 @@ public class MainMenuUIDocument : MonoBehaviour
         }
 
         _charDetailName.text  = def.displayName;
-        _charDetailStats.text = $"체력 {def.baseMaxHealth}\n공격 +{def.baseAttackPower * 100f:0}%\n이속 {def.baseMoveSpeed}\n닷지 쿨타임 {def.baseDodgeCooldown:0.0}s";
+        _charDetailStats.text = $"체력 {def.baseMaxHealth}\n공격 +{def.baseAttackPower * 100f:0}%\n이속 {def.baseMoveSpeed}\n스태미나 {def.baseMaxStamina}";
         _charDetailDesc.text  = def.description;
         _charSelectConfirmButton?.SetEnabled(true);
         _previewRenderer?.Preview(def);

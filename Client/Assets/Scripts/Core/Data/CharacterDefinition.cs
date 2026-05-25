@@ -25,8 +25,15 @@ public class CharacterDefinition : ScriptableObject
     public float baseAttackPower = 0f;
     // PlayerController._moveSpeed 로 사용
     public float baseMoveSpeed = 5f;
-    // PlayerController._dodgeCooldown 으로 사용 (초)
-    public float baseDodgeCooldown = 1.5f;
+
+
+    [Header("스태미나")]
+    // PlayerStats._baseMaxStamina 로 사용
+    public float baseMaxStamina = 100f;
+    // dash 1초당 소비량
+    public float baseStaminaDrain = 25f;
+    // 1초당 회복량
+    public float baseStaminaRegen = 15f;
 
     [Header("외형/장비")]
     // PlayerCharacterBinder가 Player의 ModelHolder 자식으로 인스턴시에이션

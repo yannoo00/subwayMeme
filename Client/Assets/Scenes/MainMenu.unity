@@ -210,77 +210,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &268974535
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 268974538}
-  - component: {fileID: 268974537}
-  - component: {fileID: 268974536}
-  m_Layer: 0
-  m_Name: MapUIDocument
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &268974536
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 268974535}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7934d3875e8bc4c509d5264de1de87cf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MapUIDocument
-  _columns: 5
-  _floors: 10
-  _styleSheet: {fileID: 7433441132597879392, guid: 46cd989e97b134046a289b94bbce7a1a, type: 3}
---- !u!114 &268974537
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 268974535}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
-  m_PanelSettings: {fileID: 11400000, guid: 671ac43f8f5234c54a2e9075d76aeae0, type: 2}
-  m_ParentUI: {fileID: 0}
-  sourceAsset: {fileID: 9197481963319205126, guid: 6c44798acb37d47e68793c9965a9c949, type: 3}
-  m_SortingOrder: 10
-  m_Position: 0
-  m_WorldSpaceSizeMode: 1
-  m_WorldSpaceWidth: 1920
-  m_WorldSpaceHeight: 1080
-  m_PivotReferenceSize: 0
-  m_Pivot: 0
-  m_WorldSpaceCollider: {fileID: 0}
---- !u!4 &268974538
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 268974535}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.79948, y: 0, z: -0.99274}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &288406577
 GameObject:
   m_ObjectHideFlags: 0
@@ -2131,12 +2060,16 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3379889439560951497, guid: 48339e15c1db04cdfb439ea1cef41f70, type: 3}
       propertyPath: _characters.Array.size
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 3379889439560951497, guid: 48339e15c1db04cdfb439ea1cef41f70, type: 3}
       propertyPath: '_characters.Array.data[0]'
       value: 
       objectReference: {fileID: 11400000, guid: c57dd1825b34e4d23a041fe696b57613, type: 2}
+    - target: {fileID: 3379889439560951497, guid: 48339e15c1db04cdfb439ea1cef41f70, type: 3}
+      propertyPath: '_characters.Array.data[1]'
+      value: 
+      objectReference: {fileID: 11400000, guid: e5e4604d162284952b9dc1cc81b28d08, type: 2}
     - target: {fileID: 6719087515275209551, guid: 48339e15c1db04cdfb439ea1cef41f70, type: 3}
       propertyPath: m_Name
       value: GameManager
@@ -2297,7 +2230,6 @@ SceneRoots:
   - {fileID: 415892183}
   - {fileID: 779465679}
   - {fileID: 488126078}
-  - {fileID: 268974538}
   - {fileID: 1768096962}
   - {fileID: 288406579}
   - {fileID: 856294440}
