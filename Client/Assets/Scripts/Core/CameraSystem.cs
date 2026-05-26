@@ -73,7 +73,8 @@ public class CameraSystem : MonoBehaviour
 
     private void Update()
     {
-        if (GameManager.Instance != null && GameManager.Instance.CurrentState == GameState.Menu) return;
+        // Playing 이외(메뉴/씬로딩/입장중/End)에는 카메라 회전 입력 차단
+        if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameState.Playing) return;
         if (Mouse.current == null) return;
         if (_cameraPivot == null) return;
 

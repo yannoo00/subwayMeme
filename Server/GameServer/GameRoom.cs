@@ -12,7 +12,6 @@ namespace GameServer
     public record BoardResult(int BoardedCount, int Total, List<GameSession> Others, bool Trigger, int NodeIndex);
     public record RouteResult(bool IsHost, bool Trigger, int NodeIndex, List<GameSession> AllSessions);
     public record DamageResult(GamePlayer Player, int CurrentHp, bool IsDead);
-    public record GeneratorDamageResult(int CurrentHp, bool IsDestroyed);
 
     // ============================================================================
 
@@ -33,11 +32,6 @@ namespace GameServer
 
         // 적 ID 발급 카운터 - 게임 세션 내에서 유일한 ID를 부여하기 위해 단조 증가
         int _nextEnemyId = 1;
-
-        // 발전기 HP (서버 권위) - 호스트가 C_GeneratorInit 으로 max_hp 통보 시 초기화
-        // _generatorMaxHp == 0 이면 아직 초기화 안 된 상태로 간주
-        int _generatorMaxHp     = 0;
-        int _generatorCurrentHp = 0;
 
 
         // ==== 초기화 =============================================================
@@ -225,33 +219,6 @@ namespace GameServer
                     return new DamageResult(p, p.Hp, p.Hp <= 0);
                 }
                 return new DamageResult(null, 0, false);
-            }
-        }
-
-
-        // 발전기 초기화 - 호스트의 C_GeneratorInit 수신 시 호출
-        // 중복 호출 시 덮어쓰기 (게임 재시작 등)
-        public void InitGenerator(int maxHp)
-        {
-            lock (_lock)
-            {
-                _generatorMaxHp     = maxHp;
-                _generatorCurrentHp = maxHp;
-            }
-        }
-
-
-        // 발전기 피해 적용 (서버 권위)
-        // 초기화 전이면 CurrentHp=0, IsDestroyed=false 로 반환 (호출 측에서 무시)
-        public GeneratorDamageResult ApplyGeneratorDamage(int damage)
-        {
-            lock (_lock)
-            {
-                if (_generatorMaxHp <= 0) return new GeneratorDamageResult(0, false);
-                if (_generatorCurrentHp <= 0) return new GeneratorDamageResult(0, true);
-
-                _generatorCurrentHp = Math.Max(0, _generatorCurrentHp - damage);
-                return new GeneratorDamageResult(_generatorCurrentHp, _generatorCurrentHp <= 0);
             }
         }
 

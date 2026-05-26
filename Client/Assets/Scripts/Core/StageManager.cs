@@ -44,14 +44,10 @@ public class StageManager : MonoBehaviour
         SceneLoader.Instance.LoadStation(StartSurvivalMode);
     }
 
-
-    // 서바이벌 모드: Station 씬에서 20분 웨이브 방어
     private void StartSurvivalMode()
     {
         if (_survivalWaveData != null)
             SpawnManager.Instance.StartWave(_survivalWaveData);
-        else
-            Debug.LogWarning("[StageManager] SurvivalMode: _survivalWaveData가 설정되지 않았습니다.");
 
         StageEvents.SurvivalStarted();
         _stayingCoroutine = StartCoroutine(SurvivalTimer(_survivalDuration));

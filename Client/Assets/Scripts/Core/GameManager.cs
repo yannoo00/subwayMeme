@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 
 // 패킷 처리의 기준이 되는 상태
@@ -13,6 +14,8 @@ public enum GameState
                     // 이 구간에서 오는 게임 패킷은 전부 무시
 
     Playing,        // 인게임 (이동, 전투, 타이머 등 동기화 패킷 처리)
+
+    End,            // 게임 종료 (오버/클리어). 결과 패널 표시 중이며 모든 인게임 조작 차단
 }
 
 
@@ -23,7 +26,6 @@ public class GameManager : MonoBehaviour
     public GameState CurrentState { get; private set; }
 
     // 게임오버/클리어 중복 처리 방지 가드
-    // 발전기 파괴와 전원 사망이 같은 프레임에 발생해도 결과는 한 번만 확정되어야 함
     private bool _isGameEnded;
 
     [Header("캐릭터")]
@@ -111,6 +113,10 @@ public class GameManager : MonoBehaviour
         _isGameEnded = false;
         ChangeState(GameState.Playing);
 
+        // HUD/플레이어 등 새 게임 시작 시점에 상태를 리셋할 수 있도록 알림
+        // 이전 라운드의 결과 패널 잔상 제거, hud-root 재노출 등을 구독측이 처리
+        GameEvents.GameStart();
+
         StageManager.Instance._TryGame(seed);
     }
 
@@ -147,6 +153,7 @@ public class GameManager : MonoBehaviour
         _isGameEnded = true;
 
         StopGameplayRoutines();
+        ChangeState(GameState.End);
         GameEvents.GameOver();
     }
 
@@ -156,6 +163,7 @@ public class GameManager : MonoBehaviour
         _isGameEnded = true;
 
         StopGameplayRoutines();
+        ChangeState(GameState.End);
         GameEvents.GameClear();
     }
 
@@ -164,6 +172,25 @@ public class GameManager : MonoBehaviour
     {
         StageManager.Instance?.StopAllStageRoutines();
         SpawnManager.Instance?.StopAllWaves();
+    }
+
+
+    // 결과 패널의 "돌아가기" 버튼에서 호출
+    // 게임 서버 TCP 연결을 끊고 인게임 오브젝트를 정리한 뒤 MainMenu 씬으로 복귀
+    // 새 패킷을 만들지 않고 disconnect 만으로 처리 - 서버는 TCP 단절을 감지해 방/세션 정리
+    public void ReturnToMainMenu()
+    {
+        // 서버 연결 종료. ConnectToLobbyAsync 가 내부에서 CurrentDispatcher = Lobby 로 다시 세팅하므로
+        // 여기서 디스패처를 별도로 만질 필요는 없다
+        ServerSession.Instance?.Disconnect();
+
+        // 로컬/원격 플레이어 오브젝트 정리. SpawnManager는 sceneLoaded 콜백으로 자체 정리됨
+        PlayerRegistry.Instance?.Clear();
+
+        _isGameEnded = false;
+        ChangeState(GameState.Menu);
+
+        SceneManager.LoadScene("MainMenu");
     }
 
 

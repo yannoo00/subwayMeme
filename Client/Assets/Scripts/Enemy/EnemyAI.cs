@@ -56,6 +56,8 @@ public abstract class EnemyAI : MonoBehaviour
     private void Update()
     {
         if (_currentState == State.Dead) return;
+        // 게임 종료(결과 패널 표시 중)에는 적 행동 정지 - 결과 화면 위에서 추적/공격 어색함 방지
+        if (GameManager.Instance != null && GameManager.Instance.CurrentState == GameState.End) return;
         Think();
     }
 
@@ -92,9 +94,8 @@ public abstract class EnemyAI : MonoBehaviour
 
 
     // 타겟까지의 거리를 콜라이더 표면 기준으로 계산
-    // pivot 거리는 발전기처럼 큰 모델에선 외벽 위에 좀비가 붙어 있어도 큰 값이 나와
-    // attackRange 안으로 못 들어가는 문제가 생긴다. 콜라이더 표면 거리를 쓰면 모델 크기와 무관.
-    // 콜라이더가 없으면 pivot 거리로 폴백.
+    // pivot 거리는 큰 모델일 경우 외곽에 붙어 있어도 큰 값이 나와 attackRange 안으로 못 들어가는 문제가 있음.
+    // 콜라이더 표면 거리를 쓰면 모델 크기와 무관. 콜라이더가 없으면 pivot 거리로 폴백.
     protected float GetDistanceTo(Transform target)
     {
         if (target == null) return float.MaxValue;

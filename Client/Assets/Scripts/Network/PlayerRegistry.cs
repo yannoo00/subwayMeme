@@ -62,6 +62,8 @@ public class PlayerRegistry : MonoBehaviour
     private void Update()
     {
         if (!_isSpectating) return;
+        // 게임 종료(결과 패널 표시 중)에는 관전 전환 입력 차단 - 마우스 클릭은 결과 패널 버튼 전용
+        if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameState.Playing) return;
         if (Mouse.current == null) return;
 
         if (Mouse.current.leftButton.wasPressedThisFrame)  CycleSpectateTarget(1);
@@ -212,6 +214,28 @@ public class PlayerRegistry : MonoBehaviour
     {
         _remotePlayers.TryGetValue(playerId, out var np);
         return np;
+    }
+
+    // 게임 종료 후 메인 메뉴 복귀 시 호출 (GameManager.ReturnToMainMenu)
+    // DontDestroyOnLoad라 자동 소멸되지 않는 로컬/원격 플레이어 오브젝트를 명시적으로 정리
+    public void Clear()
+    {
+        if (_localPlayer != null)
+        {
+            Destroy(_localPlayer);
+            _localPlayer = null;
+        }
+
+        foreach (var np in _remotePlayers.Values)
+        {
+            if (np != null) Destroy(np.gameObject);
+        }
+        _remotePlayers.Clear();
+
+        _alivePlayersCount = 0;
+        _localPlayerAlive  = false;
+        _isSpectating      = false;
+        _spectateTargetId  = 0;
     }
 
     // 살아있는 모든 플레이어(로컬+원격)의 Transform 열거

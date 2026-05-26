@@ -20,6 +20,9 @@ public class HUDDocument : MonoBehaviour
 
     private UIDocument _document;
 
+    // 루트 - 메인 메뉴 복귀 시 HUD 전체를 숨기는 데 사용
+    private VisualElement _hudRoot;
+
     private VisualElement _hpPanel;
     private VisualElement _hpBarFill;
     private Label _hpLabel;
@@ -30,9 +33,6 @@ public class HUDDocument : MonoBehaviour
     private VisualElement _timerPanel;
     private Label _timerTitle;
     private Label _timerLabel;
-
-    private VisualElement _generatorBarFill;
-    private Label _generatorLabel;
 
     // 무기 슬롯 - 인덱스 = 슬롯 번호
     private VisualElement   _weaponPanel;
@@ -51,6 +51,7 @@ public class HUDDocument : MonoBehaviour
     // 게임 결과 패널 (클리어/오버)
     private VisualElement _resultPanel;
     private Label         _resultTitle;
+    private Button        _returnToMenuButton;
 
     // 관전 패널
     private VisualElement _spectatorPanel;
@@ -93,9 +94,9 @@ public class HUDDocument : MonoBehaviour
         StageEvents.OnStationArrived      += OnStationArrived;
         StageEvents.OnSurvivalStarted     += OnSurvivalStarted;
         StageEvents.OnTimerTick           += OnTimerTick;
-        GameEvents.OnGeneratorDamaged     += OnGeneratorDamaged;
         GameEvents.OnGameOver             += OnGameOver;
         GameEvents.OnGameClear            += OnGameClear;
+        GameEvents.OnGameStart            += OnGameStart;
         PlayerEvents.OnSpectateTargetChanged += OnSpectateTargetChanged;
     }
 
@@ -114,10 +115,13 @@ public class HUDDocument : MonoBehaviour
         StageEvents.OnStationArrived      -= OnStationArrived;
         StageEvents.OnSurvivalStarted     -= OnSurvivalStarted;
         StageEvents.OnTimerTick           -= OnTimerTick;
-        GameEvents.OnGeneratorDamaged     -= OnGeneratorDamaged;
         GameEvents.OnGameOver             -= OnGameOver;
         GameEvents.OnGameClear            -= OnGameClear;
+        GameEvents.OnGameStart            -= OnGameStart;
         PlayerEvents.OnSpectateTargetChanged -= OnSpectateTargetChanged;
+
+        if (_returnToMenuButton != null)
+            _returnToMenuButton.clicked -= OnReturnToMenuClicked;
     }
 
     private void Update()
@@ -141,6 +145,8 @@ public class HUDDocument : MonoBehaviour
         if (_styleSheet != null)
             root.styleSheets.Add(_styleSheet);
 
+        _hudRoot = root.Q<VisualElement>("hud-root");
+
         _hpPanel    = root.Q<VisualElement>("hp-panel");
         _hpBarFill  = root.Q<VisualElement>("hp-bar-fill");
         _hpLabel    = root.Q<Label>("hp-label");
@@ -151,9 +157,6 @@ public class HUDDocument : MonoBehaviour
         _timerPanel = root.Q<VisualElement>("timer-panel");
         _timerTitle = root.Q<Label>("timer-title");
         _timerLabel = root.Q<Label>("timer-label");
-
-        _generatorBarFill = root.Q<VisualElement>("generator-bar-fill");
-        _generatorLabel   = root.Q<Label>("generator-label");
 
         _weaponPanel        = root.Q<VisualElement>("weapon-panel");
         _weaponSlots[0]     = root.Q<VisualElement>("weapon-slot-0");
@@ -176,6 +179,10 @@ public class HUDDocument : MonoBehaviour
         _resultPanel = root.Q<VisualElement>("game-result-panel");
         _resultTitle = root.Q<Label>("result-title");
         SetHidden(_resultPanel, true);
+
+        _returnToMenuButton = root.Q<Button>("return-to-menu-button");
+        if (_returnToMenuButton != null)
+            _returnToMenuButton.clicked += OnReturnToMenuClicked;
 
         _spectatorPanel  = root.Q<VisualElement>("spectator-panel");
         _spectatorTarget = root.Q<Label>("spectator-target");
@@ -229,16 +236,6 @@ public class HUDDocument : MonoBehaviour
         _timerLabel.text = $"{minutes:00}:{seconds:00}";
     }
 
-    private void OnGeneratorDamaged(int current, int max)
-    {
-        if (_generatorBarFill == null || _generatorLabel == null) return;
-
-        float ratio = max > 0 ? (float)current / max : 0f;
-        _generatorBarFill.style.width = Length.Percent(ratio * 100f);
-        _generatorLabel.text = $"발전기 {current} / {max}";
-    }
-
-
     private void OnGameClear()
     {
         ShowResult("GAME CLEAR", "result-title--clear");
@@ -247,6 +244,17 @@ public class HUDDocument : MonoBehaviour
     private void OnGameOver()
     {
         ShowResult("GAME OVER", "result-title--over");
+    }
+
+    // 새 게임 시작 시 호출: 이전 라운드 결과 패널/관전 패널 잔상 정리 + 메인 메뉴 복귀 후
+    // 숨겨졌던 hud-root 재노출 (timer/ammo 등 상세 패널은 각자 이벤트로 다시 노출됨)
+    private void OnGameStart()
+    {
+        SetHidden(_hudRoot, false);
+        SetHidden(_resultPanel, true);
+        SetHidden(_spectatorPanel, true);
+        SetHidden(_hpPanel, false);
+        SetHidden(_weaponPanel, false);
     }
 
     // 결과 패널 표시: 타이틀 텍스트/컬러 클래스 세팅 후 패널 노출
@@ -260,6 +268,16 @@ public class HUDDocument : MonoBehaviour
         _resultTitle.AddToClassList(variantClass);
 
         SetHidden(_resultPanel, false);
+    }
+
+    // "메인 메뉴로 돌아가기" 버튼 클릭
+    // HUD 자체는 DontDestroyOnLoad라 씬 전환만으로는 안 사라짐 - hud-root를 명시적으로 숨김
+    private void OnReturnToMenuClicked()
+    {
+        SetHidden(_hudRoot, true);
+        SetHidden(_resultPanel, true);
+
+        GameManager.Instance?.ReturnToMainMenu();
     }
 
     // 로컬 플레이어 사망 후 관전 모드 진입/대상 전환 시 호출

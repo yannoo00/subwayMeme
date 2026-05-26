@@ -56,7 +56,8 @@ public class PlayerCombat : MonoBehaviour
 
     private void Update()
     {
-        if (GameManager.Instance.CurrentState == GameState.Menu) return;
+        // Playing 이외(메뉴/씬로딩/입장중/End)에는 전투 입력 차단
+        if (GameManager.Instance.CurrentState != GameState.Playing) return;
         // 사망 시 입력 차단 - 관전 모드로 전환되므로 전투 입력은 무시
         if (_stats != null && !_stats.IsAlive) return;
 
