@@ -13,7 +13,7 @@
 | 직렬화 | Protobuf (Google.Protobuf) | .proto 파일로 서버/클라 동시 생성 |
 | 클라 네트워크 | TcpClient + async/await | 클라는 연결 1개라 SAEA 불필요 |
 | DB | MySQL + Dapper | 계정, 매치 기록 최소한만 |
-| 서버 간 통신 | localhost HTTP (REST) | Lobby ↔ Game Server 내부 통신 |
+| 서버 간 통신 | localhost TCP + Protobuf (internal.proto) | LobbyServer ↔ GameServer 내부 채널 (loopback 7772) |
 
 ## 레포 구조
 
@@ -27,9 +27,9 @@ subwayMeme/                   ← git root
 └── Server/
     ├── ServerCore/           ← SAEA 네트워크 코어 (두 서버 공용 라이브러리)
     │   └── ServerCore.csproj
-    ├── LobbyServer/          ← 항상 실행, 방 관리 담당
+    ├── LobbyServer/          ← 항상 실행, 방 관리 + GameServer 내부 채널 연결
     │   └── LobbyServer.csproj
-    └── GameServer/           ← 게임방 1개당 1 프로세스, 게임 종료 시 자동 종료
+    └── GameServer/           ← 항상 실행, 단일 프로세스 안에서 여러 룸 동시 운영
         └── GameServer.csproj
 ```
 
@@ -38,27 +38,34 @@ subwayMeme/                   ← git root
 ```
 [Mac Mini]
 │
-├── Lobby Server (항상 실행, 포트 7770)
-│   ├── 플레이어 접속 및 인증
+├── LobbyServer (항상 실행, 포트 7770)
+│   ├── 외부 클라 접속 (Listener)
 │   ├── 방 목록 관리
-│   └── 게임 시작 시 Game Server 프로세스 spawn
+│   └── GameServer 내부 채널(7772) 에 능동 접속 (Connector)
 │
-├── Game Server #1 (포트 7771) ← 방 1개
-├── Game Server #2 (포트 7772) ← 방 1개
-└── Game Server #N ...          ← 게임 종료 시 자동 종료
+└── GameServer (항상 실행, 단일 프로세스)
+    ├── 포트 7771 (IPAddress.Any)    ← 외부 클라이언트 접속용
+    │   └── GameSession → GameRoomManager 가 roomId 로 라우팅
+    └── 포트 7772 (IPAddress.Loopback) ← LobbyServer 전용 내부 채널 (외부 접근 차단)
+        └── InternalSession (L2G_ / G2L_ 패킷 처리)
 
 [클라이언트 접속 흐름]
-1. Lobby Server 접속 (TCP)
+1. LobbyServer 접속 (TCP)
 2. 방 생성 / 참가
-3. 게임 시작 → Lobby가 Game Server spawn
-4. Lobby 응답: "7771 포트로 접속해"
-5. Game Server에 직접 접속 → 게임 진행
+3. 게임 시작
+   3-1. LobbyServer → GameServer: L2G_CreateRoom 전송 → GameRoom 인스턴스 생성
+   3-2. LobbyServer → 방 안 모든 클라: S_GameReady (port=7771, roomId)
+4. 각 클라가 GameServer:7771 에 직접 접속
+5. C_EnterGame { roomId } 전송 → GameSession 이 해당 GameRoom 에 바인딩 → 게임 진행
 ```
 
-**Game Server는 요청 시 spawn**: 방이 만들어질 때 `Process.Start()`로 실행,
-게임 종료 시 스스로 종료. 항상 대기 중인 프로세스 없음.
+**GameServer 는 미리 실행**: 부팅 후 두 개의 Listener 를 열고 대기.
+LobbyServer 가 보내는 룸 생성 요청마다 `GameRoomManager` 가 roomId 키로 GameRoom 인스턴스를 추가한다.
+한 프로세스 안에서 N 개의 룸이 독립 상태(플레이어, 적, 타이머 등) 로 공존.
 
-Lobby ↔ Game Server 내부 통신은 localhost HTTP (REST)로 충분.
+LobbyServer ↔ GameServer 내부 통신은 같은 SAEA 파이프라인 (`Connector` + `PacketSession`) 을 재사용해
+TCP + Protobuf 로 처리한다. 패킷 정의는 `internal.proto` (L2G_CreateRoom, G2L_RoomEnded).
+외부 노출을 막기 위해 GameServer 의 내부 포트는 loopback (127.0.0.1) 만 바인딩.
 
 ## 로컬 저장 vs 서버 저장
 
@@ -118,7 +125,7 @@ S_CreatorChanged / S_Error         // 방장 위임 / 에러
 #### 게임 (game.proto / GameProto)
 ```
 // 접속/초기화
-C_EnterGame / S_EnterGame          // 게임서버 접속 (로비 playerId 사용)
+C_EnterGame / S_EnterGame          // 게임서버 접속 (로비 playerId + roomId 동봉)
 S_PlayerEntered / S_PlayerLeft     // 입장/퇴장 알림
 S_HostChanged                      // 호스트 변경
 
@@ -152,43 +159,57 @@ S_StationSkipped                   // 역 스킵 (미하차)
 C_Interact / S_InteractResult      // 상점/회복 등
 ```
 
+#### 서버 간 내부 채널 (internal.proto / InternalProto)
+LobbyServer ↔ GameServer 전용 통신 (외부 노출 X, localhost loopback 바인딩).
+LobbyServer를 클라이언트처럼 GameServer에 TCP 연결시키고, 기존 PacketSession 파이프라인을 재사용해 패킷 송수신한다.
+
+```
+L2G_CreateRoom    // Lobby → Game: 게임 룸 생성 요청 (room_id, player_count, host_player_id)
+G2L_RoomEnded     // Game → Lobby: 게임 종료 알림 (room_id) — 로비측 룸 정리용
+```
+
+기존 멀티프로세스(GameServer 1방=1프로세스) 구조를 단일 GameServer 프로세스 + 다중 룸 구조로 전환하기 위해 도입.
+`ProcessManager`의 프로세스 spawn 역할을 `L2G_CreateRoom` 패킷이 대체한다.
+
 ## 서버 프로젝트 구조
 
 ```
 Server/
-├── ServerCore/                   ← Lobby/Game Server 공용 SAEA 라이브러리
+├── ServerCore/                       ← 두 서버 공용 SAEA 라이브러리
 │   ├── ServerCore.csproj
-│   ├── Listener.cs               ← AcceptAsync 처리
-│   ├── Session.cs                ← 클라이언트 연결 단위 (Send/Recv)
-│   ├── RecvBuffer.cs             ← 수신 링버퍼 (패킷 단편화 처리)
-│   └── SendBuffer.cs             ← 송신 버퍼
+│   ├── Listener.cs                   ← AcceptAsync 처리 (수동 연결 대기)
+│   ├── Connector.cs                  ← ConnectAsync 처리 (능동 연결, LobbyServer → GameServer)
+│   ├── Session.cs                    ← 연결 단위 추상 (Send/Recv)
+│   ├── PacketSession.cs              ← [size][id][body] 헤더 파싱 후 OnRecvPacket 위임
+│   ├── RecvBuffer.cs                 ← 수신 링버퍼 (단편화 처리)
+│   └── SendBuffer.cs                 ← 송신 버퍼
 │
 ├── LobbyServer/
 │   ├── LobbyServer.csproj
-│   ├── Program.cs
-│   ├── Lobby/
-│   │   ├── Room.cs               ← 대기방
-│   │   ├── RoomManager.cs        ← 방 목록 관리
-│   │   └── LobbyPlayer.cs        ← 로비 내 플레이어
-│   ├── ProcessManager.cs         ← Game Server 프로세스 spawn/kill
-│   ├── Packet/
-│   │   ├── Generated/            ← protoc 자동 생성
-│   │   └── LobbyPacketHandler.cs
-│   └── DB/
-│       └── DBManager.cs
+│   ├── Program.cs                    ← Listener(7770) + Connector(GameServer 7772)
+│   ├── LobbyConfig.cs                ← appsettings.json 로드, GameServer 호스트/포트 보관
+│   ├── LobbySession.cs               ← 외부 클라 세션
+│   ├── GameServerSession.cs          ← GameServer 내부 채널 세션 (능동 접속)
+│   ├── Room.cs                       ← 대기방
+│   ├── RoomManager.cs                ← 방 목록 관리 (thread-safe)
+│   └── Packet/
+│       ├── Generated/                ← protoc 자동 생성 (Lobby.cs, Internal.cs)
+│       ├── LobbyPacketHandler.cs     ← 외부 클라 패킷 (C_ → S_)
+│       └── InternalPacketHandler.cs  ← 내부 채널 수신 (G2L_)
 │
 └── GameServer/
     ├── GameServer.csproj
-    ├── Program.cs                ← 인자로 포트/방ID 수신
-    ├── Game/
-    │   ├── GameRoom.cs           ← 게임 룸 (플레이어, 적, 타이머)
-    │   ├── GamePlayer.cs         ← 서버 측 플레이어 상태
-    │   ├── EnemyController.cs    ← 서버 권위 적 관리
-    │   └── StageTimer.cs         ← 스테이지 타이머
-    ├── Packet/
-    │   ├── Generated/            ← protoc 자동 생성
-    │   └── GamePacketHandler.cs
-    └── LobbyReporter.cs          ← 게임 종료 시 Lobby에 HTTP 보고
+    ├── Program.cs                    ← Listener(7771 클라용) + Listener(7772 loopback 내부)
+    ├── GameRoom.cs                   ← 룸 단위 상태 (플레이어, 적, 스테이지, Enemies 보유)
+    ├── GameRoomManager.cs            ← roomId 키 Dictionary 로 다중 룸 관리
+    ├── GamePlayer.cs                 ← 서버 측 플레이어 상태
+    ├── GameSession.cs                ← 외부 클라 세션 (C_EnterGame 수신 시 Room 동적 바인딩)
+    ├── InternalSession.cs            ← LobbyServer 와의 내부 채널 세션 (수신)
+    ├── EnemyManager.cs               ← 룸별 적 HP 관리 (GameRoom 이 소유)
+    └── Packet/
+        ├── Generated/                ← protoc 자동 생성 (Game.cs, Internal.cs)
+        ├── GamePacketHandler.cs      ← 외부 클라 패킷 (C_ → S_)
+        └── InternalPacketHandler.cs  ← 내부 채널 수신 (L2G_)
 ```
 
 ## 클라이언트 네트워크 구조
@@ -307,6 +328,47 @@ Client/Assets/Scripts/Network/
 - [ ] 씬 로딩 완료 시 C_Ready 송신
 - [ ] PlayerController → 이동/공격 입력 시 C_Move / C_Attack 송신
 - [ ] 호스트 전용: NavMesh 결과 → C_EnemySync, 적 공격 → C_EnemyAttack 송신
+
+### 6단계: 서버 구조 리팩터링 (Phase 1 + Phase 2) - 완료
+멀티프로세스 GameServer 구조에서 단일 GameServer + 다중 룸 구조로 전환.
+WebGL 배포 시 GameServer 의 고정 포트만 노출하면 되도록 사전 정비.
+
+- [x] Phase 1: GameRoom / EnemyManager 싱글톤 해체
+  - [x] GameRoom 인스턴스화 (`GameRoom.Instance` 제거)
+  - [x] EnemyManager 를 GameRoom 의 `Enemies` 프로퍼티로 소유 (룸별 독립 상태)
+  - [x] GameSession 생성자 주입 → 모든 핸들러 `gs.Room.X` 로 접근
+- [x] Phase 2: 단일 GameServer 프로세스 + 다중 룸
+  - [x] `internal.proto` (L2G_CreateRoom, G2L_RoomEnded) 정의
+  - [x] `C_EnterGame` 에 `room_id` 필드 추가
+  - [x] `GameRoomManager` (Dictionary<int, GameRoom>) 도입
+  - [x] `GameServer/Program.cs` 재작성: args 제거 + Listener 2개 (7771 클라용, 7772 loopback 내부)
+  - [x] `InternalSession` + `InternalPacketHandler` (game/lobby 양쪽)
+  - [x] `ServerCore/Connector.cs` 신설 (Listener 의 능동 연결 버전)
+  - [x] `LobbyServer/GameServerSession.cs` + `LobbyConfig.cs`
+  - [x] `RoomManager.StartGame` 에서 ProcessManager.Spawn 제거 → 고정 포트 반환
+  - [x] `LobbyPacketHandler.Handle_C_StartGame` 에서 L2G_CreateRoom 송신 후 S_GameReady
+  - [x] `GameSession.Handle_C_EnterGame` 에서 roomId 로 GameRoomManager 조회 → BindRoom
+  - [x] 클라 `NetworkManager.MyRoomId` 추가 + `C_EnterGame.RoomId` 동봉
+  - [x] `ProcessManager.cs` 삭제
+- [x] 빈 룸 자동 정리: `GameSession.OnDisconnected` 에서 `Room.Remove` 결과 0명 시 `GameRoomManager.RemoveRoom` 호출
+- [x] G2L_RoomEnded 송신: 룸 정리 시 GameServer → LobbyServer 로 알림 (`InternalSession.LobbyConnection` 단일 참조 활용)
+- [x] LobbyServer 측 G2L 처리: `RoomManager.RemoveRoom` 신설 + `InternalPacketHandler.Handle_G2L_RoomEnded` 에서 호출
+- [x] `GameRoom.RoomId` 필드 추가 (룸이 자기 ID 를 알고 있어야 정리 시 GameRoomManager 호출 가능)
+- [ ] LobbyServer → GameServer 연결 끊김 시 재연결 (현재는 한 번 실패 시 영구 미연결)
+
+### 실행 방식 변경 (Phase 2 이후)
+기존엔 LobbyServer 만 실행하면 GameServer 가 자동 spawn 됐지만, 이제는 두 프로세스를 **각각 수동으로 실행**해야 한다.
+
+```bash
+# 1. GameServer 먼저 (LobbyServer 부팅 시 GameServer:7772 에 연결 시도)
+cd Server/GameServer && dotnet run
+
+# 2. 다른 터미널에서 LobbyServer
+cd Server/LobbyServer && dotnet run
+```
+
+순서가 바뀌면 LobbyServer 콘솔에 `[Connector] Connect 실패: ConnectionRefused` 출력 후,
+첫 C_StartGame 처리 시 클라에 "게임서버 연결 없음" 에러 응답.
 
 ## 주요 구현 메모
 

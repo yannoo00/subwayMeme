@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+option csharp_namespace = "InternalProto";
+
+// ===================================================
+//  서버 간 내부 채널 패킷
+//  LobbyServer <-> GameServer 전용 (외부 클라이언트 노출 X)
+//  GameServer 는 클라용 포트와 별도로 localhost loopback 포트를 열어 수신.
+//
+//  L2G_ : Lobby to Game
+//  G2L_ : Game to Lobby
+// ===================================================
+enum InternalPacketId {
+  NONE = 0;
+
+  // --- 룸 라이프사이클 ---
+  L2G_CREATE_ROOM = 1;   // 로비 게임 시작 시: 게임서버에 룸 생성 지시
+  G2L_ROOM_ENDED  = 2;   // 게임 종료 시: 로비측 룸 정리용 알림
+}
+
+// ===================================================
+//  Lobby -> Game
+// ===================================================
+
+// 게임 룸 생성 요청.
+// 기존 ProcessManager 의 GameServer 프로세스 spawn 을 대체한다.
+// 단일 GameServer 프로세스 안에서 GameRoomManager 가 room_id 키로 GameRoom 인스턴스를 보관.
+message L2G_CreateRoom {
+  int32 room_id        = 1;
+  int32 player_count   = 2;   // 로비에서 확정된 참가 인원 (GameRoom.Init 의 expectedCount)
+  int32 host_player_id = 3;   // 로비 방장의 PlayerId
+}
+
+// ===================================================
+//  Game -> Lobby
+// ===================================================
+
+// 게임 종료 알림. 로비측 룸 상태 정리 용도.
+// 클리어/게임오버/전원 이탈 등 어떤 사유든 게임이 끝나면 발송.
+message G2L_RoomEnded {
+  int32 room_id = 1;
+}

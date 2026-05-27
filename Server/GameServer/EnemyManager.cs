@@ -5,8 +5,7 @@ namespace GameServer
 {
     public class EnemyManager
     {
-        public static readonly EnemyManager Instance = new();
-
+        // 싱글톤 제거: GameRoom 이 인스턴스로 소유. 룸별 독립 상태 관리.
         readonly object _lock = new();
         readonly Dictionary<int, int> _enemyHp = new(); // enemyId → currentHp
 

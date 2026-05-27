@@ -1,6 +1,7 @@
 using System;
 using Google.Protobuf;
 using LobbyProto;
+using InternalProto;
 using ServerCore;
 
 namespace LobbyServer
@@ -116,11 +117,30 @@ namespace LobbyServer
                 return;
             }
 
-            // 방의 모든 플레이어에게 게임 서버 포트 전달
+            // Phase 2: 게임서버에 먼저 룸 생성 요청 (서버 간 내부 채널).
+            // 이게 클라들에게 S_GameReady 보내기 전에 처리되어야 함 - TCP 순서 보장.
+            if (GameServerSession.Instance == null)
+            {
+                Console.WriteLine($"[Lobby] C_StartGame 실패: GameServer 내부 채널 연결 없음");
+                session.Send(MakePacket(PacketId.SError, new S_Error { Code = 3, Message = "게임서버 연결 없음" }));
+                return;
+            }
+
+            var createPkt = InternalPacketHandler.MakePacket(
+                InternalPacketId.L2GCreateRoom,
+                new L2G_CreateRoom
+                {
+                    RoomId       = result.Data.RoomId,
+                    PlayerCount  = result.Data.AllSessions.Count,
+                    HostPlayerId = result.Data.HostPlayerId,
+                });
+            GameServerSession.Instance.Send(createPkt);
+
+            // 방의 모든 플레이어에게 게임 서버 정보 전달
             var readyBytes = MakePacket(PacketId.SGameReady, new S_GameReady
             {
                 Port   = result.Data.GamePort,
-                Host   = ProcessManager.Instance.GameServerHost,
+                Host   = LobbyConfig.Instance.GameServerHost,
                 RoomId = result.Data.RoomId,
             });
 

@@ -85,6 +85,7 @@ public static class LobbyPacketHandler
         Debug.Log($"[Lobby] S_GameReady: port={pkt.Port}, roomId={pkt.RoomId}");
 
         NetworkManager.Instance.GameServerPort = pkt.Port;
+        NetworkManager.Instance.MyRoomId       = pkt.RoomId;
         GameManager.Instance.OnEnteringGame();
         MainMenuUIDocument.Instance?.OnGameReadyReceived();
     }

@@ -99,11 +99,14 @@ message EnemySyncData {
 //  1. 접속/초기화
 // ===================================================
 
-// 클라 -> 서버: 게임서버 접속 (로비에서 받은 ID 사용)
+// 클라 -> 서버: 게임서버 접속 (로비에서 받은 playerId + roomId 동봉)
+// room_id 는 S_GameReady 로 받은 값을 그대로 다시 보낸다.
+// 게임서버가 단일 프로세스 + 다중 룸 구조이므로, 이 값으로 GameSession 을 올바른 GameRoom 에 라우팅한다.
 message C_EnterGame {
   int32  player_id    = 1;
   string player_name  = 2;
   int32  character_id = 3;
+  int32  room_id      = 4;
 }
 
 // 서버 -> 클라: 접속 수락 + 현재 플레이어 목록

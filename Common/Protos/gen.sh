@@ -13,6 +13,10 @@ protoc --proto_path="$PROTO_DIR" --csharp_out="$GAME_SERVER_OUT"  "$PROTO_DIR/ga
 protoc --proto_path="$PROTO_DIR" --csharp_out="$CLIENT_OUT"       "$PROTO_DIR/lobby.proto"
 protoc --proto_path="$PROTO_DIR" --csharp_out="$CLIENT_OUT"       "$PROTO_DIR/game.proto"
 
+# internal.proto: LobbyServer + GameServer 전용 (클라이언트 제외)
+protoc --proto_path="$PROTO_DIR" --csharp_out="$LOBBY_SERVER_OUT" "$PROTO_DIR/internal.proto"
+protoc --proto_path="$PROTO_DIR" --csharp_out="$GAME_SERVER_OUT"  "$PROTO_DIR/internal.proto"
+
 echo ""
 echo "[gen.sh] 생성 완료"
 echo "  로비서버: $LOBBY_SERVER_OUT"

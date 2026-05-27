@@ -17,7 +17,11 @@ namespace GameServer
 
     public class GameRoom
     {
-        public static readonly GameRoom Instance = new();
+        // 룸 단위로 적 HP 를 관리. Phase 2 다중 룸 전환 시 룸별 적 ID 충돌 방지를 위해 룸이 소유.
+        public EnemyManager Enemies { get; } = new EnemyManager();
+
+        // 룸 자기 자신의 ID. 빈 룸 정리 시 GameRoomManager.RemoveRoom(RoomId) 와 G2L_RoomEnded 송신에 사용.
+        public int RoomId { get; private set; }
 
         readonly object _lock = new();
         readonly Dictionary<int, GamePlayer> _players = new(); // key: SessionId
@@ -36,11 +40,12 @@ namespace GameServer
 
         // ==== 초기화 =============================================================
 
-        // Program.cs에서 GameServer 시작 직후 호출
-        public void Init(int expectedCount, int hostPlayerId)
+        // GameRoomManager.CreateRoom 에서 호출. 로비서버가 보낸 L2G_CreateRoom 의 필드를 그대로 받는다.
+        public void Init(int roomId, int expectedCount, int hostPlayerId)
         {
             lock (_lock)
             {
+                RoomId         = roomId;
                 _expectedCount = expectedCount;
                 _hostPlayerId  = hostPlayerId;
             }

@@ -113,7 +113,8 @@ namespace LobbyServer
         }
 
         // 게임 시작 (방장만 호출 가능)
-        // ProcessManager로 GameServer 프로세스를 띄우고 포트와 전체 세션 목록을 반환
+        // Phase 2: 프로세스 spawn 안 함. 클라가 접속할 포트(고정값) + 룸 ID + 세션 목록을 반환.
+        // 실제 룸 생성 요청은 호출부가 L2G_CreateRoom 으로 GameServer 에 보낸다.
         public RoomResult<StartGameData> StartGame(LobbySession requester)
         {
             lock (_lock)
@@ -130,12 +131,15 @@ namespace LobbyServer
                 if (!room.IsAllReady())
                     return RoomResult<StartGameData>.Fail("아직 캐릭터를 선택하지 않은 플레이어가 있습니다.");
 
-                int? port = ProcessManager.Instance.Spawn(room.RoomId, room.PlayerCount, room.CreatorSessionId);
-                if (!port.HasValue)
-                    return RoomResult<StartGameData>.Fail("게임 서버를 시작하지 못했습니다.");
-
+                // Phase 2: 프로세스 spawn 제거. GameServer 는 미리 떠 있고,
+                // 룸 생성은 호출부(LobbyPacketHandler) 가 L2G_CreateRoom 패킷으로 요청한다.
+                // 여기서는 클라에게 전달할 데이터만 구성. 포트는 고정값.
                 var allSessions = room.GetAllSessions();
-                return RoomResult<StartGameData>.Success(new(port.Value, room.RoomId, allSessions, room.CreatorSessionId));
+                return RoomResult<StartGameData>.Success(new(
+                    LobbyConfig.Instance.GameServerClientPort,
+                    room.RoomId,
+                    allSessions,
+                    room.CreatorSessionId));
             }
         }
 
@@ -154,6 +158,18 @@ namespace LobbyServer
 
                 return RoomResult<SelectCharacterData>.Success(
                     new(requester.SessionId, characterId, room.GetAllSessions()));
+            }
+        }
+
+        // G2L_RoomEnded 수신 시 방어적 룸 제거.
+        // 정상 흐름에서는 게임 시작 시 모든 플레이어가 disconnect 하면서 LeaveRoom 누적으로
+        // 이미 _rooms 에서 빠져 있을 가능성이 높지만, 혹시 남아있다면 여기서 강제 제거.
+        public void RemoveRoom(int roomId)
+        {
+            lock (_lock)
+            {
+                if (_rooms.Remove(roomId))
+                    Console.WriteLine($"[RoomManager] 룸 제거 (G2L): roomId={roomId}");
             }
         }
 

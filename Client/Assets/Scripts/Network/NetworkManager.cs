@@ -24,6 +24,8 @@ public class NetworkManager : MonoBehaviour
     public string MyPlayerName   { get; set; }
     public bool   IsHost         { get; set; }
     public int    GameServerPort { get; set; }
+    // S_GameReady 로 받은 룸 ID. C_EnterGame 동봉하여 GameServer 가 올바른 GameRoom 에 라우팅.
+    public int    MyRoomId       { get; set; }
 
     // 현재 연결 대상에 맞는 디스패처를 반환
     // ServerSession이 수신한 패킷을 올바른 핸들러로 전달하기 위해 사용
@@ -92,6 +94,8 @@ public class NetworkManager : MonoBehaviour
             PlayerName  = MyPlayerName,
             // 다른 플레이어들이 내 모델을 올바르게 인스턴시에이션할 수 있도록 동봉
             CharacterId = GameManager.Instance.SelectedCharacterId,
+            // Phase 2: GameServer 단일 프로세스 + 다중 룸 구조이므로 룸 라우팅용으로 동봉
+            RoomId      = MyRoomId,
         });
     }
 
