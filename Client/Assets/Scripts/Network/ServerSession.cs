@@ -80,6 +80,7 @@ public class ServerSession : MonoBehaviour
         }
         catch (Exception e)
         {
+            //프로세스 종료 등 서버 연결 끊기는 것에 대한 처리.
             Debug.LogError($"[ServerSession] 접속 실패: {e.Message}");
             return false;
         }

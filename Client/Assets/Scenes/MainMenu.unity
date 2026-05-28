@@ -1136,7 +1136,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkManager
   _serverHost: 127.0.0.1
-  _lobbyPort: 7770
+  _lobbyPort: 8770
 --- !u!4 &948390130
 Transform:
   m_ObjectHideFlags: 0
