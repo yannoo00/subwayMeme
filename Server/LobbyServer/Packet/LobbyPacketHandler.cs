@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Google.Protobuf;
 using LobbyProto;
 using InternalProto;
@@ -8,6 +9,15 @@ namespace LobbyServer
 {
     public class LobbyPacketHandler
     {
+        // === pending game start (G2L_RoomCreated ack 대기 중) ===
+        // C_StartGame 처리 시 S_GameReady 를 즉시 보내지 않고 여기 보관.
+        // GameServer 가 룸 생성 완료를 ack 로 알려오면 FinalizeGameStart 에서 꺼내 송신.
+        // race 방어: 클라가 C_EnterGame 보낼 때 GameRoom 이 보장됨.
+        record PendingGameStart(int RoomId, int Port, string Host, List<LobbySession> AllSessions);
+
+        static readonly object _pendingLock = new();
+        static readonly Dictionary<int, PendingGameStart> _pendingStarts = new();
+
         // PacketId -> 핸들러 함수 테이블
         // LobbySession.OnRecvPacket()에서 이 테이블을 조회해 호출
         public static Action<PacketSession, ArraySegment<byte>>[] Handlers { get; private set; }
@@ -117,14 +127,22 @@ namespace LobbyServer
                 return;
             }
 
-            // Phase 2: 게임서버에 먼저 룸 생성 요청 (서버 간 내부 채널).
-            // 이게 클라들에게 S_GameReady 보내기 전에 처리되어야 함 - TCP 순서 보장.
             if (GameServerSession.Instance == null)
             {
                 Console.WriteLine($"[Lobby] C_StartGame 실패: GameServer 내부 채널 연결 없음");
                 session.Send(MakePacket(PacketId.SError, new S_Error { Code = 3, Message = "게임서버 연결 없음" }));
                 return;
             }
+
+            // ack 기반 흐름: pending 보관 → L2G 전송 → G2L_RoomCreated 수신 시 FinalizeGameStart 에서 S_GameReady 송신.
+            // 이렇게 해야 클라의 C_EnterGame 이 GameServer 에 도착할 때 룸 생성이 완료되어 있다 (race 방어).
+            var pending = new PendingGameStart(
+                result.Data.RoomId,
+                result.Data.GamePort,
+                LobbyConfig.Instance.GameServerHost,
+                result.Data.AllSessions);
+            lock (_pendingLock)
+                _pendingStarts[result.Data.RoomId] = pending;
 
             var createPkt = InternalPacketHandler.MakePacket(
                 InternalPacketId.L2GCreateRoom,
@@ -136,15 +154,33 @@ namespace LobbyServer
                 });
             GameServerSession.Instance.Send(createPkt);
 
-            // 방의 모든 플레이어에게 게임 서버 정보 전달
+            // S_GameReady 송신은 G2L_RoomCreated 수신 후 FinalizeGameStart 에서.
+        }
+
+        // InternalPacketHandler.Handle_G2L_RoomCreated 에서 호출.
+        // 보관해둔 pending 을 꺼내 클라들에게 S_GameReady 송신.
+        public static void FinalizeGameStart(int roomId)
+        {
+            PendingGameStart pending;
+            lock (_pendingLock)
+            {
+                if (!_pendingStarts.Remove(roomId, out pending))
+                {
+                    Console.WriteLine($"[Lobby] FinalizeGameStart 무시: pending 없음 roomId={roomId}");
+                    return;
+                }
+            }
+
+            Console.WriteLine($"[Lobby] S_GameReady 송신: roomId={roomId}, 수신자={pending.AllSessions.Count}");
+
             var readyBytes = MakePacket(PacketId.SGameReady, new S_GameReady
             {
-                Port   = result.Data.GamePort,
-                Host   = LobbyConfig.Instance.GameServerHost,
-                RoomId = result.Data.RoomId,
+                Port   = pending.Port,
+                Host   = pending.Host,
+                RoomId = pending.RoomId,
             });
 
-            foreach (var s in result.Data.AllSessions)
+            foreach (var s in pending.AllSessions)
                 s.Send(readyBytes);
         }
 

@@ -13,10 +13,11 @@ namespace LobbyServer
 
         static InternalPacketHandler()
         {
-            int maxId = (int)InternalPacketId.G2LRoomEnded + 1;
+            int maxId = (int)InternalPacketId.G2LRoomCreated + 1;
             Handlers = new Action<PacketSession, ArraySegment<byte>>[maxId];
 
-            Handlers[(int)InternalPacketId.G2LRoomEnded] = Handle_G2L_RoomEnded;
+            Handlers[(int)InternalPacketId.G2LRoomEnded]   = Handle_G2L_RoomEnded;
+            Handlers[(int)InternalPacketId.G2LRoomCreated] = Handle_G2L_RoomCreated;
         }
 
         // 게임서버로부터 룸 종료 알림 수신.
@@ -27,6 +28,15 @@ namespace LobbyServer
             var pkt = G2L_RoomEnded.Parser.ParseFrom(body.Array, body.Offset, body.Count);
             Console.WriteLine($"[Internal] G2L_RoomEnded: roomId={pkt.RoomId}");
             RoomManager.Instance.RemoveRoom(pkt.RoomId);
+        }
+
+        // 룸 생성 완료 ack 수신.
+        // Handle_C_StartGame 에서 보관해둔 pending 정보를 꺼내 클라들에게 S_GameReady 송신.
+        static void Handle_G2L_RoomCreated(PacketSession session, ArraySegment<byte> body)
+        {
+            var pkt = G2L_RoomCreated.Parser.ParseFrom(body.Array, body.Offset, body.Count);
+            Console.WriteLine($"[Internal] G2L_RoomCreated: roomId={pkt.RoomId}");
+            LobbyPacketHandler.FinalizeGameStart(pkt.RoomId);
         }
 
         public static ArraySegment<byte> MakePacket(InternalPacketId id, IMessage message)

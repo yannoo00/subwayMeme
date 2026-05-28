@@ -354,7 +354,12 @@ WebGL 배포 시 GameServer 의 고정 포트만 노출하면 되도록 사전 �
 - [x] G2L_RoomEnded 송신: 룸 정리 시 GameServer → LobbyServer 로 알림 (`InternalSession.LobbyConnection` 단일 참조 활용)
 - [x] LobbyServer 측 G2L 처리: `RoomManager.RemoveRoom` 신설 + `InternalPacketHandler.Handle_G2L_RoomEnded` 에서 호출
 - [x] `GameRoom.RoomId` 필드 추가 (룸이 자기 ID 를 알고 있어야 정리 시 GameRoomManager 호출 가능)
+- [x] L2G_CreateRoom 처리와 C_EnterGame 도착의 race 방어: `G2L_RoomCreated` ack 패턴 도입
+  - 원인: GameServer 의 두 Session 핸들러가 별도 ThreadPool 스레드에서 병렬 실행 → `GameRoomManager` lock 순서가 race
+  - 해결: LobbyServer 가 ack 받기 전까지 S_GameReady 보류 (`LobbyPacketHandler._pendingStarts` Dictionary)
+  - GameServer `Handle_L2G_CreateRoom` 마지막에 `G2L_RoomCreated` 송신
 - [ ] LobbyServer → GameServer 연결 끊김 시 재연결 (현재는 한 번 실패 시 영구 미연결)
+- [ ] pending L2G 의 timeout 처리 (ack 안 오면 영원히 잔존 - 학습 범위 외)
 
 ### 실행 방식 변경 (Phase 2 이후)
 기존엔 LobbyServer 만 실행하면 GameServer 가 자동 spawn 됐지만, 이제는 두 프로세스를 **각각 수동으로 실행**해야 한다.
