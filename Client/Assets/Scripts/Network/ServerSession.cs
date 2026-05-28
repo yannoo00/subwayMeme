@@ -69,14 +69,32 @@ public class ServerSession : MonoBehaviour
             string url = $"ws://{host}:{port}";
             _ws = new WebSocket(url);
 
-            _ws.OnOpen    += () => Debug.Log($"[ServerSession] 접속 성공: {url}");
-            _ws.OnMessage += OnWebSocketMessage;
-            _ws.OnError   += (err) => Debug.LogError($"[ServerSession] 에러: {err}");
-            _ws.OnClose   += (code) => OnDisconnected();
+            // NativeWebSocket 의 Connect() 는 내부에서 Receive 루프가 끝날 때(= 세션 종료)까지 반환 안 함.
+            // 즉 await _ws.Connect() 는 연결이 살아있는 내내 영원히 await 됨.
+            // 그래서 Connect() 는 fire-and-forget 으로 띄우고, OnOpen 콜백으로 연결 성공 시점을 잡는다.
+            var openTcs = new TaskCompletionSource<bool>();
 
-            // Connect 는 핸드셰이크 완료까지 await. 완료 후 State 로 성공 여부 판정.
-            await _ws.Connect();
-            return _ws.State == WebSocketState.Open;
+            _ws.OnOpen += () =>
+            {
+                Debug.Log($"[ServerSession] 접속 성공: {url}");
+                openTcs.TrySetResult(true);
+            };
+            _ws.OnMessage += OnWebSocketMessage;
+            _ws.OnError += (err) =>
+            {
+                Debug.LogError($"[ServerSession] 에러: {err}");
+                openTcs.TrySetResult(false);
+            };
+            _ws.OnClose += (code) =>
+            {
+                OnDisconnected();
+                openTcs.TrySetResult(false); // 이미 true 면 TrySet 무시됨
+            };
+
+            // fire-and-forget. 내부 예외는 Connect() 가 자체적으로 OnError/OnClose 로 변환.
+            _ = _ws.Connect();
+
+            return await openTcs.Task;
         }
         catch (Exception e)
         {
