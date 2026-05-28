@@ -13,7 +13,8 @@ public class NetworkManager : MonoBehaviour
 
     [Header("Server Settings")]
     [SerializeField] private string _serverHost = "127.0.0.1";
-    [SerializeField] private int    _lobbyPort  = 7770;
+    // websockify 프록시 포트. 실제 LobbyServer TCP 포트는 7770, websockify 가 8770 → 7770 변환.
+    [SerializeField] private int    _lobbyPort  = 8770;
 
     // === Private 변수 ===
 
@@ -92,9 +93,7 @@ public class NetworkManager : MonoBehaviour
         {
             PlayerId    = MyPlayerId,
             PlayerName  = MyPlayerName,
-            // 다른 플레이어들이 내 모델을 올바르게 인스턴시에이션할 수 있도록 동봉
             CharacterId = GameManager.Instance.SelectedCharacterId,
-            // Phase 2: GameServer 단일 프로세스 + 다중 룸 구조이므로 룸 라우팅용으로 동봉
             RoomId      = MyRoomId,
         });
     }
