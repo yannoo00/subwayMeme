@@ -189,6 +189,19 @@ public static class ClientGamePacketHandler
         }
     }
 
+    // 적 공격 애니메이션 트리거 (비호스트 전용)
+    public static void Handle_S_EnemyAttack(byte[] body)
+    {
+        if (GameManager.Instance.CurrentState != GameState.Playing) return;
+
+        var pkt = S_EnemyAttack.Parser.ParseFrom(body);
+
+        var ne = SpawnManager.Instance.GetNetworkEnemy(pkt.EnemyId);
+        if (ne == null) return;
+
+        ne.TriggerAttackAnim();
+    }
+
     // 적 피격 (서버 권위 HP)
     public static void Handle_S_EnemyDamaged(byte[] body)
     {

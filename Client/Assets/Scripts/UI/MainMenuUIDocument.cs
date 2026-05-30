@@ -397,7 +397,7 @@ public class MainMenuUIDocument : MonoBehaviour
         var row = new VisualElement();
         row.AddToClassList("player-entry");
 
-        var nameLabel = new Label(isSelf ? $"{playerName} (나)" : playerName);
+        var nameLabel = new Label(isSelf ? $"{playerName} (me)" : playerName);
         nameLabel.AddToClassList("player-entry__name");
         row.Add(nameLabel);
 
@@ -429,11 +429,11 @@ public class MainMenuUIDocument : MonoBehaviour
             var def = GameManager.Instance != null
                 ? GameManager.Instance.GetCharacterDefinition(entry.CharacterId)
                 : null;
-            display = def != null ? def.displayName : $"캐릭터 {entry.CharacterId}";
+            display = def != null ? def.displayName : $"Character {entry.CharacterId}";
         }
         else
         {
-            display = isSelf ? "캐릭터 선택" : "선택 중...";
+            display = isSelf ? "SELECT" : "Selecting...";
         }
         entry.CharacterLabel.text = display;
 
@@ -521,7 +521,7 @@ public class MainMenuUIDocument : MonoBehaviour
         var characters = GameManager.Instance?.AllCharacters;
         if (characters == null || characters.Length == 0)
         {
-            var empty = new Label("등록된 캐릭터가 없습니다.");
+            var empty = new Label("No characters registered.");
             empty.AddToClassList("player-entry");
             _charSelectGrid.Add(empty);
             return;
@@ -569,7 +569,7 @@ public class MainMenuUIDocument : MonoBehaviour
         var def = GameManager.Instance?.GetCharacterDefinition(_focusedCharacterId);
         if (def == null)
         {
-            _charDetailName.text  = "캐릭터를 선택하세요";
+            _charDetailName.text  = "Select a character";
             _charDetailStats.text = "";
             _charDetailDesc.text  = "";
             _charSelectConfirmButton?.SetEnabled(false);
@@ -578,7 +578,7 @@ public class MainMenuUIDocument : MonoBehaviour
         }
 
         _charDetailName.text  = def.displayName;
-        _charDetailStats.text = $"체력 {def.baseMaxHealth}\n공격 +{def.baseAttackPower * 100f:0}%\n이속 {def.baseMoveSpeed}\n스태미나 {def.baseMaxStamina}";
+        _charDetailStats.text = $"HP {def.baseMaxHealth}\nATK +{def.baseAttackPower:0}%\nSPD {def.baseMoveSpeed}\nSTA {def.baseMaxStamina}";
         _charDetailDesc.text  = def.description;
         _charSelectConfirmButton?.SetEnabled(true);
         _previewRenderer?.Preview(def);

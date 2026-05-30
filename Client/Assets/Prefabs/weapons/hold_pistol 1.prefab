@@ -76,6 +76,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1993849809910696543}
     m_Modifications:
+    - target: {fileID: 916900718458821711, guid: d5370334ebfc741919094c943fa694ee, type: 3}
+      propertyPath: playOnAwake
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3338325901135871073, guid: d5370334ebfc741919094c943fa694ee, type: 3}
+      propertyPath: playOnAwake
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5128621479578589028, guid: d5370334ebfc741919094c943fa694ee, type: 3}
       propertyPath: m_Name
       value: CustomMuzzleFlash

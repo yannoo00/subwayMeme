@@ -14,7 +14,7 @@
             <ui:Label name="stamina-label" text="100 / 100" class="hud-label"/>
         </ui:VisualElement>
         <ui:VisualElement name="timer-panel" class="hud-panel hud-panel--hidden">
-            <ui:Label name="timer-title" text="다음 역까지" class="hud-label--title"/>
+            <ui:Label name="timer-title" text="NEXT STATION" class="hud-label--title"/>
             <ui:Label name="timer-label" text="00:30" class="hud-label--timer"/>
         </ui:VisualElement>
         <ui:VisualElement name="bottom-right" picking-mode="Ignore" class="bottom-right">
@@ -40,12 +40,12 @@
             <ui:VisualElement class="crosshair__v"/>
         </ui:VisualElement>
         <ui:VisualElement name="spectator-panel" picking-mode="Ignore" class="hud-panel spectator-panel hud-panel--hidden">
-            <ui:Label name="spectator-title" text="관전 중" class="hud-label--title"/>
+            <ui:Label name="spectator-title" text="SPECTATING" class="hud-label--title"/>
             <ui:Label name="spectator-target" text="" class="hud-label"/>
         </ui:VisualElement>
         <ui:VisualElement name="game-result-panel" class="game-result-panel hud-panel--hidden">
             <ui:Label name="result-title" text="GAME CLEAR" class="result-title"/>
-            <ui:Button name="return-to-menu-button" text="메인 메뉴로 돌아가기" class="result-button"/>
+            <ui:Button name="return-to-menu-button" text="RETURN TO MENU" class="result-button"/>
         </ui:VisualElement>
     </ui:VisualElement>
     <ui:VisualElement name="damage-vignette" picking-mode="Ignore" class="damage-vignette"/>

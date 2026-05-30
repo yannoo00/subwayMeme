@@ -266,6 +266,11 @@ namespace GameServer
 
             Console.WriteLine($"[Game] C_EnemyAttack: enemyId={pkt.EnemyId}, target={pkt.TargetPlayerId}, dmg={pkt.Damage}");
 
+            var attackBytes = MakePacket(GamePacketId.SEnemyAttack,
+                new S_EnemyAttack { EnemyId = pkt.EnemyId });
+            foreach (var s in gs.Room.GetOtherSessions(session.SessionId))
+                s.Send(attackBytes);
+
             var result = gs.Room.ApplyPlayerDamage(pkt.TargetPlayerId, pkt.Damage);
             if (result.Player == null) return;
 

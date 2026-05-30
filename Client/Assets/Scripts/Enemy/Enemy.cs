@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 // 적 오브젝트의 중심 클래스
@@ -83,10 +84,21 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     {
         CombatEvents.EnemyDied(gameObject);
 
-        // AI가 있으면 사망 연출 후 제거를 AI에 위임
-        if (_ai != null)
+        foreach (var col in GetComponentsInChildren<Collider>())
+            col.enabled = false;
+
+        // 비호스트는 AI가 disabled 상태이므로 StartCoroutine을 직접 처리
+        if (_ai != null && _ai.enabled)
             _ai.OnDeath();
         else
-            Destroy(gameObject);
+            StartCoroutine(DeathSequence());
+    }
+
+
+    private IEnumerator DeathSequence()
+    {
+        _anim?.PlayDeath();
+        yield return new WaitForSeconds(2f);
+        Destroy(gameObject);
     }
 }

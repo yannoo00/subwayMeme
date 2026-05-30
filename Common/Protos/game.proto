@@ -48,6 +48,7 @@ enum GamePacketId {
   S_ENEMY_SYNC       = 42;
   C_ENEMY_ATTACK     = 43;
   C_ENEMY_SPAWNED    = 44;   // 호스트 -> 서버: 스폰 보고, 서버가 ID 발급 후 S_ENEMY_SPAWN 릴레이
+  S_ENEMY_ATTACK     = 45;   // 서버 -> 비호스트: 적 공격 애니메이션 트리거
 
   // --- 스테이지 진행 ---
   S_WAVE_START       = 50;
@@ -286,6 +287,11 @@ message C_EnemyAttack {
   int32 enemy_id         = 1;
   int32 target_player_id = 2;
   int32 damage           = 3;
+}
+
+// 서버 -> 비호스트: 적 공격 애니메이션 트리거
+message S_EnemyAttack {
+  int32 enemy_id = 1;
 }
 
 // ===================================================

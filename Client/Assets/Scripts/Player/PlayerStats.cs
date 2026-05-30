@@ -46,6 +46,7 @@ public class PlayerStats: MonoBehaviour, IDamageable
     // 탈진 중이면 임계값 회복 전까지 false 유지. dash 진입 게이트는 이 프로퍼티만 보면 됨
     public bool  CanDash        => !_isExhausted && _currentStamina > 0f;
 
+    // 퍼센트 단위 (10 = +10%). 데미지 적용: damage * (1 + AttackBonus / 100)
     public float AttackBonus       => _baseAttackBonus + _mutationAttackBonus;
     public float MoveSpeedBonus    => _mutationMoveSpeedBonus; // PlayerController에서 읽어서 이속에 가산
 

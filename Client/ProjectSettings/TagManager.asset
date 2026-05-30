@@ -6,6 +6,7 @@ TagManager:
   tags:
   - PlayerSpawnPoint
   - EnemySpawnPoint
+  - Environment
   layers:
   - Default
   - TransparentFX
@@ -13,7 +14,7 @@ TagManager:
   - Enemy
   - Water
   - UI
-  - 
+  - Environment
   - 
   - 
   - 

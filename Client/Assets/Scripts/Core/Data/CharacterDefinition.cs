@@ -16,7 +16,8 @@ public class CharacterDefinition : ScriptableObject
     [Header("기본 스탯")]
     // PlayerStats의 _baseMaxHealth로 사용
     public int baseMaxHealth = 100;
-    // PlayerStats.AttackBonus 에 가산되는 캐릭터 베이스 공격력 보너스 (0.1 = +10%)
+    // PlayerStats.AttackBonus 에 가산되는 캐릭터 베이스 공격력 보너스. 퍼센트 단위 (10 = +10%)
+    // 실제 데미지 적용 시: damage * (1 + baseAttackPower / 100)
     public float baseAttackPower = 0f;
     // PlayerController._moveSpeed 로 사용
     public float baseMoveSpeed = 5f;

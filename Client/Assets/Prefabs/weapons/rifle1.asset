@@ -14,9 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HitscanWeaponData
   weaponName: rifle1
   damage: 20
-  attackCooldown: 0.25
+  attackCooldown: 0.125
   range: 20
   pickupPrefab: {fileID: 5554834611176692639, guid: 71ffbcf29764a304eb8c555db4d96ba2, type: 3}
-  magazineSize: 12
+  magazineSize: 30
   reloadTime: 1.5
   spread: 0
+  selectedWeaponType: 0

@@ -18,12 +18,14 @@ public class HitscanWeapon : WeaponBase
 
     private Camera _aimCamera;
     private int _currentAmmo;
+    private int _totalAmmo = 500;       // 예비 탄약. 재장전 시 차감됨
     private float _reloadEndTime;       // Time.time 기준 재장전 완료 시각. 0이면 비재장전 상태
 
     private bool IsReloading => _reloadEndTime > 0f && Time.time < _reloadEndTime;
     private bool IsAmmoEmpty => _currentAmmo <= 0;
 
     public int CurrentAmmo => _currentAmmo;
+    public int TotalAmmo   => _totalAmmo;
     public int MagazineSize => Data != null ? Data.magazineSize : 0;
 
     // 발사 직후 발행 - 같은 prefab에 부착된 HitscanWeaponEffects 가 구독해서 머즐/카메라 흔들림 처리
@@ -39,12 +41,15 @@ public class HitscanWeapon : WeaponBase
         // 멀티플레이 시 자기 카메라만 태그하면 그대로 동작
         if (_aimCamera == null) _aimCamera = Camera.main;
 
-        // 처음 장착 시 만탄으로 시작. 재줍기 후 탄약 정책은 추후 변경 가능
+        // 처음 장착 시 만탄으로 시작. 예비 탄약에서 첫 탄창분 차감
         if (_currentAmmo == 0 && !IsReloading)
+        {
             _currentAmmo = Data.magazineSize;
+            _totalAmmo   = Mathf.Max(0, _totalAmmo - Data.magazineSize);
+        }
 
         // HUD 동기화 - 장착 시점 탄약/재장전 상태 알림
-        PlayerEvents.AmmoChanged(_currentAmmo, Data.magazineSize);
+        PlayerEvents.AmmoChanged(_currentAmmo, _totalAmmo);
 
         // 재장전 도중 다른 슬롯으로 갔다가 돌아온 경우 - 진행률 바 복구
         // 남은 시간만큼을 새 duration으로 보냄. 바는 0%부터 다시 차오르지만 완료 타이밍은 정확
@@ -59,13 +64,15 @@ public class HitscanWeapon : WeaponBase
         // Unequip(GameObject 비활성)되면 Update 자체가 안 돌아 자연스럽게 일시정지된다
         if (_reloadEndTime > 0f && Time.time >= _reloadEndTime)
         {
-            _currentAmmo = Data.magazineSize;
+            int needed  = Data.magazineSize - _currentAmmo;
+            int loaded  = Mathf.Min(needed, _totalAmmo);
+            _currentAmmo  += loaded;
+            _totalAmmo    -= loaded;
             _reloadEndTime = 0f;
 
             // 순서 중요: ReloadFinished 먼저 → AmmoChanged 나중
-            // HUD가 "RELOADING" → "12/12"로 자연스럽게 갱신되도록
             PlayerEvents.ReloadFinished();
-            PlayerEvents.AmmoChanged(_currentAmmo, Data.magazineSize);
+            PlayerEvents.AmmoChanged(_currentAmmo, _totalAmmo);
         }
     }
 
@@ -81,7 +88,7 @@ public class HitscanWeapon : WeaponBase
         }
 
         _currentAmmo--;
-        PlayerEvents.AmmoChanged(_currentAmmo, Data.magazineSize);
+        PlayerEvents.AmmoChanged(_currentAmmo, _totalAmmo);
 
         Vector3 origin = _aimCamera.transform.position;
         Vector3 direction = ApplySpread(_aimCamera.transform.forward, Data.spread);
@@ -117,6 +124,7 @@ public class HitscanWeapon : WeaponBase
     {
         if (IsReloading) return;
         if (_currentAmmo == Data.magazineSize) return;
+        if (_totalAmmo <= 0) return;
 
         _reloadEndTime = Time.time + Data.reloadTime;
         PlayerEvents.ReloadStarted(Data.reloadTime);

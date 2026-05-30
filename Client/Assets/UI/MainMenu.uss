@@ -1,53 +1,51 @@
-/* === 컬러 토큰 (참고용 주석) ===
-   bg-darkest:      rgb(14, 16, 20)
-   bg-panel:        rgb(22, 26, 32)     - 다이얼로그
-   bg-surface:      rgb(32, 38, 46)     - 버튼/면
-   bg-surface-hov:  rgb(44, 52, 62)
-   bg-surface-act:  rgb(26, 30, 36)
-   bg-inset:        rgb(18, 22, 28)     - 스크롤/입력 트랙
-   border-faint:    rgba(255, 255, 255, 0.06)
-   border:          rgba(255, 255, 255, 0.1)
-   border-strong:   rgba(255, 255, 255, 0.18)
-   accent:          rgb(180, 195, 215)
-   text:            rgb(228, 230, 234)
-   text-dim:        rgba(170, 180, 195, 0.7)
-   text-muted:      rgba(120, 130, 145, 0.5)
-   gold:            rgb(218, 180, 110)
-   danger-fg:       rgb(220, 150, 150)
+/* === COLOR TOKENS ===
+   bg-darkest:      rgb(20, 20, 20)
+   bg-panel:        rgb(42, 42, 42)
+   bg-surface:      rgb(58, 58, 58)
+   bg-surface-hov:  rgb(72, 72, 72)
+   bg-surface-act:  rgb(30, 30, 30)
+   bg-inset:        rgb(28, 28, 28)
+   border:          rgba(160, 160, 160, 0.35)
+   border-strong:   rgba(200, 200, 160, 0.55)
+   accent:          rgb(218, 175, 50)
+   text:            rgb(210, 210, 205)
+   text-dim:        rgba(155, 155, 148, 0.8)
+   text-muted:      rgba(120, 118, 112, 0.6)
+   danger-fg:       rgb(210, 100, 100)
 */
 
 
-/* === 풀스크린 패널 === */
+/* === FULL SCREEN PANEL === */
 
 .full-panel {
     position: absolute;
     width: 100%;
     height: 100%;
-    background-color: rgb(14, 16, 20);
+    background-color: rgb(20, 20, 20);
     align-items: center;
     justify-content: center;
     flex-direction: column;
 }
 
 
-/* === 게임 타이틀 === */
+/* === GAME TITLE === */
 
 .game-title {
-    color: rgb(228, 230, 234);
-    font-size: 56px;
+    color: rgb(210, 210, 205);
+    font-size: 40px;
     -unity-font-style: bold;
-    letter-spacing: 12px;
+    letter-spacing: 10px;
     margin-bottom: 56px;
 }
 
 
-/* === 다이얼로그 박스 === */
+/* === DIALOG BOX === */
 
 .dialog-box {
-    background-color: rgb(22, 26, 32);
-    border-radius: 4px;
+    background-color: rgb(42, 42, 42);
+    border-radius: 0;
     border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(160, 160, 160, 0.35);
     padding: 28px 32px;
     min-width: 380px;
     align-items: stretch;
@@ -58,111 +56,113 @@
 }
 
 .dialog-title {
-    color: rgb(228, 230, 234);
-    font-size: 18px;
+    color: rgb(210, 210, 205);
+    font-size: 14px;
     -unity-font-style: bold;
     -unity-text-align: middle-center;
-    letter-spacing: 4px;
+    letter-spacing: 5px;
     margin-bottom: 20px;
     padding-bottom: 14px;
     border-bottom-width: 1px;
-    border-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(160, 160, 160, 0.25);
 }
 
 
-/* === 버튼 (메뉴 공통) === */
+/* === BUTTONS === */
 
 .menu-button {
     height: 44px;
     min-width: 220px;
-    font-size: 14px;
+    font-size: 13px;
     -unity-font-style: bold;
-    letter-spacing: 2px;
-    color: rgb(228, 230, 234);
-    background-color: rgb(32, 38, 46);
+    letter-spacing: 3px;
+    color: rgb(210, 210, 205);
+    background-color: rgb(58, 58, 58);
     border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.1);
-    border-radius: 3px;
+    border-color: rgba(160, 160, 160, 0.35);
+    border-radius: 0;
     margin: 4px 0;
     padding: 0 22px;
     transition-duration: 80ms;
-    transition-property: background-color, border-color;
+    transition-property: background-color, border-color, color;
 }
 
 .menu-button:hover {
-    background-color: rgb(44, 52, 62);
-    border-color: rgba(180, 195, 215, 0.45);
+    background-color: rgb(72, 72, 72);
+    border-color: rgb(218, 175, 50);
+    color: rgb(218, 175, 50);
 }
 
 .menu-button:active {
-    background-color: rgb(26, 30, 36);
+    background-color: rgb(30, 30, 30);
+    border-color: rgba(218, 175, 50, 0.6);
 }
 
 .menu-button:disabled {
-    background-color: rgb(24, 28, 34);
-    border-color: rgba(255, 255, 255, 0.05);
-    color: rgba(120, 130, 145, 0.4);
+    background-color: rgb(38, 38, 38);
+    border-color: rgba(160, 160, 160, 0.15);
+    color: rgba(120, 118, 112, 0.4);
 }
 
-/* 메인 메뉴: 버튼 가운데 정렬 */
 #main-menu-panel .menu-button {
     width: 280px;
 }
 
 .menu-button--small {
     min-width: 130px;
-    font-size: 12px;
+    font-size: 11px;
     height: 38px;
 }
 
 .menu-button--danger {
-    color: rgb(220, 150, 150);
-    background-color: rgb(34, 26, 28);
-    border-color: rgba(200, 110, 110, 0.25);
+    color: rgb(210, 100, 100);
+    background-color: rgb(48, 32, 32);
+    border-color: rgba(200, 80, 80, 0.3);
 }
 .menu-button--danger:hover {
-    background-color: rgb(48, 32, 34);
-    border-color: rgba(200, 110, 110, 0.55);
+    background-color: rgb(62, 38, 38);
+    border-color: rgb(210, 100, 100);
+    color: rgb(230, 120, 120);
 }
 
 
-/* === 텍스트 입력 === */
+/* === TEXT INPUT === */
 
 .text-input {
     height: 40px;
     margin-bottom: 18px;
-    font-size: 14px;
-    color: rgb(228, 230, 234);
+    font-size: 13px;
+    color: rgb(210, 210, 205);
 }
 
 .text-input .unity-text-field__input {
-    color: rgb(228, 230, 234);
-    background-color: rgb(18, 22, 28);
-    border-color: rgba(255, 255, 255, 0.1);
-    border-radius: 3px;
+    color: rgb(210, 210, 205);
+    background-color: rgb(28, 28, 28);
+    border-color: rgba(160, 160, 160, 0.35);
+    border-radius: 0;
     border-width: 1px;
     padding: 0 12px;
     -unity-text-align: middle-left;
+    letter-spacing: 1px;
 }
 
 .text-input .unity-text-field__input:focus {
-    border-color: rgba(180, 195, 215, 0.5);
+    border-color: rgb(218, 175, 50);
 }
 
 
-/* === 스크롤 리스트 === */
+/* === SCROLL LIST === */
 
 .list-scroll {
     width: 100%;
     height: 280px;
-    background-color: rgb(14, 16, 20);
+    background-color: rgb(20, 20, 20);
     border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.08);
-    border-radius: 3px;
+    border-color: rgba(160, 160, 160, 0.25);
+    border-radius: 0;
     margin-bottom: 16px;
 }
 
-/* ScrollView 내부 스크롤바를 다크 톤으로 통일 */
 .list-scroll .unity-scroller {
     background-color: transparent;
 }
@@ -182,49 +182,48 @@
 }
 
 .list-scroll .unity-base-slider__dragger {
-    background-color: rgba(255, 255, 255, 0.18);
+    background-color: rgba(160, 160, 160, 0.3);
     border-width: 0;
-    border-radius: 2px;
+    border-radius: 0;
     min-width: 4px;
     min-height: 4px;
 }
 
 .list-scroll .unity-base-slider__dragger:hover {
-    background-color: rgba(180, 195, 215, 0.5);
+    background-color: rgb(218, 175, 50);
 }
 
-/* 스크롤바 위/아래 화살표 버튼 숨김 (선택사항: 미니멀하게) */
 .list-scroll .unity-scroller__low-button,
 .list-scroll .unity-scroller__high-button {
     display: none;
 }
 
 
-/* === 방 목록 항목 === */
+/* === ROOM LIST ENTRY === */
 
 .room-entry-button {
     width: 100%;
     height: 50px;
-    font-size: 14px;
-    color: rgb(228, 230, 234);
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: rgb(210, 210, 205);
     background-color: transparent;
     border-width: 0;
     border-left-width: 2px;
     border-color: transparent;
     border-bottom-width: 1px;
-    border-bottom-color: rgba(255, 255, 255, 0.05);
+    border-bottom-color: rgba(160, 160, 160, 0.12);
     border-radius: 0;
     margin: 0;
     padding: 0 20px;
     -unity-text-align: middle-left;
-    letter-spacing: 1px;
     transition-duration: 80ms;
     transition-property: background-color, border-left-color;
 }
 
 .room-entry-button:hover {
     background-color: rgba(255, 255, 255, 0.04);
-    border-left-color: rgb(180, 195, 215);
+    border-left-color: rgb(218, 175, 50);
 }
 
 .room-entry-button:active {
@@ -232,22 +231,25 @@
 }
 
 
-/* === 플레이어 목록 항목 === */
+/* === PLAYER LIST ENTRY === */
 
 .player-entry {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
     height: 44px;
-    font-size: 14px;
-    color: rgb(228, 230, 234);
+    font-size: 13px;
+    color: rgb(210, 210, 205);
     background-color: transparent;
     padding: 0 20px;
     border-bottom-width: 1px;
-    border-color: rgba(255, 255, 255, 0.06);
+    border-color: rgba(160, 160, 160, 0.12);
     -unity-text-align: middle-left;
     letter-spacing: 1px;
 }
 
 
-/* === 버튼 행 === */
+/* === BUTTON ROW === */
 
 .button-row {
     flex-direction: row;
@@ -263,16 +265,18 @@
 }
 
 
-/* === 방 인원 수 === */
+/* === ROOM COUNT === */
 
 .room-count {
-    color: rgba(170, 180, 195, 0.7);
+    color: rgba(155, 155, 148, 0.8);
     font-size: 12px;
     letter-spacing: 2px;
     -unity-text-align: middle-center;
     margin-bottom: 14px;
 }
 
+
+/* === CHARACTER CARDS === */
 
 .character-row {
     height: 76px;
@@ -283,72 +287,67 @@
 .character-card {
     min-width: 130px;
     height: 60px;
-    background-color: rgb(32, 38, 46);
+    background-color: rgb(58, 58, 58);
     border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.1);
-    border-radius: 3px;
+    border-color: rgba(160, 160, 160, 0.35);
+    border-radius: 0;
     padding: 8px 14px;
     margin-right: 8px;
-    color: rgb(228, 230, 234);
-    font-size: 13px;
+    color: rgb(210, 210, 205);
+    font-size: 12px;
     -unity-font-style: bold;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
 }
 
 .character-card:hover {
-    background-color: rgb(44, 52, 62);
-    border-color: rgba(180, 195, 215, 0.45);
+    background-color: rgb(72, 72, 72);
+    border-color: rgb(218, 175, 50);
+    color: rgb(218, 175, 50);
 }
 
 .character-card--selected {
-    background-color: rgb(34, 30, 22);
-    color: rgb(218, 180, 110);
-    border-color: rgba(218, 180, 110, 0.55);
+    background-color: rgb(52, 48, 28);
+    color: rgb(218, 175, 50);
+    border-color: rgba(218, 175, 50, 0.7);
 }
 
 
-/* === 대기방 플레이어 항목 (확장) === */
-
-.player-entry {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-}
+/* === WAITING ROOM PLAYER ENTRY === */
 
 .player-entry__name {
-    color: rgb(228, 230, 234);
-    font-size: 14px;
+    color: rgb(210, 210, 205);
+    font-size: 13px;
     letter-spacing: 1px;
 }
 
 .player-entry__character {
-    color: rgba(170, 180, 195, 0.7);
-    font-size: 12px;
+    color: rgba(155, 155, 148, 0.8);
+    font-size: 11px;
     -unity-font-style: bold;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
     padding: 4px 12px;
-    border-radius: 3px;
+    border-radius: 0;
     border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.08);
-    background-color: rgba(255, 255, 255, 0.03);
+    border-color: rgba(160, 160, 160, 0.2);
+    background-color: rgb(30, 30, 30);
 }
 
 .player-entry__character--ready {
-    color: rgb(218, 180, 110);
-    border-color: rgba(218, 180, 110, 0.4);
-    background-color: rgb(34, 30, 22);
+    color: rgb(218, 175, 50);
+    border-color: rgba(218, 175, 50, 0.5);
+    background-color: rgb(52, 48, 28);
 }
 
 .player-entry__character--self:hover {
-    border-color: rgba(180, 195, 215, 0.55);
-    color: rgb(228, 230, 234);
+    border-color: rgba(160, 160, 160, 0.55);
+    color: rgb(210, 210, 205);
 }
 
 
-/* === 캐릭터 선택 모달 === */
+/* === CHARACTER SELECT MODAL === */
 
 .modal-overlay {
-    background-color: rgba(0, 0, 0, 0.7);
+    background-color: rgba(0, 0, 0, 0.78);
 }
 
 .char-select-content {
@@ -359,14 +358,13 @@
 .char-select-grid {
     width: 300px;
     height: 320px;
-    background-color: rgb(14, 16, 20);
+    background-color: rgb(20, 20, 20);
     border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.08);
-    border-radius: 3px;
+    border-color: rgba(160, 160, 160, 0.25);
+    border-radius: 0;
     padding: 8px;
 }
 
-/* 그리드 안에 카드를 행으로 흘림 */
 .char-select-grid .unity-scroll-view__content-container {
     flex-direction: row;
     flex-wrap: wrap;
@@ -375,38 +373,39 @@
 .char-select-card {
     width: 130px;
     height: 80px;
-    background-color: rgb(32, 38, 46);
+    background-color: rgb(58, 58, 58);
     border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.1);
-    border-radius: 3px;
+    border-color: rgba(160, 160, 160, 0.3);
+    border-radius: 0;
     margin: 4px;
     padding: 10px 12px;
-    color: rgb(228, 230, 234);
-    font-size: 13px;
+    color: rgb(210, 210, 205);
+    font-size: 12px;
     -unity-font-style: bold;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
     -unity-text-align: middle-center;
 }
 
 .char-select-card:hover {
-    background-color: rgb(44, 52, 62);
-    border-color: rgba(180, 195, 215, 0.45);
+    background-color: rgb(72, 72, 72);
+    border-color: rgb(218, 175, 50);
+    color: rgb(218, 175, 50);
 }
 
 .char-select-card--focused {
-    background-color: rgb(34, 30, 22);
-    color: rgb(218, 180, 110);
-    border-color: rgba(218, 180, 110, 0.55);
+    background-color: rgb(52, 48, 28);
+    color: rgb(218, 175, 50);
+    border-color: rgba(218, 175, 50, 0.7);
 }
 
 .char-select-detail {
     flex-grow: 1;
     margin-left: 14px;
     padding: 18px;
-    background-color: rgb(18, 22, 28);
+    background-color: rgb(30, 30, 30);
     border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.08);
-    border-radius: 3px;
+    border-color: rgba(160, 160, 160, 0.25);
+    border-radius: 0;
     min-width: 220px;
 }
 
@@ -414,33 +413,33 @@
     width: 100%;
     height: 220px;
     margin-bottom: 12px;
-    background-color: rgb(10, 12, 16);
-    border-radius: 3px;
+    background-color: rgb(20, 20, 20);
+    border-radius: 0;
     border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.06);
+    border-color: rgba(160, 160, 160, 0.2);
 }
 
 .char-detail-name {
-    color: rgb(228, 230, 234);
-    font-size: 18px;
+    color: rgb(210, 210, 205);
+    font-size: 16px;
     -unity-font-style: bold;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
     margin-bottom: 14px;
     padding-bottom: 10px;
     border-bottom-width: 1px;
-    border-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(160, 160, 160, 0.2);
 }
 
 .char-detail-stats {
-    color: rgba(180, 195, 215, 0.85);
-    font-size: 13px;
+    color: rgba(155, 155, 148, 0.85);
+    font-size: 12px;
     letter-spacing: 1px;
     margin-bottom: 14px;
     white-space: normal;
 }
 
 .char-detail-desc {
-    color: rgba(170, 180, 195, 0.7);
-    font-size: 12px;
+    color: rgba(120, 118, 112, 0.8);
+    font-size: 11px;
     white-space: normal;
 }

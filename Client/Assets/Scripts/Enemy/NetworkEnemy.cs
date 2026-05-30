@@ -54,4 +54,11 @@ public class NetworkEnemy : MonoBehaviour
         _targetRotY  = rotY;
         _targetState = state;
     }
+
+    // === S_EnemyAttack 수신 시 호출 ===
+
+    public void TriggerAttackAnim()
+    {
+        _animator?.PlayAttack();
+    }
 }

@@ -137,6 +137,7 @@ public class NetworkManager : MonoBehaviour
         game.Register((ushort)GamePacketId.SWeaponSwitch,  ClientGamePacketHandler.Handle_S_WeaponSwitch);
         game.Register((ushort)GamePacketId.SEnemySpawn,    ClientGamePacketHandler.Handle_S_EnemySpawn);
         game.Register((ushort)GamePacketId.SEnemySync,     ClientGamePacketHandler.Handle_S_EnemySync);
+        game.Register((ushort)GamePacketId.SEnemyAttack,   ClientGamePacketHandler.Handle_S_EnemyAttack);
         game.Register((ushort)GamePacketId.SEnemyDamaged,  ClientGamePacketHandler.Handle_S_EnemyDamaged);
         game.Register((ushort)GamePacketId.SEnemyDied,     ClientGamePacketHandler.Handle_S_EnemyDied);
         game.Register((ushort)GamePacketId.SPlayerDamaged, ClientGamePacketHandler.Handle_S_PlayerDamaged);

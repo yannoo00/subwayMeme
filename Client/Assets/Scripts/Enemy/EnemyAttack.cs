@@ -9,8 +9,8 @@ public abstract class EnemyAttack : MonoBehaviour
 
     protected virtual void Awake()
     {
-        _enemy = GetComponent<Enemy>();
     }
+        _enemy = GetComponent<Enemy>();
 
 
     // EnemyAI가 Attack 상태일 때 매 프레임 호출
