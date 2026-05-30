@@ -73,7 +73,7 @@ public class NetworkPlayer : MonoBehaviour
     // S_Attack 수신 시 호출 - 다른 플레이어의 공격 애니메이션 재생
     public void TriggerAttackAnim()
     {
-        _animator?.SetTrigger(AnimatorParams.Attack);
+        _animator?.SetTrigger(AnimatorParams.Shoot);
     }
 
 

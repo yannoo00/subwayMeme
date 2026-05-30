@@ -20,7 +20,7 @@ public class EnemyAnimator : MonoBehaviour
 
     public void PlayIdle()   => _animator?.SetBool(AnimatorParams.IsMoving, false);
     public void PlayMove()   => _animator?.SetBool(AnimatorParams.IsMoving, true);
-    public void PlayAttack() => _animator?.SetTrigger(AnimatorParams.Attack);
+    public void PlayAttack() => _animator?.SetTrigger(AnimatorParams.Shoot);
     public void PlayDeath()  => _animator?.SetBool(AnimatorParams.IsDead, true);
     public void PlayHit()    => _animator?.SetTrigger(AnimatorParams.Hit);
 }

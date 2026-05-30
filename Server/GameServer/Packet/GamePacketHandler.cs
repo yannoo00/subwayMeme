@@ -68,16 +68,33 @@ namespace GameServer
 
         static void Handle_C_Ready(PacketSession session, ArraySegment<byte> body)
         {
+            var pkt    = C_Ready.Parser.ParseFrom(body.Array, body.Offset, body.Count);
             var gs     = (GameSession)session;
+            var player = gs.Room.Get(session.SessionId);
+
+            // 호스트가 보낸 게임 시간을 저장 (AllReady 판정 전에 처리)
+            if (player != null && player.IsHost && pkt.SurvivalDurationSecs > 0)
+                gs.Room.SetSurvivalDuration(pkt.SurvivalDurationSecs);
+
             Console.WriteLine($"[Game] C_Ready: sessionId={session.SessionId}");
 
             var result = gs.Room.MarkReady(session.SessionId);
             if (!result.AllReady) return;
 
-            Console.WriteLine($"[Game] 전원 준비 완료 - S_GameStart (seed={result.Seed})");
-            var startBytes = MakePacket(GamePacketId.SGameStart, new S_GameStart { MapSeed = result.Seed });
+            int durationSecs = gs.Room.GetSurvivalDuration();
+            Console.WriteLine($"[Game] 전원 준비 완료 - S_GameStart (seed={result.Seed}, duration={durationSecs}s)");
+            var startBytes = MakePacket(GamePacketId.SGameStart, new S_GameStart { MapSeed = result.Seed, SurvivalDurationSecs = durationSecs });
             foreach (var s in result.AllSessions)
                 s.Send(startBytes);
+
+            var room = gs.Room;
+            room.StartSurvivalTimer(() =>
+            {
+                Console.WriteLine($"[Game] 서바이벌 타이머 종료 - S_GameClear (roomId={room.RoomId})");
+                var clearBytes = MakePacket(GamePacketId.SGameClear, new S_GameClear());
+                foreach (var s in room.GetAllSessions())
+                    s.Send(clearBytes);
+            }, durationSecs * 1000);
         }
 
         // === 플레이어 이동 ===
@@ -259,6 +276,14 @@ namespace GameServer
                     new S_PlayerDied { PlayerId = result.Player.PlayerId });
                 foreach (var s in gs.Room.GetAllSessions())
                     s.Send(diedBytes);
+
+                if (result.AllDead && gs.Room.TryMarkGameEnded())
+                {
+                    Console.WriteLine($"[Game] 전원 사망 - S_GameOver (roomId={gs.Room.RoomId})");
+                    var overBytes = MakePacket(GamePacketId.SGameOver, new S_GameOver());
+                    foreach (var s in gs.Room.GetAllSessions())
+                        s.Send(overBytes);
+                }
             }
             else
             {

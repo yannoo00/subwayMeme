@@ -12,6 +12,7 @@ namespace GameServer
         public int  CharacterId     { get; }
         public bool IsHost          { get; set; }
         public bool IsReady         { get; set; }
+        public bool IsAlive         { get; set; } = true;
         public int  Hp              { get; set; } = 100;
 
         public GamePlayer(GameSession session, int playerId, string playerName, int characterId, bool isHost)

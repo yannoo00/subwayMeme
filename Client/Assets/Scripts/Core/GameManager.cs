@@ -57,16 +57,6 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        // SaveData에서 마지막 선택 캐릭터 복원
-        // SaveManager.Awake가 먼저 실행되어 Current가 로드된 상태라고 가정 (둘 다 Persistent 씬)
-        // -1 또는 정의되지 않은 ID면 기본값 0 유지
-        var save = SaveManager.Instance?.Current;
-        if (save != null && save.lastSelectedCharacterId >= 0
-            && GetCharacterDefinition(save.lastSelectedCharacterId) != null)
-        {
-            SelectedCharacterId = save.lastSelectedCharacterId;
-        }
-
         ChangeState(GameState.Menu);
     }
 
@@ -107,17 +97,16 @@ public class GameManager : MonoBehaviour
     }
 
     // S_GameStart 수신 시 호출: 맵 생성 후 노선도 UI 표시
-    public void StartGame(int seed)
+    public void StartGame(int seed, int survivalDurationSecs)
     {
         Time.timeScale = 1f;
         _isGameEnded = false;
         ChangeState(GameState.Playing);
 
         // HUD/플레이어 등 새 게임 시작 시점에 상태를 리셋할 수 있도록 알림
-        // 이전 라운드의 결과 패널 잔상 제거, hud-root 재노출 등을 구독측이 처리
         GameEvents.GameStart();
 
-        StageManager.Instance._TryGame(seed);
+        StageManager.Instance._TryGame(seed, survivalDurationSecs);
     }
 
     // S_AllBoarded / S_AllExited 수신 시 호출: 씬 전환 시작
@@ -196,8 +185,7 @@ public class GameManager : MonoBehaviour
 
     // === 캐릭터 선택 ===
 
-    // 강화 화면이나 캐릭터 선택 UI에서 호출
-    // SaveData에 슬롯이 없으면 자동 생성 (신규 캐릭터 첫 선택 시)
+    // 대기방의 캐릭터 선택 모달에서 호출. 세션 한정 - 게임 재실행 시 초기화됨
     public void SelectCharacter(int characterId)
     {
         if (GetCharacterDefinition(characterId) == null)
@@ -207,15 +195,6 @@ public class GameManager : MonoBehaviour
         }
 
         SelectedCharacterId = characterId;
-
-        // SaveData 슬롯 자동 생성 + 마지막 선택 ID 영속화
-        var save = SaveManager.Instance?.Current;
-        if (save != null)
-        {
-            save.GetOrCreateCharacter(characterId);
-            save.lastSelectedCharacterId = characterId;
-            SaveManager.Instance.Save();
-        }
     }
 
     public CharacterDefinition GetCharacterDefinition(int characterId)

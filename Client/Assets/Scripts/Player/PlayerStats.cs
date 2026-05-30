@@ -28,11 +28,6 @@ public class PlayerStats: MonoBehaviour, IDamageable
     // 캐릭터 베이스 보너스 (CharacterDefinition.baseAttackPower)
     private float _baseAttackBonus;
 
-    // 영구 강화 보너스 (UpgradeManager.ApplyBonusesToPlayer 로 설정)
-    private int   _bonusMaxHp;
-    private float _attackBonus;    // 추가 공격력 퍼센트 (PlayerCombat에서 참조)
-    private float _dodgeReduction; // 닷지 쿨타임 감소 초 (PlayerController에서 참조)
-
     // 변이 보너스 (런 종료 시 MutationManager.ResetForNewRun 으로 초기화)
     private int   _mutationMaxHpBonus;
     private float _mutationAttackBonus;
@@ -42,7 +37,7 @@ public class PlayerStats: MonoBehaviour, IDamageable
     private int _genePoints;
 
     public int CurrentHealth    => _currentHealth;
-    public int MaxHealth        => _baseMaxHealth + _bonusMaxHp + _mutationMaxHpBonus;
+    public int MaxHealth        => _baseMaxHealth + _mutationMaxHpBonus;
     public bool IsAlive         => _currentHealth > 0;
     public bool IsInvincible { get; set; }
 
@@ -51,8 +46,7 @@ public class PlayerStats: MonoBehaviour, IDamageable
     // 탈진 중이면 임계값 회복 전까지 false 유지. dash 진입 게이트는 이 프로퍼티만 보면 됨
     public bool  CanDash        => !_isExhausted && _currentStamina > 0f;
 
-    public float AttackBonus       => _baseAttackBonus + _attackBonus + _mutationAttackBonus;
-    public float DodgeReduction    => _dodgeReduction;
+    public float AttackBonus       => _baseAttackBonus + _mutationAttackBonus;
     public float MoveSpeedBonus    => _mutationMoveSpeedBonus; // PlayerController에서 읽어서 이속에 가산
 
     public int GenePoints => _genePoints;
@@ -74,18 +68,8 @@ public class PlayerStats: MonoBehaviour, IDamageable
         _currentHealth = _baseMaxHealth;
         _currentStamina = _baseMaxStamina;
 
-        // 강화/UpgradeManager가 없는 환경에서도 HUD가 정확한 값을 보도록 즉시 1회 발행
-        // ApplyPermanentBonuses 가 뒤따라 호출되면 거기서 다시 한 번 발행됨 (멱등)
         PlayerEvents.HealthChanged(_currentHealth, MaxHealth);
         PlayerEvents.StaminaChanged(_currentStamina, MaxStamina);
-
-        // 영구 강화 보너스 자동 적용 - GameManager가 보관하는 SelectedCharacterId 기준
-        // GameManager는 Persistent 씬의 DontDestroyOnLoad라 게임 씬 진입 시 항상 존재
-        if (UpgradeManager.Instance != null)
-        {
-            int characterId = GameManager.Instance != null ? GameManager.Instance.SelectedCharacterId : 0;
-            UpgradeManager.Instance.ApplyBonusesToPlayer(characterId, this);
-        }
     }
 
     private void Update()
@@ -124,18 +108,6 @@ public class PlayerStats: MonoBehaviour, IDamageable
 
         PlayerEvents.StaminaChanged(_currentStamina, _baseMaxStamina);
     }
-
-    // UpgradeManager에서 호출 - 영구 강화 보너스 일괄 적용
-    public void ApplyPermanentBonuses(int bonusMaxHp, float attackBonus, float dodgeReduction)
-    {
-        _bonusMaxHp     = bonusMaxHp;
-        _attackBonus    = attackBonus;
-        _dodgeReduction = dodgeReduction;
-        _currentHealth  = MaxHealth;
-        PlayerEvents.HealthChanged(_currentHealth, MaxHealth);
-    }
-
- 
 
     public void TakeDamage(int damage)
     {

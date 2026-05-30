@@ -136,11 +136,13 @@ message S_HostChanged {
 
 // 클라 -> 서버: 씬 로딩 완료 보고
 message C_Ready {
+  int32 survival_duration_secs = 1;  // 호스트만 채움, 나머지는 0
 }
 
 // 서버 -> 클라: 전원 준비 완료, 게임 시작
 message S_GameStart {
   int32 map_seed = 1;
+  int32 survival_duration_secs = 2;
 }
 
 // 서버 -> 클라: 종착역 도달, 게임 클리어

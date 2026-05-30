@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -24,6 +25,10 @@ public class HitscanWeapon : WeaponBase
 
     public int CurrentAmmo => _currentAmmo;
     public int MagazineSize => Data != null ? Data.magazineSize : 0;
+
+    // 발사 직후 발행 - 같은 prefab에 부착된 HitscanWeaponEffects 가 구독해서 머즐/카메라 흔들림 처리
+    // 인스턴스 단위 event - 무기마다 자기 표현 컴포넌트만 반응하면 되므로 전역 PlayerEvents 로 빼지 않음
+    public event Action OnFired;
 
 
     public override void Equip()
@@ -83,7 +88,8 @@ public class HitscanWeapon : WeaponBase
 
         var hitEnemyIds = new List<int>();
 
-        if (Physics.Raycast(origin, direction, out RaycastHit hit, Data.range, _hitMask))
+        bool didHit = Physics.Raycast(origin, direction, out RaycastHit hit, Data.range, _hitMask);
+        if (didHit)
         {
             var enemy = hit.collider.GetComponentInParent<Enemy>();
             bool isNetworkEnemy = enemy != null && enemy.NetworkId > 0;
@@ -102,6 +108,8 @@ public class HitscanWeapon : WeaponBase
 
         if (_showDebugRay)
             Debug.DrawRay(origin, direction * Data.range, Color.yellow, 0.5f);
+
+        OnFired?.Invoke();
     }
 
 
@@ -128,8 +136,8 @@ public class HitscanWeapon : WeaponBase
         if (spreadDegrees <= 0f) return forward;
 
         float halfSpread = spreadDegrees * 0.5f;
-        float yaw = Random.Range(-halfSpread, halfSpread);
-        float pitch = Random.Range(-halfSpread, halfSpread);
+        float yaw = UnityEngine.Random.Range(-halfSpread, halfSpread);
+        float pitch = UnityEngine.Random.Range(-halfSpread, halfSpread);
 
         Quaternion rot = Quaternion.AngleAxis(yaw, _aimCamera.transform.up)
                        * Quaternion.AngleAxis(pitch, _aimCamera.transform.right);

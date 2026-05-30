@@ -12,7 +12,7 @@ public static class AnimatorParams
     public static readonly int StrafeX           = Animator.StringToHash("StrafeX");
     public static readonly int StrafeY           = Animator.StringToHash("StrafeY");
 
-    public static readonly int Attack            = Animator.StringToHash("Attack");
+    public static readonly int Shoot            = Animator.StringToHash("Shoot");
     public static readonly int IsDead            = Animator.StringToHash("IsDead");
     public static readonly int IsReloading       = Animator.StringToHash("IsReloading");
     public static readonly int IsSwitchingWeapon = Animator.StringToHash("IsSwitchingWeapon");

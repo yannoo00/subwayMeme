@@ -33,6 +33,11 @@ public class PlayerRegistry : MonoBehaviour
     private bool _isSpectating;
     private int  _spectateTargetId;
 
+    // S_EnterGame 으로 들어온 초기 플레이어 목록을 보관.
+    // 패킷은 Station 씬 로드 전에 도착하므로 이 시점엔 스폰 위치를 알 수 없어, 씬 로드 후로 지연 스폰.
+    // 게임 도중 합류처럼 이미 PlayerSpawnPoint 가 있는 상황이면 SpawnPlayers 호출 직후 즉시 처리됨.
+    private List<GamePlayerInfo> _pendingSpawn;
+
     // === Unity 생명주기 ===
 
     private void Awake()
@@ -72,17 +77,35 @@ public class PlayerRegistry : MonoBehaviour
 
     // === Public 메서드 ===
 
-    // S_EnterGame 수신 시 호출: 씬이 이미 로드된 상태이므로 즉시 스폰
-    // self도 여기서 함께 처리 - SelectedCharacter가 결정된 시점이라 PlayerCharacterBinder가 정상 동작
+    // S_EnterGame 수신 시 호출. 패킷이 Station 씬 로드보다 먼저 도착하므로 즉시 스폰하지 않고
+    // pending 으로 보관 후 OnSceneLoaded 가 PlayerSpawnPoint 를 만나는 시점에 한꺼번에 스폰함.
+    // RepeatedField 를 그대로 보관하면 다음 패킷 파싱 영향이 걱정돼 방어적으로 List 로 복사.
     public void SpawnPlayers(IEnumerable<GamePlayerInfo> players)
     {
+        _pendingSpawn = new List<GamePlayerInfo>(players);
+
+        // 이미 PlayerSpawnPoint 가 존재하는 씬에서 호출된 경우(예: 게임 도중 재진입 같은 분기)면
+        // OnSceneLoaded 를 기다리지 않고 즉시 처리. 그렇지 않으면 OnSceneLoaded 가 처리할 때까지 대기.
+        TrySpawnPending();
+    }
+
+    private bool TrySpawnPending()
+    {
+        if (_pendingSpawn == null) return false;
+
+        var spawnPoint = GameObject.FindWithTag("PlayerSpawnPoint");
+        if (spawnPoint == null) return false;
+
+        var players = _pendingSpawn;
+        _pendingSpawn = null;
+
         // 재플레이 대비: 카운터/관전 상태를 매 게임 시작 시 초기화
         _alivePlayersCount = 0;
         _localPlayerAlive  = true;
         _isSpectating      = false;
         _spectateTargetId  = 0;
 
-        Vector3 spawnPos = FindSpawnPosition();
+        Vector3 spawnPos = spawnPoint.transform.position;
         foreach (var info in players)
         {
             if (info.PlayerId == NetworkManager.Instance.MyPlayerId)
@@ -92,6 +115,7 @@ public class PlayerRegistry : MonoBehaviour
 
             ++_alivePlayersCount;
         }
+        return true;
     }
 
     // S_PlayerEntered 수신 시 호출: 게임 도중 새 플레이어 입장
@@ -171,14 +195,10 @@ public class PlayerRegistry : MonoBehaviour
             CycleSpectateTarget(1);
     }
 
-    // 생존 플레이어가 0이면 게임오버 확정 (GameManager가 멱등 가드로 중복 방지)
-    // 게임이 종료됐으면 true 반환
+    // 생존 플레이어가 0이면 true 반환. 게임오버 판정은 서버가 S_GameOver 전송으로 처리.
     private bool CheckAllDead()
     {
-        if (_alivePlayersCount > 0) return false;
-
-        GameManager.Instance.EndGame();
-        return true;
+        return _alivePlayersCount <= 0;
     }
 
     // 관전 대상을 dir 방향(1=다음, -1=이전)으로 순환
@@ -236,6 +256,9 @@ public class PlayerRegistry : MonoBehaviour
         _localPlayerAlive  = false;
         _isSpectating      = false;
         _spectateTargetId  = 0;
+
+        // 로드 도중 메뉴로 빠져나간 경우 stale pending 잔존을 방지
+        _pendingSpawn = null;
     }
 
     // 살아있는 모든 플레이어(로컬+원격)의 Transform 열거
@@ -265,20 +288,48 @@ public class PlayerRegistry : MonoBehaviour
 
     // === Private 메서드 ===
 
-    // 씬 전환 시 기존 스폰된 오브젝트를 새 씬의 SpawnPoint로 이동
-    // DontDestroyOnLoad라 MainMenu/Lobby 등 모든 씬 로드마다 발화되므로
-    // 옮길 대상이 없으면(_localPlayer 미스폰 시점) 조용히 리턴해 SpawnPoint 탐색 자체를 건너뜀
+    // 씬 로드 시점 처리
+    //  1) Pending 스폰(S_EnterGame 으로 들어온 초기 목록)이 있으면 PlayerSpawnPoint 위치에 스폰.
+    //     첫 진입은 항상 이 경로 - (0,0,0) 임시 스폰 단계가 없어짐.
+    //  2) 이미 스폰된 플레이어가 있고 PlayerSpawnPoint 가 있는 씬(예: Subway → Station 전환)이면
+    //     해당 위치로 텔레포트.
+    //  3) MainMenu 처럼 PlayerSpawnPoint 가 없는 씬에서는 아무것도 안 함.
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        // 초기 진입 케이스: pending 이 있으면 처리하고 종료. 텔레포트 단계 불필요(스폰 시 이미 정위치).
+        if (TrySpawnPending()) return;
+
         if (_localPlayer == null && _remotePlayers.Count == 0) return;
 
-        Vector3 spawnPos = FindSpawnPosition();
+        // PlayerSpawnPoint 자체가 없는 씬(MainMenu 등)에서는 이동 시도 자체를 스킵
+        var spawnPoint = GameObject.FindWithTag("PlayerSpawnPoint");
+        if (spawnPoint == null) return;
+
+        Vector3 spawnPos = spawnPoint.transform.position;
 
         if (_localPlayer != null)
-            _localPlayer.transform.position = spawnPos;
+            TeleportRespectingController(_localPlayer.transform, spawnPos);
 
         foreach (var np in _remotePlayers.Values)
-            np.transform.position = spawnPos;
+            TeleportRespectingController(np.transform, spawnPos);
+    }
+
+    // CharacterController.enabled == true 상태에서 transform.position 을 바로 바꾸면
+    // 다음 Move() 호출 시 CC 가 내부 위치로 덮어써서 워프가 무시됨.
+    // 잠깐 끄고 옮긴 뒤 다시 켜면 CC 가 새 위치를 시작점으로 잡음.
+    private static void TeleportRespectingController(Transform t, Vector3 pos)
+    {
+        var cc = t.GetComponent<CharacterController>();
+        if (cc != null)
+        {
+            cc.enabled = false;
+            t.position = pos;
+            cc.enabled = true;
+        }
+        else
+        {
+            t.position = pos;
+        }
     }
 
     // 로컬 플레이어 스폰 - S_EnterGame 시점에서 호출
@@ -286,7 +337,7 @@ public class PlayerRegistry : MonoBehaviour
     {
         if (_localPlayer != null)
         {
-            _localPlayer.transform.position = pos;
+            TeleportRespectingController(_localPlayer.transform, pos);
             Debug.Log($"[PlayerRegistry] 로컬 플레이어가 이미 존재 - 위치만 이동");
             return;
         }

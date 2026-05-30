@@ -9,7 +9,6 @@ public class DropSpawner : MonoBehaviour
     [Header("드롭 프리팹")]
     [SerializeField] private GameObject _mutationPickupPrefab;   // DropItemPickup 컴포넌트
     [SerializeField] private GameObject _evolutionPointPrefab;   // CurrencyPickup 컴포넌트
-    [SerializeField] private GameObject _genePointPrefab;        // CurrencyPickup 컴포넌트
 
 
     // === 생명주기 ===
@@ -55,28 +54,10 @@ public class DropSpawner : MonoBehaviour
             var go = Instantiate(_evolutionPointPrefab, pos, Quaternion.identity);
             go.GetComponent<CurrencyPickup>()?.Init(CurrencyType.EvolutionPoint, data.evolutionPointAmount);
         }
-
-        if (data.genePointChance > 0f && Random.value <= data.genePointChance)
-        {
-            var go = Instantiate(_genePointPrefab, pos, Quaternion.identity);
-            go.GetComponent<CurrencyPickup>()?.Init(CurrencyType.GenePoint, data.genePointAmount);
-        }
     }
 
     private void SpawnMutationDrop(MutationDefinition mutation, Vector3 pos)
     {
-        if (mutation == null)
-        {
-            Debug.LogWarning("[DropSpawner] Elite 변이 드롭이 설정되지 않았습니다.");
-            return;
-        }
-
-        if (_mutationPickupPrefab == null)
-        {
-            Debug.LogWarning("[DropSpawner] _mutationPickupPrefab이 설정되지 않았습니다.");
-            return;
-        }
-
         var go = Instantiate(_mutationPickupPrefab, pos, Quaternion.identity);
         go.GetComponent<DropItemPickup>()?.Init(mutation);
     }

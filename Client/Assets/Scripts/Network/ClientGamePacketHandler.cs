@@ -25,20 +25,21 @@ public static class ClientGamePacketHandler
 
         // TODO: 호스트라면 NavMesh / 적 AI 권한 활성화
 
-        // 씬 로드 + 서버 접속 완료 신호 - 서버가 전원 준비 확인 후 S_GameStart 발행
-        NetworkManager.Instance.SendGame(GamePacketId.CReady, new C_Ready());
+        // 호스트만 게임 시간을 담아 전송. 서버가 이 값으로 타이머를 시작하고 S_GameStart에 실어 전원에 알림.
+        int durationSecs = pkt.IsHost ? (int)StageManager.Instance.SurvivalDuration : 0;
+        NetworkManager.Instance.SendGame(GamePacketId.CReady, new C_Ready { SurvivalDurationSecs = durationSecs });
     }
 
-    // 게임 시작: 서버가 생성한 seed로 맵 생성 
+    // 게임 시작
     public static void Handle_S_GameStart(byte[] body)
     {
         if (GameManager.Instance.CurrentState != GameState.EnteringGame) return;
 
         var pkt = S_GameStart.Parser.ParseFrom(body);
 
-        Debug.Log($"[Game] S_GameStart: seed={pkt.MapSeed}");
+        Debug.Log($"[Game] S_GameStart: seed={pkt.MapSeed}, duration={pkt.SurvivalDurationSecs}s");
 
-        GameManager.Instance.StartGame((int)pkt.MapSeed);
+        GameManager.Instance.StartGame(pkt.MapSeed, pkt.SurvivalDurationSecs);
     }
 
 

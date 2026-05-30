@@ -37,6 +37,12 @@ public class CameraSystem : MonoBehaviour
     private float _yRotation;
     private bool  _isAiming;
 
+    // Shake 상태 - magnitude(도) 가 시간에 따라 선형 감쇠. 매 프레임 random 오프셋을 회전에 가산
+    // pivot 회전은 매 Update 에서 _xRotation/_yRotation 으로 덮어쓰여지므로, 별도 누적 회전이 아닌
+    // "이번 프레임 적용 오프셋" 만 더하는 방식이라 자연스럽게 원위치로 복귀함
+    private float _shakeMagnitude;
+    private float _shakeDecayPerSec;
+
 
     private void Awake()
     {
@@ -85,7 +91,25 @@ public class CameraSystem : MonoBehaviour
         _xRotation -= Mouse.current.delta.y.ReadValue() * sensY;
         _xRotation  = Mathf.Clamp(_xRotation, _minVerticalAngle, _maxVerticalAngle);
 
-        _cameraPivot.rotation = Quaternion.Euler(_xRotation, _yRotation, 0f);
+        Vector2 shakeOffset = Vector2.zero;
+        if (_shakeMagnitude > 0f)
+        {
+            // insideUnitCircle 는 [-1,1] 원판 내 균등분포. 매 프레임 다른 방향이라 흔들리는 느낌이 남
+            shakeOffset = UnityEngine.Random.insideUnitCircle * _shakeMagnitude;
+            _shakeMagnitude = Mathf.Max(0f, _shakeMagnitude - _shakeDecayPerSec * Time.deltaTime);
+        }
+
+        _cameraPivot.rotation = Quaternion.Euler(_xRotation + shakeOffset.y, _yRotation + shakeOffset.x, 0f);
+    }
+
+    // 일회성 카메라 흔들림 - HitscanWeaponEffects 등 표현 컴포넌트에서 호출
+    // magnitudeDeg: 시작 시점의 최대 각도 흔들림(도). duration 동안 선형 감쇠
+    // 연속 호출되면 강한 쪽이 살아남도록 Max 합성 (사격 연사 중에도 점차 약해지지 않게)
+    public void Shake(float magnitudeDeg, float duration)
+    {
+        if (magnitudeDeg <= 0f || duration <= 0f) return;
+        _shakeMagnitude = Mathf.Max(_shakeMagnitude, magnitudeDeg);
+        _shakeDecayPerSec = magnitudeDeg / duration;
     }
 
     private void OnLocalPlayerSpawned(Transform playerRoot)

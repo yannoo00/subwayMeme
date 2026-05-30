@@ -15,13 +15,13 @@ MonoBehaviour:
   enemyType: dummyEnemy
   maxHealth: 100
   moveSpeed: 1
-  detectionRange: 4
+  detectionRange: 1000
   attackRange: 1
   attackDamage: 10
   attackCooldown: 1
   grade: 0
-  evolutionPointChance: 0.1
+  evolutionPointChance: 0
   evolutionPointAmount: 1
-  genePointChance: 0.1
+  genePointChance: 0
   genePointAmount: 100
   eliteDrop: {fileID: 0}

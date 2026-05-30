@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace GameServer
 {
@@ -11,7 +13,7 @@ namespace GameServer
     public record ExitResult(int ExitedCount, int Total, List<GameSession> Others, bool AllExited);
     public record BoardResult(int BoardedCount, int Total, List<GameSession> Others, bool Trigger, int NodeIndex);
     public record RouteResult(bool IsHost, bool Trigger, int NodeIndex, List<GameSession> AllSessions);
-    public record DamageResult(GamePlayer Player, int CurrentHp, bool IsDead);
+    public record DamageResult(GamePlayer Player, int CurrentHp, bool IsDead, bool AllDead = false);
 
     // ============================================================================
 
@@ -36,6 +38,13 @@ namespace GameServer
 
         // 적 ID 발급 카운터 - 게임 세션 내에서 유일한 ID를 부여하기 위해 단조 증가
         int _nextEnemyId = 1;
+
+        // 게임 종료 가드 - 클리어/오버 중복 전송 방지
+        bool _gameEnded = false;
+        CancellationTokenSource _cts;
+
+        // 호스트가 C_Ready 에 담아 보낸 서바이벌 타이머 길이
+        int _survivalDurationSecs = 120;
 
 
         // ==== 초기화 =============================================================
@@ -213,6 +222,7 @@ namespace GameServer
 
 
         // 플레이어 피해 적용 (서버 권위)
+        // IsDead=true 이면서 AllDead=true 일 때 S_GameOver 를 전송해야 함
         public DamageResult ApplyPlayerDamage(int targetPlayerId, int damage)
         {
             lock (_lock)
@@ -221,10 +231,59 @@ namespace GameServer
                 {
                     if (p.PlayerId != targetPlayerId) continue;
                     p.Hp = Math.Max(0, p.Hp - damage);
-                    return new DamageResult(p, p.Hp, p.Hp <= 0);
+                    bool isDead = p.Hp <= 0;
+                    if (isDead)
+                    {
+                        p.IsAlive = false;
+                        bool allDead = _players.Values.All(x => !x.IsAlive);
+                        return new DamageResult(p, p.Hp, true, allDead);
+                    }
+                    return new DamageResult(p, p.Hp, false);
                 }
                 return new DamageResult(null, 0, false);
             }
+        }
+
+
+        // ==== 게임 종료 =========================================================
+
+        // 호스트 C_Ready 수신 시 저장. AllReady 이전에 처리되므로 타이머 시작 전 반드시 호출됨.
+        public void SetSurvivalDuration(int secs) { lock (_lock) { if (secs > 0) _survivalDurationSecs = secs; } }
+        public int  GetSurvivalDuration()         { lock (_lock) { return _survivalDurationSecs; } }
+
+        // 서바이벌 타이머 시작. 전원 준비 완료(S_GameStart 직후)에 호출.
+        // durationMs 경과 후 onClear 콜백을 실행 (S_GameClear 전송 담당)
+        public void StartSurvivalTimer(Action onClear, int durationMs)
+        {
+            _cts = new CancellationTokenSource();
+            _ = RunSurvivalTimer(onClear, durationMs, _cts.Token);
+        }
+
+        private async Task RunSurvivalTimer(Action onClear, int durationMs, CancellationToken ct)
+        {
+            try
+            {
+                await Task.Delay(durationMs, ct);
+            }
+            catch (OperationCanceledException)
+            {
+                return; // 전원 사망으로 취소됨
+            }
+
+            if (TryMarkGameEnded())
+                onClear();
+        }
+
+        // 게임 종료 확정. 최초 호출만 true 반환 (중복 방지)
+        public bool TryMarkGameEnded()
+        {
+            lock (_lock)
+            {
+                if (_gameEnded) return false;
+                _gameEnded = true;
+            }
+            _cts?.Cancel();
+            return true;
         }
 
 

@@ -8,7 +8,12 @@ public class StageManager : MonoBehaviour
 
     [Header("Survival Mode")]
     [SerializeField] private WaveData _survivalWaveData;
-    [SerializeField] private float _survivalDuration = 1200f; // 20분
+    [SerializeField] private float _survivalDuration = 120f;
+
+    // 서버가 S_GameStart에 실어 보낸 실제 게임 시간 (C_Ready에서 호스트가 전달한 값)
+    private float _activeDuration;
+
+    public float SurvivalDuration => _survivalDuration;
 
     private Coroutine _stayingCoroutine;
 
@@ -39,8 +44,9 @@ public class StageManager : MonoBehaviour
 
     // 게임 1트 시작
     // GameManager에서만 사용하고, 직접 호출되는 일은 없어야 함
-    public void _TryGame(int seed)
+    public void _TryGame(int seed, int survivalDurationSecs)
     {
+        _activeDuration = survivalDurationSecs > 0 ? survivalDurationSecs : _survivalDuration;
         SceneLoader.Instance.LoadStation(StartSurvivalMode);
     }
 
@@ -50,7 +56,7 @@ public class StageManager : MonoBehaviour
             SpawnManager.Instance.StartWave(_survivalWaveData);
 
         StageEvents.SurvivalStarted();
-        _stayingCoroutine = StartCoroutine(SurvivalTimer(_survivalDuration));
+        _stayingCoroutine = StartCoroutine(SurvivalTimer(_activeDuration));
     }
 
 
@@ -66,12 +72,10 @@ public class StageManager : MonoBehaviour
             StageEvents.TimerTick(remaining, duration);
         }
 
-        //남은 시간이 끝났다면
-        GameManager.Instance.ClearGame();
+        // 타이머 UI 표시용으로만 실행. 클리어 판정은 서버가 S_GameClear 전송으로 처리.
     }
 
 
-    // 모든 적 처치: 진행 트리거 아님. 추후 보너스 로직 연결 가능
     private void HandleAllEnemiesDefeated()
     {
         Debug.Log("[StageManager] 모든 적 처치!");

@@ -85,7 +85,7 @@ public class PlayerAnimator : MonoBehaviour
 
     private void HandleAttack()
     {
-        _animator?.SetTrigger(AnimatorParams.Attack);
+        _animator?.SetTrigger(AnimatorParams.Shoot);
     }
     private void HandleDeath()  => _animator?.SetBool(AnimatorParams.IsDead, true);
 

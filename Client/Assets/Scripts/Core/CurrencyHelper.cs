@@ -1,28 +1,15 @@
-// 진화 포인트(영구 재화) 조작을 위한 정적 헬퍼
-// 획득/소모 시 SaveManager에 즉시 반영하고 UI 이벤트 발행
+// 진화 포인트(세션 한정 카운터)
+// 영구 저장 없이 게임 세션 동안만 유지. 픽업 시 누적되고 이벤트로 HUD/UI 통지
 public static class CurrencyHelper
 {
-    public static int GetEvolutionPoints()
-    {
-        if (SaveManager.Instance == null) return 0;
-        return SaveManager.Instance.Current.evolutionPoints;
-    }
+    private static int _evolutionPoints;
+
+    public static int GetEvolutionPoints() => _evolutionPoints;
 
     public static void AddEvolutionPoints(int amount)
     {
-        if (amount <= 0 || SaveManager.Instance == null) return;
-        SaveManager.Instance.Current.evolutionPoints += amount;
-        SaveManager.Instance.Save();
-        PlayerEvents.EvolutionPointsChanged(GetEvolutionPoints());
-    }
-
-    public static bool TrySpendEvolutionPoints(int amount)
-    {
-        if (amount <= 0 || SaveManager.Instance == null) return false;
-        if (GetEvolutionPoints() < amount) return false;
-        SaveManager.Instance.Current.evolutionPoints -= amount;
-        SaveManager.Instance.Save();
-        PlayerEvents.EvolutionPointsChanged(GetEvolutionPoints());
-        return true;
+        if (amount <= 0) return;
+        _evolutionPoints += amount;
+        PlayerEvents.EvolutionPointsChanged(_evolutionPoints);
     }
 }

@@ -194,7 +194,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DropSpawner
   _mutationPickupPrefab: {fileID: 0}
   _evolutionPointPrefab: {fileID: 3219691578172424020, guid: 6f40e7c5dbace444f8bf23f20befa00f, type: 3}
-  _genePointPrefab: {fileID: 8263307057192472674, guid: 3a7eb27d69dc3418180fbd28c000c8c2, type: 3}
 --- !u!4 &181116241
 Transform:
   m_ObjectHideFlags: 0
@@ -549,54 +548,6 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 4.06413, y: 0.53768, z: -1.79148}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &450499549
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 450499551}
-  - component: {fileID: 450499550}
-  m_Layer: 0
-  m_Name: UpgradeManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &450499550
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 450499549}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 27f7fa0d996d44ecf8d7fa809149b8af, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::UpgradeManager
-  _upgrades:
-  - {fileID: 11400000, guid: d9751670d315f4c5881a37446889654a, type: 2}
-  - {fileID: 11400000, guid: 99f7c94c8cef64cb1b83213f0a976b8a, type: 2}
-  - {fileID: 11400000, guid: 1f37476ae344e4f98915e02bf1346249, type: 2}
---- !u!4 &450499551
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 450499549}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -4.99557, y: -0, z: -5.57587}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1209,50 +1160,6 @@ MonoBehaviour:
   _aimCamera: {fileID: 2100845563}
   _activePriority: 10
   _inactivePriority: 0
---- !u!1 &1225738176
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1225738178}
-  - component: {fileID: 1225738177}
-  m_Layer: 0
-  m_Name: SaveManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1225738177
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1225738176}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cf1bc92fa7bfe4af78346fcb27e4d929, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SaveManager
---- !u!4 &1225738178
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1225738176}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -4.99556, y: -0, z: -5.57587}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1643207707
 GameObject:
   m_ObjectHideFlags: 0
@@ -2177,7 +2084,5 @@ SceneRoots:
   - {fileID: 1912412443}
   - {fileID: 963849470}
   - {fileID: 181116241}
-  - {fileID: 1225738178}
-  - {fileID: 450499551}
   - {fileID: 420753497}
   - {fileID: 1804182705}

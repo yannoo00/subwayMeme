@@ -2,11 +2,6 @@ using UnityEngine;
 
 // 캐릭터 한 명의 메타데이터를 정의하는 ScriptableObject
 // Create > Game > Character Definition 으로 생성
-//
-// 강화 트리 정책 (Scenario A):
-// 모든 캐릭터가 동일한 UpgradeDefinition 목록을 공유하고, 캐릭터별로 레벨만 따로 저장된다
-// (CharacterSaveData.upgradeLevels). 캐릭터마다 다른 트리가 필요해지면 이 SO에
-// UpgradeDefinition[] 필드를 추가하고 UpgradeManager 가 그걸 참조하도록 변경한다.
 [CreateAssetMenu(fileName = "CharacterDefinition", menuName = "Game/Character Definition")]
 public class CharacterDefinition : ScriptableObject
 {

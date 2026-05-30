@@ -274,95 +274,6 @@
 }
 
 
-/* === 강화 화면 === */
-
-.upgrade-gold-label {
-    color: rgb(218, 180, 110);
-    font-size: 16px;
-    -unity-font-style: bold;
-    letter-spacing: 2px;
-    margin-bottom: 16px;
-    -unity-text-align: middle-center;
-}
-
-.upgrade-scroll {
-    height: 320px;
-}
-
-.upgrade-entry {
-    flex-direction: row;
-    align-items: center;
-    padding: 14px 18px;
-    border-bottom-width: 1px;
-    border-color: rgba(255, 255, 255, 0.06);
-}
-
-.upgrade-entry__info {
-    flex-grow: 1;
-    flex-direction: column;
-}
-
-.upgrade-entry__name {
-    color: rgb(228, 230, 234);
-    font-size: 14px;
-    -unity-font-style: bold;
-    letter-spacing: 1px;
-}
-
-.upgrade-entry__desc {
-    color: rgba(170, 180, 195, 0.7);
-    font-size: 12px;
-    margin-top: 4px;
-}
-
-.upgrade-entry__level {
-    color: rgba(180, 195, 215, 0.85);
-    font-size: 13px;
-    -unity-font-style: bold;
-    width: 80px;
-    -unity-text-align: middle-center;
-    letter-spacing: 1px;
-}
-
-.upgrade-entry__button {
-    min-width: 110px;
-    height: 36px;
-    font-size: 12px;
-    -unity-font-style: bold;
-    letter-spacing: 1px;
-    color: rgb(228, 230, 234);
-    background-color: rgb(32, 38, 46);
-    border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.1);
-    border-radius: 3px;
-    margin-left: 12px;
-    padding: 0 14px;
-}
-
-.upgrade-entry__button:hover {
-    background-color: rgb(44, 52, 62);
-    border-color: rgba(180, 195, 215, 0.45);
-}
-
-.upgrade-entry__button:disabled {
-    background-color: rgb(24, 28, 34);
-    color: rgba(120, 130, 145, 0.4);
-    border-color: rgba(255, 255, 255, 0.05);
-}
-
-.upgrade-entry__button--maxed {
-    color: rgb(218, 180, 110);
-    background-color: rgb(34, 30, 22);
-    border-color: rgba(218, 180, 110, 0.3);
-}
-
-.upgrade-entry__preview {
-    color: rgba(218, 180, 110, 0.85);
-    font-size: 11px;
-    margin-top: 2px;
-    -unity-font-style: italic;
-}
-
 .character-row {
     height: 76px;
     margin-bottom: 12px;
@@ -453,13 +364,6 @@
     border-color: rgba(255, 255, 255, 0.08);
     border-radius: 3px;
     padding: 8px;
-}
-
-/* 강화 1단계 그리드는 모달과 다르게 가로폭 전체 사용 */
-.upgrade-character-grid {
-    width: 100%;
-    height: 320px;
-    margin-bottom: 16px;
 }
 
 /* 그리드 안에 카드를 행으로 흘림 */
