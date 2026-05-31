@@ -77,14 +77,14 @@ public static class LobbyPacketHandler
         MainMenuUIDocument.Instance?.UpdateCreatorStatus(pkt.NewCreatorId);
     }
 
-    // 게임 서버 준비 완료: 포트 저장 후 씬 로드 -> 게임 서버 접속
+    // 게임 서버 준비 완료: 룸 ID 저장 후 씬 로드 -> 게임 서버 접속
+    // pkt.Port 는 사용하지 않는다. 게임 접속은 nginx 의 고정 path(/game)로 라우팅하므로 동적 포트가 불필요.
     public static void Handle_S_GameReady(byte[] body)
     {
         var pkt = S_GameReady.Parser.ParseFrom(body);
 
-        Debug.Log($"[Lobby] S_GameReady: port={pkt.Port}, roomId={pkt.RoomId}");
+        Debug.Log($"[Lobby] S_GameReady: roomId={pkt.RoomId}");
 
-        NetworkManager.Instance.GameServerPort = pkt.Port;
         NetworkManager.Instance.MyRoomId       = pkt.RoomId;
         GameManager.Instance.OnEnteringGame();
         MainMenuUIDocument.Instance?.OnGameReadyReceived();

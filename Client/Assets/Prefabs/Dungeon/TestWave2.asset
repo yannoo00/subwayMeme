@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: TestWave2
   m_EditorClassIdentifier: Assembly-CSharp::WaveData
   waveName: TestWave2
-  duration: 30
+  duration: 120
   spawnGroups:
   - delay: 2
-    interval: 2
-    repeatCount: 5
+    interval: 5
+    repeatCount: 1000
     enemies:
     - prefab: {fileID: 1155741758266991740, guid: ce387693d0f964cbe8d1374aed92fa04, type: 3}
-      count: 1
+      count: 2

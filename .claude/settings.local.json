@@ -20,7 +20,9 @@
       "Bash(find \"D:\\\\\\\\unity\\\\\\\\subwayMeme\\\\\\\\Server\" -name \"*.cs\" -type f)",
       "Bash(find \"D:\\\\\\\\unity\\\\\\\\subwayMeme\\\\\\\\Server\" -name \"GamePlayer.cs\" -o -name \"GameSession.cs\")",
       "Bash(findstr /I generator)",
-      "Bash(dotnet build *)"
+      "Bash(dotnet build *)",
+      "Bash(nginx -v)",
+      "Bash(ngrok version *)"
     ]
   }
 }

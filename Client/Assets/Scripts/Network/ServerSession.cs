@@ -57,16 +57,17 @@ public class ServerSession : MonoBehaviour
         Disconnect();
     }
 
-    // 호출부(NetworkManager) 시그니처 그대로 유지. 내부에서 ws:// URL 조립.
+    // 완성된 WebSocket URL(ws:// 또는 wss://)을 그대로 받아 접속한다.
+    // 로비/게임 구분은 호스트:포트가 아니라 URL path(/lobby, /game)로 하므로,
+    // URL 조립 책임은 NetworkManager 가 가진다 (nginx 리버스 프록시 경유).
     // 로비->게임 전환 시 재접속되는 흐름 지원 위해 호출 시점에 기존 연결 먼저 정리.
-    public async Task<bool> ConnectAsync(string host, int port)
+    public async Task<bool> ConnectAsync(string url)
     {
         try
         {
             Disconnect();
             _recvBuffer.Clear();
 
-            string url = $"ws://{host}:{port}";
             _ws = new WebSocket(url);
 
             // NativeWebSocket 의 Connect() 는 내부에서 Receive 루프가 끝날 때(= 세션 종료)까지 반환 안 함.

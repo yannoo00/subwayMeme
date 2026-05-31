@@ -12,9 +12,10 @@ public class NetworkManager : MonoBehaviour
     // === Inspector 변수 ===
 
     [Header("Server Settings")]
-    [SerializeField] private string _serverHost = "127.0.0.1";
-    // websockify 프록시 포트. 실제 LobbyServer TCP 포트는 7770, websockify 가 8770 → 7770 변환.
-    [SerializeField] private int    _lobbyPort  = 8770;
+    // 단일 진입점. nginx 리버스 프록시가 path(/lobby, /game)를 보고 로비/게임 websockify 로 분기한다.
+    // ngrok static 도메인은 443(wss) 하나만 노출되므로 포트가 아니라 path 로 서버를 구분한다.
+    // 로컬 테스트 시에는 "ws://127.0.0.1:8080" 처럼 nginx 포트로만 바꾸면 된다.
+    [SerializeField] private string _serverBaseUrl = "wss://corned-catacomb-agreeably.ngrok-free.dev";
 
     // === Private 변수 ===
 
@@ -24,7 +25,6 @@ public class NetworkManager : MonoBehaviour
     public int    MyPlayerId     { get; set; }
     public string MyPlayerName   { get; set; }
     public bool   IsHost         { get; set; }
-    public int    GameServerPort { get; set; }
     // S_GameReady 로 받은 룸 ID. C_EnterGame 동봉하여 GameServer 가 올바른 GameRoom 에 라우팅.
     public int    MyRoomId       { get; set; }
 
@@ -60,12 +60,13 @@ public class NetworkManager : MonoBehaviour
     {
         MyPlayerName      = playerName;
         CurrentDispatcher = PacketDispatcher.Lobby;
-        await ServerSession.Instance.ConnectAsync(_serverHost, _lobbyPort);
+        await ServerSession.Instance.ConnectAsync($"{_serverBaseUrl}/lobby");
         SendLobby(PacketId.CConnected, new C_Connected { PlayerName = playerName });
     }
 
     // 게임 서버 접속 후 C_EnterGame 자동 전송
-    // GameServer 프로세스 시작 직후에 호출되므로 준비될 때까지 재시도
+    // 로비와 같은 도메인에 /game path 로 접속한다. nginx 가 게임 websockify 로 분기.
+    // 일시적 연결 실패(프록시 워밍업 등)에 대비해 준비될 때까지 재시도.
     public async Task ConnectToGameAsync()
     {
         CurrentDispatcher = PacketDispatcher.Game;
@@ -76,7 +77,7 @@ public class NetworkManager : MonoBehaviour
         bool connected = false;
         for (int i = 0; i < maxRetries; i++)
         {
-            connected = await ServerSession.Instance.ConnectAsync(_serverHost, GameServerPort);
+            connected = await ServerSession.Instance.ConnectAsync($"{_serverBaseUrl}/game");
             if (connected) break;
 
             Debug.Log($"[NetworkManager] 게임 서버 재시도 {i + 1}/{maxRetries}...");
