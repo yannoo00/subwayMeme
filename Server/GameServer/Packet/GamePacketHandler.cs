@@ -49,52 +49,63 @@ namespace GameServer
             }
             gs.BindRoom(room);
 
-            var player = gs.Room.Add(gs, pkt.PlayerId, pkt.PlayerName, pkt.CharacterId);
+            room.Push(() =>
+            {
+                var player = room.Add(gs, pkt.PlayerId, pkt.PlayerName, pkt.CharacterId);
 
-            Console.WriteLine($"[Game] C_EnterGame: playerId={player.PlayerId}, name={player.PlayerName}, characterId={player.CharacterId}, isHost={player.IsHost}");
+                Console.WriteLine($"[Game] C_EnterGame: playerId={player.PlayerId}, name={player.PlayerName}, characterId={player.CharacterId}, isHost={player.IsHost}");
 
-            // 입장한 본인에게: 역할 + 현재 방 플레이어 목록
-            var enterRes = new S_EnterGame { IsHost = player.IsHost };
-            foreach (var p in gs.Room.GetAllPlayers())
-                enterRes.Players.Add(p.ToProto());
-            session.Send(MakePacket(GamePacketId.SEnterGame, enterRes));
+                // 입장한 본인에게: 역할 + 현재 방 플레이어 목록
+                var enterRes = new S_EnterGame { IsHost = player.IsHost };
+                foreach (var p in room.GetAllPlayers())
+                    enterRes.Players.Add(p.ToProto());
+                session.Send(MakePacket(GamePacketId.SEnterGame, enterRes));
 
-            // 기존 플레이어들에게 새 입장자 알림
-            var enteredBytes = MakePacket(GamePacketId.SPlayerEntered,
-                new S_PlayerEntered { Player = player.ToProto() });
-            foreach (var s in gs.Room.GetOtherSessions(session.SessionId))
-                s.Send(enteredBytes);
+                // 기존 플레이어들에게 새 입장자 알림
+                var enteredBytes = MakePacket(GamePacketId.SPlayerEntered,
+                    new S_PlayerEntered { Player = player.ToProto() });
+                foreach (var s in room.GetOtherSessions(session.SessionId))
+                    s.Send(enteredBytes);
+            });
         }
 
         static void Handle_C_Ready(PacketSession session, ArraySegment<byte> body)
         {
-            var pkt    = C_Ready.Parser.ParseFrom(body.Array, body.Offset, body.Count);
-            var gs     = (GameSession)session;
-            var player = gs.Room.Get(session.SessionId);
-
-            // 호스트가 보낸 게임 시간을 저장 (AllReady 판정 전에 처리)
-            if (player != null && player.IsHost && pkt.SurvivalDurationSecs > 0)
-                gs.Room.SetSurvivalDuration(pkt.SurvivalDurationSecs);
-
-            Console.WriteLine($"[Game] C_Ready: sessionId={session.SessionId}");
-
-            var result = gs.Room.MarkReady(session.SessionId);
-            if (!result.AllReady) return;
-
-            int durationSecs = gs.Room.GetSurvivalDuration();
-            Console.WriteLine($"[Game] 전원 준비 완료 - S_GameStart (seed={result.Seed}, duration={durationSecs}s)");
-            var startBytes = MakePacket(GamePacketId.SGameStart, new S_GameStart { MapSeed = result.Seed, SurvivalDurationSecs = durationSecs });
-            foreach (var s in result.AllSessions)
-                s.Send(startBytes);
-
+            var pkt  = C_Ready.Parser.ParseFrom(body.Array, body.Offset, body.Count);
+            var gs   = (GameSession)session;
             var room = gs.Room;
-            room.StartSurvivalTimer(() =>
+
+            // 상태를 바꾸는 처리 전체(확인 -> MarkReady -> 전송 -> 타이머 시작)를 하나의 Job으로 묶어
+            // 다른 플레이어의 패킷 처리와 절대 끼어들지 않게 함
+            room.Push(() =>
             {
-                Console.WriteLine($"[Game] 서바이벌 타이머 종료 - S_GameClear (roomId={room.RoomId})");
-                var clearBytes = MakePacket(GamePacketId.SGameClear, new S_GameClear());
-                foreach (var s in room.GetAllSessions())
-                    s.Send(clearBytes);
-            }, durationSecs * 1000);
+                var player = room.Get(session.SessionId);
+
+                // 호스트가 보낸 게임 시간을 저장 (AllReady 판정 전에 처리)
+                if (player != null && player.IsHost && pkt.SurvivalDurationSecs > 0)
+                    room.SetSurvivalDuration(pkt.SurvivalDurationSecs);
+
+                Console.WriteLine($"[Game] C_Ready: sessionId={session.SessionId}");
+
+                var result = room.MarkReady(session.SessionId);
+                if (!result.AllReady) return;
+
+                int durationSecs = room.GetSurvivalDuration();
+                Console.WriteLine($"[Game] 전원 준비 완료 - S_GameStart (seed={result.Seed}, duration={durationSecs}s)");
+                var startBytes = MakePacket(GamePacketId.SGameStart, new S_GameStart { MapSeed = result.Seed, SurvivalDurationSecs = durationSecs });
+                foreach (var s in result.AllSessions)
+                    s.Send(startBytes);
+
+                // Task.Delay 완료 콜백은 Push를 거치지 않고 임의의 스레드풀 스레드에서 직접 호출되므로
+                // 콜백 본문도 Push로 한 번 더 감싸서 다른 Job과 직렬화되게 함
+                room.StartSurvivalTimer(() => room.Push(() =>
+                {
+                    Console.WriteLine($"[Game] 서바이벌 타이머 종료 - S_GameClear (roomId={room.RoomId})");
+                    var clearBytes = MakePacket(GamePacketId.SGameClear, new S_GameClear());
+                    foreach (var s in room.GetAllSessions())
+                        s.Send(clearBytes);
+                }), durationSecs * 1000);
+            });
         }
 
         // === 플레이어 이동 ===
@@ -124,41 +135,46 @@ namespace GameServer
 
         static void Handle_C_Attack(PacketSession session, ArraySegment<byte> body)
         {
-            var gs     = (GameSession)session;
-            var pkt    = C_Attack.Parser.ParseFrom(body.Array, body.Offset, body.Count);
-            var player = gs.Room.Get(session.SessionId);
-            if (player == null) return;
+            var gs   = (GameSession)session;
+            var pkt  = C_Attack.Parser.ParseFrom(body.Array, body.Offset, body.Count);
+            var room = gs.Room;
 
-            Console.WriteLine($"[Game] C_Attack: playerId={player.PlayerId}, hits={pkt.HitEnemyIds.Count}");
-
-            // 공격 애니메이션 브로드캐스트
-            var attackBytes = MakePacket(GamePacketId.SAttack,
-                new S_Attack { PlayerId = player.PlayerId, WeaponId = pkt.WeaponId });
-            foreach (var s in gs.Room.GetOtherSessions(session.SessionId))
-                s.Send(attackBytes);
-
-            // 피격 적마다 HP 계산 후 S_EnemyDamaged 또는 S_EnemyDied 브로드캐스트
-            // TODO: 쿨타임/거리 검증 추가
-            foreach (int enemyId in pkt.HitEnemyIds)
+            room.Push(() =>
             {
-                var (currentHp, isDead) = gs.Room.Enemies.ApplyDamage(enemyId, pkt.Damage);
-                if (currentHp == -1) continue; // 서버에 미등록 적 (이미 사망 처리 중)
+                var player = room.Get(session.SessionId);
+                if (player == null) return;
 
-                if (isDead)
+                Console.WriteLine($"[Game] C_Attack: playerId={player.PlayerId}, hits={pkt.HitEnemyIds.Count}");
+
+                // 공격 애니메이션 브로드캐스트
+                var attackBytes = MakePacket(GamePacketId.SAttack,
+                    new S_Attack { PlayerId = player.PlayerId, WeaponId = pkt.WeaponId });
+                foreach (var s in room.GetOtherSessions(session.SessionId))
+                    s.Send(attackBytes);
+
+                // 피격 적마다 HP 계산 후 S_EnemyDamaged 또는 S_EnemyDied 브로드캐스트
+                // TODO: 쿨타임/거리 검증 추가
+                foreach (int enemyId in pkt.HitEnemyIds)
                 {
-                    Console.WriteLine($"[Game] S_EnemyDied: enemyId={enemyId}");
-                    var diedBytes = MakePacket(GamePacketId.SEnemyDied, new S_EnemyDied { EnemyId = enemyId });
-                    foreach (var s in gs.Room.GetAllSessions())
-                        s.Send(diedBytes);
+                    var (currentHp, isDead) = room.Enemies.ApplyDamage(enemyId, pkt.Damage);
+                    if (currentHp == -1) continue; // 서버에 미등록 적 (이미 사망 처리 중)
+
+                    if (isDead)
+                    {
+                        Console.WriteLine($"[Game] S_EnemyDied: enemyId={enemyId}");
+                        var diedBytes = MakePacket(GamePacketId.SEnemyDied, new S_EnemyDied { EnemyId = enemyId });
+                        foreach (var s in room.GetAllSessions())
+                            s.Send(diedBytes);
+                    }
+                    else
+                    {
+                        var dmgBytes = MakePacket(GamePacketId.SEnemyDamaged,
+                            new S_EnemyDamaged { EnemyId = enemyId, CurrentHp = currentHp });
+                        foreach (var s in room.GetAllSessions())
+                            s.Send(dmgBytes);
+                    }
                 }
-                else
-                {
-                    var dmgBytes = MakePacket(GamePacketId.SEnemyDamaged,
-                        new S_EnemyDamaged { EnemyId = enemyId, CurrentHp = currentHp });
-                    foreach (var s in gs.Room.GetAllSessions())
-                        s.Send(dmgBytes);
-                }
-            }
+            });
         }
 
         // === 무기 액션 (Aim / Reload / Switch) ===
@@ -221,26 +237,31 @@ namespace GameServer
 
         static void Handle_C_EnemySpawned(PacketSession session, ArraySegment<byte> body)
         {
-            var gs     = (GameSession)session;
-            var pkt    = C_EnemySpawned.Parser.ParseFrom(body.Array, body.Offset, body.Count);
-            var player = gs.Room.Get(session.SessionId);
-            if (player == null || !player.IsHost) return;
+            var gs   = (GameSession)session;
+            var pkt  = C_EnemySpawned.Parser.ParseFrom(body.Array, body.Offset, body.Count);
+            var room = gs.Room;
 
-            int enemyId = gs.Room.GenerateEnemyId();
-            gs.Room.Enemies.RegisterEnemy(enemyId, pkt.MaxHp);
-
-            Console.WriteLine($"[Game] C_EnemySpawned: type={pkt.EnemyType}, pos=({pkt.PosX:F1},{pkt.PosY:F1},{pkt.PosZ:F1}) -> id={enemyId}");
-
-            var spawnBytes = MakePacket(GamePacketId.SEnemySpawn, new S_EnemySpawn
+            room.Push(() =>
             {
-                EnemyId   = enemyId,
-                EnemyType = pkt.EnemyType,
-                PosX      = pkt.PosX,
-                PosY      = pkt.PosY,
-                PosZ      = pkt.PosZ,
+                var player = room.Get(session.SessionId);
+                if (player == null || !player.IsHost) return;
+
+                int enemyId = room.GenerateEnemyId();
+                room.Enemies.RegisterEnemy(enemyId, pkt.MaxHp);
+
+                Console.WriteLine($"[Game] C_EnemySpawned: type={pkt.EnemyType}, pos=({pkt.PosX:F1},{pkt.PosY:F1},{pkt.PosZ:F1}) -> id={enemyId}");
+
+                var spawnBytes = MakePacket(GamePacketId.SEnemySpawn, new S_EnemySpawn
+                {
+                    EnemyId   = enemyId,
+                    EnemyType = pkt.EnemyType,
+                    PosX      = pkt.PosX,
+                    PosY      = pkt.PosY,
+                    PosZ      = pkt.PosZ,
+                });
+                foreach (var s in room.GetAllSessions())
+                    s.Send(spawnBytes);
             });
-            foreach (var s in gs.Room.GetAllSessions())
-                s.Send(spawnBytes);
         }
 
         static void Handle_C_EnemySync(PacketSession session, ArraySegment<byte> body)
@@ -259,107 +280,127 @@ namespace GameServer
 
         static void Handle_C_EnemyAttack(PacketSession session, ArraySegment<byte> body)
         {
-            var gs     = (GameSession)session;
-            var pkt    = C_EnemyAttack.Parser.ParseFrom(body.Array, body.Offset, body.Count);
-            var player = gs.Room.Get(session.SessionId);
-            if (player == null || !player.IsHost) return;
+            var gs   = (GameSession)session;
+            var pkt  = C_EnemyAttack.Parser.ParseFrom(body.Array, body.Offset, body.Count);
+            var room = gs.Room;
 
-            Console.WriteLine($"[Game] C_EnemyAttack: enemyId={pkt.EnemyId}, target={pkt.TargetPlayerId}, dmg={pkt.Damage}");
-
-            var attackBytes = MakePacket(GamePacketId.SEnemyAttack,
-                new S_EnemyAttack { EnemyId = pkt.EnemyId });
-            foreach (var s in gs.Room.GetOtherSessions(session.SessionId))
-                s.Send(attackBytes);
-
-            var result = gs.Room.ApplyPlayerDamage(pkt.TargetPlayerId, pkt.Damage);
-            if (result.Player == null) return;
-
-            if (result.IsDead)
+            room.Push(() =>
             {
-                Console.WriteLine($"[Game] S_PlayerDied: playerId={result.Player.PlayerId}");
-                var diedBytes = MakePacket(GamePacketId.SPlayerDied,
-                    new S_PlayerDied { PlayerId = result.Player.PlayerId });
-                foreach (var s in gs.Room.GetAllSessions())
-                    s.Send(diedBytes);
+                var player = room.Get(session.SessionId);
+                if (player == null || !player.IsHost) return;
 
-                if (result.AllDead && gs.Room.TryMarkGameEnded())
+                Console.WriteLine($"[Game] C_EnemyAttack: enemyId={pkt.EnemyId}, target={pkt.TargetPlayerId}, dmg={pkt.Damage}");
+
+                var attackBytes = MakePacket(GamePacketId.SEnemyAttack,
+                    new S_EnemyAttack { EnemyId = pkt.EnemyId });
+                foreach (var s in room.GetOtherSessions(session.SessionId))
+                    s.Send(attackBytes);
+
+                var result = room.ApplyPlayerDamage(pkt.TargetPlayerId, pkt.Damage);
+                if (result.Player == null) return;
+
+                if (result.IsDead)
                 {
-                    Console.WriteLine($"[Game] 전원 사망 - S_GameOver (roomId={gs.Room.RoomId})");
-                    var overBytes = MakePacket(GamePacketId.SGameOver, new S_GameOver());
-                    foreach (var s in gs.Room.GetAllSessions())
-                        s.Send(overBytes);
+                    Console.WriteLine($"[Game] S_PlayerDied: playerId={result.Player.PlayerId}");
+                    var diedBytes = MakePacket(GamePacketId.SPlayerDied,
+                        new S_PlayerDied { PlayerId = result.Player.PlayerId });
+                    foreach (var s in room.GetAllSessions())
+                        s.Send(diedBytes);
+
+                    if (result.AllDead && room.TryMarkGameEnded())
+                    {
+                        Console.WriteLine($"[Game] 전원 사망 - S_GameOver (roomId={room.RoomId})");
+                        var overBytes = MakePacket(GamePacketId.SGameOver, new S_GameOver());
+                        foreach (var s in room.GetAllSessions())
+                            s.Send(overBytes);
+                    }
                 }
-            }
-            else
-            {
-                var dmgBytes = MakePacket(GamePacketId.SPlayerDamaged,
-                    new S_PlayerDamaged { PlayerId = result.Player.PlayerId, Damage = pkt.Damage, CurrentHp = result.CurrentHp });
-                foreach (var s in gs.Room.GetAllSessions())
-                    s.Send(dmgBytes);
-            }
+                else
+                {
+                    var dmgBytes = MakePacket(GamePacketId.SPlayerDamaged,
+                        new S_PlayerDamaged { PlayerId = result.Player.PlayerId, Damage = pkt.Damage, CurrentHp = result.CurrentHp });
+                    foreach (var s in room.GetAllSessions())
+                        s.Send(dmgBytes);
+                }
+            });
         }
 
         // === 스테이지 진행 ===
 
         static void Handle_C_ExitSubway(PacketSession session, ArraySegment<byte> body)
         {
-            var gs     = (GameSession)session;
-            var player = gs.Room.Get(session.SessionId);
-            if (player == null) return;
+            var gs   = (GameSession)session;
+            var room = gs.Room;
 
-            Console.WriteLine($"[Game] C_ExitSubway: playerId={player.PlayerId}");
-
-            var result = gs.Room.MarkExited(session.SessionId);
-
-            var exitedBytes = MakePacket(GamePacketId.SPlayerExited,
-                new S_PlayerExited { PlayerId = player.PlayerId, ExitedCount = result.ExitedCount, TotalCount = result.Total });
-            foreach (var s in result.Others)
-                s.Send(exitedBytes);
-
-            if (result.AllExited)
+            room.Push(() =>
             {
-                Console.WriteLine($"[Game] 전원 하차 완료 - S_AllExited");
-                var allExitedBytes = MakePacket(GamePacketId.SAllExited, new S_AllExited());
-                foreach (var s in gs.Room.GetAllSessions())
-                    s.Send(allExitedBytes);
-            }
+                var player = room.Get(session.SessionId);
+                if (player == null) return;
+
+                Console.WriteLine($"[Game] C_ExitSubway: playerId={player.PlayerId}");
+
+                var result = room.MarkExited(session.SessionId);
+
+                var exitedBytes = MakePacket(GamePacketId.SPlayerExited,
+                    new S_PlayerExited { PlayerId = player.PlayerId, ExitedCount = result.ExitedCount, TotalCount = result.Total });
+                foreach (var s in result.Others)
+                    s.Send(exitedBytes);
+
+                if (result.AllExited)
+                {
+                    Console.WriteLine($"[Game] 전원 하차 완료 - S_AllExited");
+                    var allExitedBytes = MakePacket(GamePacketId.SAllExited, new S_AllExited());
+                    foreach (var s in room.GetAllSessions())
+                        s.Send(allExitedBytes);
+                }
+            });
         }
 
         static void Handle_C_BoardSubway(PacketSession session, ArraySegment<byte> body)
         {
-            var gs     = (GameSession)session;
-            var player = gs.Room.Get(session.SessionId);
-            if (player == null) return;
+            var gs   = (GameSession)session;
+            var room = gs.Room;
 
-            Console.WriteLine($"[Game] C_BoardSubway: playerId={player.PlayerId}");
+            room.Push(() =>
+            {
+                var player = room.Get(session.SessionId);
+                if (player == null) return;
 
-            var result = gs.Room.MarkBoarded(session.SessionId);
+                Console.WriteLine($"[Game] C_BoardSubway: playerId={player.PlayerId}");
 
-            var boardedBytes = MakePacket(GamePacketId.SPlayerBoarded,
-                new S_PlayerBoarded { PlayerId = player.PlayerId, BoardedCount = result.BoardedCount, TotalCount = result.Total });
-            foreach (var s in result.Others)
-                s.Send(boardedBytes);
+                var result = room.MarkBoarded(session.SessionId);
 
-            if (result.Trigger)
-                BroadcastAllBoarded(gs.Room, result.NodeIndex);
+                var boardedBytes = MakePacket(GamePacketId.SPlayerBoarded,
+                    new S_PlayerBoarded { PlayerId = player.PlayerId, BoardedCount = result.BoardedCount, TotalCount = result.Total });
+                foreach (var s in result.Others)
+                    s.Send(boardedBytes);
+
+                if (result.Trigger)
+                    BroadcastAllBoarded(room, result.NodeIndex);
+            });
         }
 
         static void Handle_C_SelectRoute(PacketSession session, ArraySegment<byte> body)
         {
-            var gs     = (GameSession)session;
-            var pkt    = C_SelectRoute.Parser.ParseFrom(body.Array, body.Offset, body.Count);
-            var result = gs.Room.SelectRoute(session.SessionId, pkt.NodeIndex);
+            var gs   = (GameSession)session;
+            var pkt  = C_SelectRoute.Parser.ParseFrom(body.Array, body.Offset, body.Count);
+            var room = gs.Room;
 
-            if (!result.IsHost)
+            room.Push(() =>
             {
-                Console.WriteLine($"[Game] C_SelectRoute: 방장 아닌 플레이어 요청 무시 (sessionId={session.SessionId})");
-                return;
-            }
+                var result = room.SelectRoute(session.SessionId, pkt.NodeIndex);
 
-            Console.WriteLine($"[Game] C_SelectRoute: nodeIndex={result.NodeIndex}");
+                if (!result.IsHost)
+                {
+                    Console.WriteLine($"[Game] C_SelectRoute: 방장 아닌 플레이어 요청 무시 (sessionId={session.SessionId})");
+                    return;
+                }
 
-            if (result.Trigger)
-                BroadcastAllBoarded(gs.Room, result.NodeIndex);
+                Console.WriteLine($"[Game] C_SelectRoute: nodeIndex={result.NodeIndex}");
+
+                if (result.Trigger)
+                    BroadcastAllBoarded(room, result.NodeIndex);
+            });
         }
 
         // 전원 탑승 + 경로 확정 -> S_AllBoarded 후 스테이지 상태 리셋

@@ -29,46 +29,53 @@ namespace GameServer
             // C_EnterGame 이전에 끊긴 세션은 Room 이 null 이라 정리할 게 없다.
             if (Room == null) return;
 
-            var result = Room.Remove(SessionId);
-            if (result.Leaver == null) return;
+            var room = Room;
 
-            // 나머지 플레이어에게 퇴장 알림
-            var leftBytes = GamePacketHandler.MakePacket(
-                GamePacketId.SPlayerLeft,
-                new S_PlayerLeft { PlayerId = result.Leaver.PlayerId });
-            foreach (var s in result.Remaining)
-                s.Send(leftBytes);
-
-            // 호스트가 나갔으면 새 호스트 지정 알림
-            if (result.NewHostPlayerId != -1)
+            // 상태 변경(Remove) + 관련 브로드캐스트/룸 정리를 하나의 Job으로 묶어
+            // 다른 플레이어의 패킷 처리와 절대 끼어들지 않게 함
+            room.Push(() =>
             {
-                Console.WriteLine($"[GameSession] 호스트 이탈 -> 새 호스트: playerId={result.NewHostPlayerId}");
-                var hostBytes = GamePacketHandler.MakePacket(
-                    GamePacketId.SHostChanged,
-                    new S_HostChanged { NewHostId = result.NewHostPlayerId });
+                var result = room.Remove(SessionId);
+                if (result.Leaver == null) return;
+
+                // 나머지 플레이어에게 퇴장 알림
+                var leftBytes = GamePacketHandler.MakePacket(
+                    GamePacketId.SPlayerLeft,
+                    new S_PlayerLeft { PlayerId = result.Leaver.PlayerId });
                 foreach (var s in result.Remaining)
-                    s.Send(hostBytes);
-            }
+                    s.Send(leftBytes);
 
-            // 룸이 비었으면 GameRoomManager 에서 제거 + 로비에 종료 알림 (best-effort)
-            if (result.Remaining.Count == 0)
-            {
-                Console.WriteLine($"[GameSession] 룸 비어있음 - 정리: roomId={Room.RoomId}");
-                GameRoomManager.Instance.RemoveRoom(Room.RoomId);
+                // 호스트가 나갔으면 새 호스트 지정 알림
+                if (result.NewHostPlayerId != -1)
+                {
+                    Console.WriteLine($"[GameSession] 호스트 이탈 -> 새 호스트: playerId={result.NewHostPlayerId}");
+                    var hostBytes = GamePacketHandler.MakePacket(
+                        GamePacketId.SHostChanged,
+                        new S_HostChanged { NewHostId = result.NewHostPlayerId });
+                    foreach (var s in result.Remaining)
+                        s.Send(hostBytes);
+                }
 
-                var lobby = InternalSession.LobbyConnection;
-                if (lobby != null)
+                // 룸이 비었으면 GameRoomManager 에서 제거 + 로비에 종료 알림 (best-effort)
+                if (result.Remaining.Count == 0)
                 {
-                    var endedBytes = InternalPacketHandler.MakePacket(
-                        InternalPacketId.G2LRoomEnded,
-                        new G2L_RoomEnded { RoomId = Room.RoomId });
-                    lobby.Send(endedBytes);
+                    Console.WriteLine($"[GameSession] 룸 비어있음 - 정리: roomId={room.RoomId}");
+                    GameRoomManager.Instance.RemoveRoom(room.RoomId);
+
+                    var lobby = InternalSession.LobbyConnection;
+                    if (lobby != null)
+                    {
+                        var endedBytes = InternalPacketHandler.MakePacket(
+                            InternalPacketId.G2LRoomEnded,
+                            new G2L_RoomEnded { RoomId = room.RoomId });
+                        lobby.Send(endedBytes);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[GameSession] G2L_RoomEnded 송신 스킵: 로비 연결 없음");
+                    }
                 }
-                else
-                {
-                    Console.WriteLine($"[GameSession] G2L_RoomEnded 송신 스킵: 로비 연결 없음");
-                }
-            }
+            });
         }
 
         public override void OnRecvPacket(ushort id, ArraySegment<byte> body)

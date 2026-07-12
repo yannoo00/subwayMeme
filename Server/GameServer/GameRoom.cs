@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using ServerCore;
 
 namespace GameServer
 {
@@ -24,6 +25,10 @@ namespace GameServer
 
         // 룸 자기 자신의 ID. 빈 룸 정리 시 GameRoomManager.RemoveRoom(RoomId) 와 G2L_RoomEnded 송신에 사용.
         public int RoomId { get; private set; }
+
+        // 이 방의 상태를 바꾸는 모든 핸들러는 Push로 감싸서 직렬 실행되게 함 (TOCTOU 레이스 방지)
+        readonly YJobQueue _jobQueue = new();
+        public void Push(Action job) => _jobQueue.Push(job);
 
         readonly object _lock = new();
         readonly Dictionary<int, GamePlayer> _players = new(); // key: SessionId
