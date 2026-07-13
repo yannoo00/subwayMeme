@@ -2,16 +2,16 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 
-namespace ServerCore
+namespace YannooNet
 {
-    // Listener 의 반대 역할: 다른 서버에 능동적으로 TCP 연결.
+    // YListener 의 반대 역할: 다른 서버에 능동적으로 TCP 연결.
     // 연결 성공 시 sessionFactory 로 만든 Session 에 소켓을 묶고 OnConnected 호출.
-    // 한 번 호출에 한 번의 연결만 수행한다 (Listener 처럼 반복 Accept 하지 않음).
-    public class Connector
+    // 한 번 호출에 한 번의 연결만 수행한다 (YListener 처럼 반복 Accept 하지 않음).
+    public class YConnector
     {
-        Func<Session> _sessionFactory;
+        Func<YSession> _sessionFactory;
 
-        public void Connect(IPEndPoint endPoint, Func<Session> sessionFactory)
+        public void Connect(IPEndPoint endPoint, Func<YSession> sessionFactory)
         {
             _sessionFactory = sessionFactory;
 
@@ -31,13 +31,13 @@ namespace ServerCore
         {
             if (args.SocketError == SocketError.Success)
             {
-                Session session = _sessionFactory.Invoke();
+                YSession session = _sessionFactory.Invoke();
                 session.Start((Socket)args.UserToken);
                 session.OnConnected(args.RemoteEndPoint);
             }
             else
             {
-                Console.WriteLine($"[Connector] Connect 실패: {args.SocketError}");
+                Console.WriteLine($"[YConnector] Connect 실패: {args.SocketError}");
             }
         }
     }

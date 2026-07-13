@@ -4,11 +4,11 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 
-namespace ServerCore
+namespace YannooNet
 {
-    public abstract class Session
+    public abstract class YSession
     {
-        // 전체 세션 ID counter 
+        // 전체 세션 ID counter
         private static int _nextId = 0;
 
         public int SessionId { get; private set; }
@@ -16,7 +16,7 @@ namespace ServerCore
         private Socket _socket; // TCP 소켓
         private int _disconnected = 0; //중복 연결 해제 방지용 플래그
 
-        private RecvBuffer _recvBuffer = new RecvBuffer(65535);
+        private YRecvBuffer _recvBuffer = new YRecvBuffer(65535);
 
         private SocketAsyncEventArgs _recvArgs = new SocketAsyncEventArgs();
         private SocketAsyncEventArgs _sendArgs = new SocketAsyncEventArgs();

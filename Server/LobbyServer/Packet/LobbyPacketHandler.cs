@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Google.Protobuf;
 using LobbyProto;
 using InternalProto;
-using ServerCore;
+using YannooNet;
 
 namespace LobbyServer
 {
@@ -20,13 +20,13 @@ namespace LobbyServer
 
         // PacketId -> 핸들러 함수 테이블
         // LobbySession.OnRecvPacket()에서 이 테이블을 조회해 호출
-        public static Action<PacketSession, ArraySegment<byte>>[] Handlers { get; private set; }
+        public static Action<YPacketSession, ArraySegment<byte>>[] Handlers { get; private set; }
 
         static LobbyPacketHandler()
         {
             // 새 패킷 ID 추가 시 maxId 기준값도 갱신해야 함
             int maxId = (int)PacketId.SPlayerCharacterSelected + 1;
-            Handlers = new Action<PacketSession, ArraySegment<byte>>[maxId];
+            Handlers = new Action<YPacketSession, ArraySegment<byte>>[maxId];
 
             Handlers[(int)PacketId.CConnected]       = Handle_C_Connected;
             Handlers[(int)PacketId.CCreateRoom]      = Handle_C_CreateRoom;
@@ -39,7 +39,7 @@ namespace LobbyServer
 
         // 핸들러 구현 ============================================================
 
-        static void Handle_C_Connected(PacketSession session, ArraySegment<byte> body)
+        static void Handle_C_Connected(YPacketSession session, ArraySegment<byte> body)
         {
             var pkt = C_Connected.Parser.ParseFrom(body.Array, body.Offset, body.Count);
             Console.WriteLine($"[Lobby] C_Connected: name={pkt.PlayerName}");
@@ -49,7 +49,7 @@ namespace LobbyServer
             session.Send(MakePacket(PacketId.SConnected, res));
         }
 
-        static void Handle_C_CreateRoom(PacketSession session, ArraySegment<byte> body)
+        static void Handle_C_CreateRoom(YPacketSession session, ArraySegment<byte> body)
         {
             var pkt = C_CreateRoom.Parser.ParseFrom(body.Array, body.Offset, body.Count);
             Console.WriteLine($"[Lobby] C_CreateRoom: name={pkt.RoomName}, max={pkt.MaxPlayers}");
@@ -64,7 +64,7 @@ namespace LobbyServer
             session.Send(MakePacket(PacketId.SRoomCreated, new S_RoomCreated { Room = result.Data.Room }));
         }
 
-        static void Handle_C_JoinRoom(PacketSession session, ArraySegment<byte> body)
+        static void Handle_C_JoinRoom(YPacketSession session, ArraySegment<byte> body)
         {
             var pkt = C_JoinRoom.Parser.ParseFrom(body.Array, body.Offset, body.Count);
             Console.WriteLine($"[Lobby] C_JoinRoom: roomId={pkt.RoomId}");
@@ -87,7 +87,7 @@ namespace LobbyServer
                 s.Send(notifyBytes);
         }
 
-        static void Handle_C_LeaveRoom(PacketSession session, ArraySegment<byte> body)
+        static void Handle_C_LeaveRoom(YPacketSession session, ArraySegment<byte> body)
         {
             Console.WriteLine($"[Lobby] C_LeaveRoom");
 
@@ -107,7 +107,7 @@ namespace LobbyServer
             }
         }
 
-        static void Handle_C_GetRooms(PacketSession session, ArraySegment<byte> body)
+        static void Handle_C_GetRooms(YPacketSession session, ArraySegment<byte> body)
         {
             Console.WriteLine($"[Lobby] C_GetRooms");
 
@@ -116,7 +116,7 @@ namespace LobbyServer
             session.Send(MakePacket(PacketId.SRoomList, res));
         }
 
-        static void Handle_C_StartGame(PacketSession session, ArraySegment<byte> body)
+        static void Handle_C_StartGame(YPacketSession session, ArraySegment<byte> body)
         {
             Console.WriteLine($"[Lobby] C_StartGame: sessionId={session.SessionId}");
 
@@ -184,7 +184,7 @@ namespace LobbyServer
                 s.Send(readyBytes);
         }
 
-        static void Handle_C_SelectCharacter(PacketSession session, ArraySegment<byte> body)
+        static void Handle_C_SelectCharacter(YPacketSession session, ArraySegment<byte> body)
         {
             var pkt = C_SelectCharacter.Parser.ParseFrom(body.Array, body.Offset, body.Count);
             Console.WriteLine($"[Lobby] C_SelectCharacter: sessionId={session.SessionId}, characterId={pkt.CharacterId}");
@@ -212,12 +212,12 @@ namespace LobbyServer
         public static ArraySegment<byte> MakePacket(PacketId id, IMessage message)
         {
             byte[] body       = message.ToByteArray();
-            ushort totalSize  = (ushort)(PacketSession.HEADER_SIZE + body.Length);
+            ushort totalSize  = (ushort)(YPacketSession.HEADER_SIZE + body.Length);
 
             byte[] packet = new byte[totalSize];
             Array.Copy(BitConverter.GetBytes(totalSize), 0, packet, 0, 2);
             Array.Copy(BitConverter.GetBytes((ushort)id), 0, packet, 2, 2);
-            Array.Copy(body, 0, packet, PacketSession.HEADER_SIZE, body.Length);
+            Array.Copy(body, 0, packet, YPacketSession.HEADER_SIZE, body.Length);
 
             return new ArraySegment<byte>(packet);
         }

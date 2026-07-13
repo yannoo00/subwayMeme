@@ -1,16 +1,16 @@
 using System;
 using System.Threading;
 
-namespace ServerCore
+namespace YannooNet
 {
-    public class SendBuffer
+    public class YSendBuffer
     {
         private byte[] _buffer;
         private int _usedSize = 0;
 
         public int FreeSize => _buffer.Length - _usedSize;
 
-        public SendBuffer(int chunkSize)
+        public YSendBuffer(int chunkSize)
         {
             _buffer = new byte[chunkSize];
         }
@@ -30,21 +30,21 @@ namespace ServerCore
         }
     }
 
-    public static class SendBufferHelper
+    public static class YSendBufferHelper
     {
         // 스레드마다 독립적인 SendBuffer 유지 (lock 없이 안전)
-        public static ThreadLocal<SendBuffer> CurrentBuffer = new ThreadLocal<SendBuffer>(() => null, true);
+        public static ThreadLocal<YSendBuffer> CurrentBuffer = new ThreadLocal<YSendBuffer>(() => null, true);
 
         public static int ChunkSize { get; set; } = 65535;
 
         public static ArraySegment<byte> Open(int reserveSize)
         {
             if (CurrentBuffer.Value == null)
-                CurrentBuffer.Value = new SendBuffer(ChunkSize);
+                CurrentBuffer.Value = new YSendBuffer(ChunkSize);
 
             // 현재 버퍼에 공간이 부족하면 새 청크 할당 (단일 패킷이 buffer 사이즈보다 클 수는 없게)
             if (CurrentBuffer.Value.FreeSize < reserveSize)
-                CurrentBuffer.Value = new SendBuffer(ChunkSize);
+                CurrentBuffer.Value = new YSendBuffer(ChunkSize);
 
             return CurrentBuffer.Value.Open(reserveSize);
         }

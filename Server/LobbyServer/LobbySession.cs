@@ -1,11 +1,11 @@
 using System;
 using System.Net;
 using LobbyProto;
-using ServerCore;
+using YannooNet;
 
 namespace LobbyServer
 {
-    public class LobbySession : PacketSession
+    public class LobbySession : YPacketSession
     {
         public override void OnConnected(EndPoint endPoint)
         {
@@ -28,7 +28,7 @@ namespace LobbyServer
             RoomManager.Instance.UnregisterPlayer(SessionId);
         }
 
-        // PacketSession이 헤더를 파싱하고, 완성된 패킷 1개씩 여기로 올려줌
+        // YPacketSession이 헤더를 파싱하고, 완성된 패킷 1개씩 여기로 올려줌
         public override void OnRecvPacket(ushort id, ArraySegment<byte> body)
         {
             // id 범위 체크

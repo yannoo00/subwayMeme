@@ -1,7 +1,7 @@
 using System;
 using Google.Protobuf;
 using InternalProto;
-using ServerCore;
+using YannooNet;
 
 namespace GameServer
 {
@@ -10,12 +10,12 @@ namespace GameServer
     // 패킷 ID 공간도 GameProto 와 별도이므로 충돌하지 않는다.
     public class InternalPacketHandler
     {
-        public static Action<PacketSession, ArraySegment<byte>>[] Handlers { get; private set; }
+        public static Action<YPacketSession, ArraySegment<byte>>[] Handlers { get; private set; }
 
         static InternalPacketHandler()
         {
             int maxId = (int)InternalPacketId.G2LRoomEnded + 1;
-            Handlers = new Action<PacketSession, ArraySegment<byte>>[maxId];
+            Handlers = new Action<YPacketSession, ArraySegment<byte>>[maxId];
 
             Handlers[(int)InternalPacketId.L2GCreateRoom] = Handle_L2G_CreateRoom;
         }
@@ -23,7 +23,7 @@ namespace GameServer
         // 로비서버로부터 룸 생성 요청 수신.
         // 기존 ProcessManager.Spawn 의 자리를 대체한다.
         // 생성 완료 후 G2L_RoomCreated 로 ack 송신 → 로비가 이걸 받고 나서야 S_GameReady 를 클라들에게 보냄.
-        static void Handle_L2G_CreateRoom(PacketSession session, ArraySegment<byte> body)
+        static void Handle_L2G_CreateRoom(YPacketSession session, ArraySegment<byte> body)
         {
             var pkt = L2G_CreateRoom.Parser.ParseFrom(body.Array, body.Offset, body.Count);
             Console.WriteLine($"[Internal] L2G_CreateRoom: roomId={pkt.RoomId}, playerCount={pkt.PlayerCount}, hostPlayerId={pkt.HostPlayerId}");
@@ -42,12 +42,12 @@ namespace GameServer
         public static ArraySegment<byte> MakePacket(InternalPacketId id, IMessage message)
         {
             byte[] body      = message.ToByteArray();
-            ushort totalSize = (ushort)(PacketSession.HEADER_SIZE + body.Length);
+            ushort totalSize = (ushort)(YPacketSession.HEADER_SIZE + body.Length);
 
             byte[] packet = new byte[totalSize];
             Array.Copy(BitConverter.GetBytes(totalSize), 0, packet, 0, 2);
             Array.Copy(BitConverter.GetBytes((ushort)id), 0, packet, 2, 2);
-            Array.Copy(body, 0, packet, PacketSession.HEADER_SIZE, body.Length);
+            Array.Copy(body, 0, packet, YPacketSession.HEADER_SIZE, body.Length);
 
             return new ArraySegment<byte>(packet);
         }

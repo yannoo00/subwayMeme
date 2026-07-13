@@ -1,13 +1,13 @@
 using System;
 using System.Net;
-using ServerCore;
+using YannooNet;
 
 namespace LobbyServer
 {
     // LobbyServer 가 GameServer 내부 채널(7772) 에 클라이언트로 접속할 때 사용하는 세션.
     // GameServer 쪽 수신 세션은 InternalSession 으로 한 쌍을 이룬다.
     // Lobby 프로세스 안에 한 번만 연결하므로 Send 호출용 static 참조를 보관.
-    public class GameServerSession : PacketSession
+    public class GameServerSession : YPacketSession
     {
         public static GameServerSession Instance { get; private set; }
 

@@ -1,4 +1,4 @@
-namespace ServerCore
+namespace YannooNet
 {
     public class YJobQueue
     {

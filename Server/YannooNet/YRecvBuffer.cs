@@ -1,14 +1,14 @@
   using System;
 
-  namespace ServerCore
+  namespace YannooNet
   {
-      public class RecvBuffer
+      public class YRecvBuffer
       {
           private ArraySegment<byte> _buffer;
           private int _readPos;
           private int _writePos;
 
-          public RecvBuffer(int bufferSize)
+          public YRecvBuffer(int bufferSize)
           {
               _buffer = new ArraySegment<byte>(new byte[bufferSize]);
           }

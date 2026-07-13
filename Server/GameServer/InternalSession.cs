@@ -1,12 +1,12 @@
 using System;
 using System.Net;
-using ServerCore;
+using YannooNet;
 
 namespace GameServer
 {
     // LobbyServer 가 GameServer 내부 채널 포트(7772) 로 접속 시 생성되는 세션.
     // 클라용 GameSession 과 분리해 패킷 디스패치 테이블도 별도 사용한다.
-    public class InternalSession : PacketSession
+    public class InternalSession : YPacketSession
     {
         // GameServer 에서 LobbyServer 방향으로 송신할 때 사용.
         // 보통 LobbyServer 하나만 연결되므로 단일 참조로 충분.

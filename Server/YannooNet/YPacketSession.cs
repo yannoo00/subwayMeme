@@ -1,19 +1,19 @@
 using System;
 using System.Net;
 
-namespace ServerCore
+namespace YannooNet
 {
-    
+
     //  패킷 헤더 구조
     //  [size: 2byte] [packetId: 2byte] [body: N byte]
-    //   헤더 포함 전체 크기, protobuf 직렬화 바이트, body 
-    
-    public abstract class PacketSession : Session
+    //   헤더 포함 전체 크기, protobuf 직렬화 바이트, body
+
+    public abstract class YPacketSession : YSession
     {
         public static readonly int HEADER_SIZE = 4; // size(2) + packetId(2)
 
-        // Session.OnRecv()를 구현 — 버퍼에서 완성된 패킷을 꺼내 OnRecvPacket 호출
-        // 반환값: 이번에 처리 완료한 총 바이트 수 (RecvBuffer에 알려줌)
+        // YSession.OnRecv()를 구현 — 버퍼에서 완성된 패킷을 꺼내 OnRecvPacket 호출
+        // 반환값: 이번에 처리 완료한 총 바이트 수 (YRecvBuffer에 알려줌)
         public sealed override int OnRecv(ArraySegment<byte> buffer)
         {
             int processLen = 0;

@@ -2,11 +2,11 @@ using System;
 using System.Net;
 using GameProto;
 using InternalProto;
-using ServerCore;
+using YannooNet;
 
 namespace GameServer
 {
-    public class GameSession : PacketSession
+    public class GameSession : YPacketSession
     {
         // 이 세션이 속한 게임 룸. 처음에는 null.
         // C_EnterGame 수신 시 GamePacketHandler 가 roomId 로 GameRoomManager 에서 찾아 BindRoom 으로 주입.

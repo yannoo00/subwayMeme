@@ -2,16 +2,16 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 
-namespace ServerCore
+namespace YannooNet
 {
-    public class Listener
+    public class YListener
     {
         private Socket _listenSocket;
 
         // 새 연결이 수락될 때 어떤 Session을 만들지 결정하는 팩토리 함수
-        private Func<Session> _sessionFactory;
+        private Func<YSession> _sessionFactory;
 
-        public void Init(IPEndPoint endPoint, Func<Session> sessionFactory)
+        public void Init(IPEndPoint endPoint, Func<YSession> sessionFactory)
         {
             _sessionFactory = sessionFactory;
 
@@ -42,13 +42,13 @@ namespace ServerCore
                 // 팩토리로 Session 생성 후 시작
                 // Start() 내부에서 RecvAsync가 즉시 완료되며 소켓이 닫힐 수 있으므로 RemoteEndPoint를 Start() 호출 전에 미리 저장
                 System.Net.EndPoint remoteEndPoint = args.AcceptSocket.RemoteEndPoint;
-                Session session = _sessionFactory.Invoke();
+                YSession session = _sessionFactory.Invoke();
                 session.Start(args.AcceptSocket);
                 session.OnConnected(remoteEndPoint);
             }
             else
             {
-                Console.WriteLine($"[Listener] Accept 실패: {args.SocketError}");
+                Console.WriteLine($"[YListener] Accept 실패: {args.SocketError}");
             }
 
             // 다음 연결을 받기 위해 다시 등록

@@ -1,13 +1,13 @@
 using System;
 using System.Net;
-using ServerCore;
+using YannooNet;
 using LobbyServer;
 
-// === 로비 Listener (포트 7770) === 외부 클라이언트 접속용
+// === 로비 YListener (포트 7770) === 외부 클라이언트 접속용
 const int LOBBY_PORT = 7770;
 IPEndPoint lobbyEndPoint = new IPEndPoint(IPAddress.Any, LOBBY_PORT);
 
-Listener lobbyListener = new Listener();
+YListener lobbyListener = new YListener();
 lobbyListener.Init(lobbyEndPoint, () => new LobbySession());
 Console.WriteLine($"[LobbyServer] 포트 {LOBBY_PORT} 대기 중");
 
@@ -19,7 +19,7 @@ var gameServerEndPoint = new IPEndPoint(
     IPAddress.Loopback,
     LobbyConfig.Instance.GameServerInternalPort);
 
-Connector gameServerConnector = new Connector();
+YConnector gameServerConnector = new YConnector();
 gameServerConnector.Connect(gameServerEndPoint, () => new GameServerSession());
 Console.WriteLine($"[LobbyServer] GameServer 내부 채널 접속 시도: {gameServerEndPoint}");
 

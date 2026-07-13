@@ -1,19 +1,19 @@
 using System;
 using Google.Protobuf;
 using GameProto;
-using ServerCore;
+using YannooNet;
 
 namespace GameServer
 {
     public class GamePacketHandler
     {
-        public static Action<PacketSession, ArraySegment<byte>>[] Handlers { get; private set; }
+        public static Action<YPacketSession, ArraySegment<byte>>[] Handlers { get; private set; }
 
         static GamePacketHandler()
         {
             // S_WEAPON_SWITCH(81) 가 최대 ID 라 배열 크기 기준이 됨
             int maxId = (int)GamePacketId.SWeaponSwitch + 1;
-            Handlers = new Action<PacketSession, ArraySegment<byte>>[maxId];
+            Handlers = new Action<YPacketSession, ArraySegment<byte>>[maxId];
 
             Handlers[(int)GamePacketId.CEnterGame]     = Handle_C_EnterGame;
             Handlers[(int)GamePacketId.CReady]         = Handle_C_Ready;
@@ -34,7 +34,7 @@ namespace GameServer
 
         // === 접속/초기화 ===
 
-        static void Handle_C_EnterGame(PacketSession session, ArraySegment<byte> body)
+        static void Handle_C_EnterGame(YPacketSession session, ArraySegment<byte> body)
         {
             var pkt    = C_EnterGame.Parser.ParseFrom(body.Array, body.Offset, body.Count);
             var gs     = (GameSession)session;
@@ -69,7 +69,7 @@ namespace GameServer
             });
         }
 
-        static void Handle_C_Ready(PacketSession session, ArraySegment<byte> body)
+        static void Handle_C_Ready(YPacketSession session, ArraySegment<byte> body)
         {
             var pkt  = C_Ready.Parser.ParseFrom(body.Array, body.Offset, body.Count);
             var gs   = (GameSession)session;
@@ -110,7 +110,7 @@ namespace GameServer
 
         // === 플레이어 이동 ===
 
-        static void Handle_C_Move(PacketSession session, ArraySegment<byte> body)
+        static void Handle_C_Move(YPacketSession session, ArraySegment<byte> body)
         {
             var gs     = (GameSession)session;
             var pkt    = C_Move.Parser.ParseFrom(body.Array, body.Offset, body.Count);
@@ -133,7 +133,7 @@ namespace GameServer
 
         // === 전투 ===
 
-        static void Handle_C_Attack(PacketSession session, ArraySegment<byte> body)
+        static void Handle_C_Attack(YPacketSession session, ArraySegment<byte> body)
         {
             var gs   = (GameSession)session;
             var pkt  = C_Attack.Parser.ParseFrom(body.Array, body.Offset, body.Count);
@@ -180,7 +180,7 @@ namespace GameServer
         // === 무기 액션 (Aim / Reload / Switch) ===
         // 전부 단순 broadcast. 본인은 이미 로컬에서 처리했으므로 제외.
 
-        static void Handle_C_Aiming(PacketSession session, ArraySegment<byte> body)
+        static void Handle_C_Aiming(YPacketSession session, ArraySegment<byte> body)
         {
             var gs     = (GameSession)session;
             var pkt    = C_Aiming.Parser.ParseFrom(body.Array, body.Offset, body.Count);
@@ -198,7 +198,7 @@ namespace GameServer
                 s.Send(relayBytes);
         }
 
-        static void Handle_C_Reload(PacketSession session, ArraySegment<byte> body)
+        static void Handle_C_Reload(YPacketSession session, ArraySegment<byte> body)
         {
             var gs     = (GameSession)session;
             var pkt    = C_Reload.Parser.ParseFrom(body.Array, body.Offset, body.Count);
@@ -215,7 +215,7 @@ namespace GameServer
                 s.Send(relayBytes);
         }
 
-        static void Handle_C_WeaponSwitch(PacketSession session, ArraySegment<byte> body)
+        static void Handle_C_WeaponSwitch(YPacketSession session, ArraySegment<byte> body)
         {
             var gs     = (GameSession)session;
             var pkt    = C_WeaponSwitch.Parser.ParseFrom(body.Array, body.Offset, body.Count);
@@ -235,7 +235,7 @@ namespace GameServer
 
         // === 적 동기화 (호스트만 전송) ===
 
-        static void Handle_C_EnemySpawned(PacketSession session, ArraySegment<byte> body)
+        static void Handle_C_EnemySpawned(YPacketSession session, ArraySegment<byte> body)
         {
             var gs   = (GameSession)session;
             var pkt  = C_EnemySpawned.Parser.ParseFrom(body.Array, body.Offset, body.Count);
@@ -264,7 +264,7 @@ namespace GameServer
             });
         }
 
-        static void Handle_C_EnemySync(PacketSession session, ArraySegment<byte> body)
+        static void Handle_C_EnemySync(YPacketSession session, ArraySegment<byte> body)
         {
             var gs     = (GameSession)session;
             var pkt    = C_EnemySync.Parser.ParseFrom(body.Array, body.Offset, body.Count);
@@ -278,7 +278,7 @@ namespace GameServer
                 s.Send(relayBytes);
         }
 
-        static void Handle_C_EnemyAttack(PacketSession session, ArraySegment<byte> body)
+        static void Handle_C_EnemyAttack(YPacketSession session, ArraySegment<byte> body)
         {
             var gs   = (GameSession)session;
             var pkt  = C_EnemyAttack.Parser.ParseFrom(body.Array, body.Offset, body.Count);
@@ -327,7 +327,7 @@ namespace GameServer
 
         // === 스테이지 진행 ===
 
-        static void Handle_C_ExitSubway(PacketSession session, ArraySegment<byte> body)
+        static void Handle_C_ExitSubway(YPacketSession session, ArraySegment<byte> body)
         {
             var gs   = (GameSession)session;
             var room = gs.Room;
@@ -356,7 +356,7 @@ namespace GameServer
             });
         }
 
-        static void Handle_C_BoardSubway(PacketSession session, ArraySegment<byte> body)
+        static void Handle_C_BoardSubway(YPacketSession session, ArraySegment<byte> body)
         {
             var gs   = (GameSession)session;
             var room = gs.Room;
@@ -380,7 +380,7 @@ namespace GameServer
             });
         }
 
-        static void Handle_C_SelectRoute(PacketSession session, ArraySegment<byte> body)
+        static void Handle_C_SelectRoute(YPacketSession session, ArraySegment<byte> body)
         {
             var gs   = (GameSession)session;
             var pkt  = C_SelectRoute.Parser.ParseFrom(body.Array, body.Offset, body.Count);
@@ -418,7 +418,7 @@ namespace GameServer
 
         // === 상호작용 ===
 
-        static void Handle_C_Interact(PacketSession session, ArraySegment<byte> body)
+        static void Handle_C_Interact(YPacketSession session, ArraySegment<byte> body)
         {
             var gs     = (GameSession)session;
             var pkt    = C_Interact.Parser.ParseFrom(body.Array, body.Offset, body.Count);
@@ -441,7 +441,7 @@ namespace GameServer
 
         // 클라가 픽업 먹은 시점에 송신. 서버는 효과를 모르고 전원 브로드캐스트만 한다.
         // 송신자 본인에게도 보내서 "서버 응답 시점에 효과 적용" 흐름을 단일화
-        static void Handle_C_Mutation(PacketSession session, ArraySegment<byte> body)
+        static void Handle_C_Mutation(YPacketSession session, ArraySegment<byte> body)
         {
             var gs     = (GameSession)session;
             var pkt    = C_Mutation.Parser.ParseFrom(body.Array, body.Offset, body.Count);
@@ -464,12 +464,12 @@ namespace GameServer
         public static ArraySegment<byte> MakePacket(GamePacketId id, IMessage message)
         {
             byte[] body      = message.ToByteArray();
-            ushort totalSize = (ushort)(PacketSession.HEADER_SIZE + body.Length);
+            ushort totalSize = (ushort)(YPacketSession.HEADER_SIZE + body.Length);
 
             byte[] packet = new byte[totalSize];
             Array.Copy(BitConverter.GetBytes(totalSize), 0, packet, 0, 2);
             Array.Copy(BitConverter.GetBytes((ushort)id), 0, packet, 2, 2);
-            Array.Copy(body, 0, packet, PacketSession.HEADER_SIZE, body.Length);
+            Array.Copy(body, 0, packet, YPacketSession.HEADER_SIZE, body.Length);
 
             return new ArraySegment<byte>(packet);
         }
